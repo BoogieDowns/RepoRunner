@@ -22,6 +22,13 @@ const statuses: ServiceStatuses = {
   backend: "stopped",
 };
 
+// Per-service fake timers — NOT shared, so restartAll can't accidentally
+// clear the wrong service's timer.
+const fakeTimers: Record<"frontend" | "backend", ReturnType<typeof setTimeout> | null> = {
+  frontend: null,
+  backend: null,
+};
+
 function emitLog(source: LogEntry["source"], text: string) {
   const entry: LogEntry = {
     id: `${Date.now()}-${logCounter++}`,
@@ -39,29 +46,52 @@ function setStatus(service: "frontend" | "backend", status: ServiceStatus) {
 }
 
 function delay(ms: number) {
-  return new Promise((r) => setTimeout(r, ms));
+  return new Promise<void>((r) => setTimeout(r, ms));
 }
 
-let fakeInterval: ReturnType<typeof setInterval> | null = null;
+function clearFakeTimer(service: "frontend" | "backend") {
+  if (fakeTimers[service] !== null) {
+    clearTimeout(fakeTimers[service]!);
+    fakeTimers[service] = null;
+  }
+}
 
-function startFakeOutput(
+/**
+ * Simulates a service starting up. Returns a Promise that resolves once the
+ * service has reached "running" (or is interrupted).
+ * Uses per-service timers so concurrent starts for different services don't
+ * interfere with each other.
+ */
+async function doFakeStart(
   service: "frontend" | "backend",
   command: string,
   port?: number
-) {
-  let ticks = 0;
-  fakeInterval = setInterval(() => {
-    ticks++;
-    if (ticks === 1) {
-      emitLog(service, `$ ${command}`);
-    } else if (ticks === 2) {
-      emitLog(service, "Starting dev server...");
-    } else if (ticks === 3) {
-      emitLog(service, port ? `Listening on port ${port}` : "Ready.");
-      setStatus(service, "running");
-      clearInterval(fakeInterval!);
-    }
-  }, 800);
+): Promise<void> {
+  clearFakeTimer(service);
+
+  setStatus(service, "starting");
+  emitLog(service, `Starting ${service}: ${command}`);
+
+  await delay(700);
+  if (statuses[service] !== "starting") return; // was stopped externally
+
+  emitLog(service, "Starting dev server...");
+
+  await delay(900);
+  if (statuses[service] !== "starting") return;
+
+  emitLog(service, port ? `Listening on port ${port}` : "Ready.");
+  setStatus(service, "running");
+}
+
+function getProject(): ProjectProfile | null {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as ProjectProfile;
+  } catch {
+    return null;
+  }
 }
 
 export const mockRepoRunnerAPI: RepoRunnerAPI = {
@@ -74,39 +104,32 @@ export const mockRepoRunnerAPI: RepoRunnerAPI = {
   },
 
   async loadProject() {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    try {
-      return JSON.parse(raw) as ProjectProfile;
-    } catch {
-      return null;
-    }
+    return getProject();
   },
 
   async pullLatest() {
-    emitLog("git", "Running git pull...");
+    emitLog("git", "Pulling latest code...");
     await delay(1200);
     emitLog("git", "Already up to date.");
   },
 
   async runInstall() {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const project = raw ? (JSON.parse(raw) as ProjectProfile) : null;
+    const project = getProject();
     emitLog("install", `Running: ${project?.installCommand ?? "npm install"}`);
-    await delay(800);
+    await delay(1000);
     emitLog("install", "added 247 packages in 2.4s");
-    emitLog("install", "Done.");
+    emitLog("install", "Install finished.");
   },
 
   async startFrontend() {
     if (statuses.frontend === "running" || statuses.frontend === "starting") {
-      emitLog("system", "Frontend is already running.");
+      emitLog("system", "Frontend is already running or starting.");
       return;
     }
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const project = raw ? (JSON.parse(raw) as ProjectProfile) : null;
-    setStatus("frontend", "starting");
-    startFakeOutput(
+    const project = getProject();
+    // Fire-and-forget for manual start — UI shows "starting" pill immediately,
+    // status updates to "running" when the simulation completes.
+    doFakeStart(
       "frontend",
       project?.frontendCommand ?? "npm run dev",
       project?.frontendPort
@@ -115,13 +138,11 @@ export const mockRepoRunnerAPI: RepoRunnerAPI = {
 
   async startBackend() {
     if (statuses.backend === "running" || statuses.backend === "starting") {
-      emitLog("system", "Backend is already running.");
+      emitLog("system", "Backend is already running or starting.");
       return;
     }
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const project = raw ? (JSON.parse(raw) as ProjectProfile) : null;
-    setStatus("backend", "starting");
-    startFakeOutput(
+    const project = getProject();
+    doFakeStart(
       "backend",
       project?.backendCommand ?? "node server.js",
       project?.backendPort
@@ -129,39 +150,69 @@ export const mockRepoRunnerAPI: RepoRunnerAPI = {
   },
 
   async stopServices() {
-    if (fakeInterval) {
-      clearInterval(fakeInterval);
-      fakeInterval = null;
-    }
+    clearFakeTimer("frontend");
+    clearFakeTimer("backend");
+
     setStatus("frontend", "stopping");
     setStatus("backend", "stopping");
     emitLog("system", "Stopping services...");
-    await delay(800);
+
+    await delay(700);
+
     setStatus("frontend", "stopped");
     setStatus("backend", "stopped");
-    emitLog("system", "All services stopped.");
+    emitLog("system", "Services stopped.");
   },
 
   async restartAll() {
-    await mockRepoRunnerAPI.stopServices();
+    const project = getProject();
+
+    emitLog("system", "Restarting all services...");
+    emitLog("system", "Stopping services...");
+
+    clearFakeTimer("frontend");
+    clearFakeTimer("backend");
+    setStatus("frontend", "stopping");
+    setStatus("backend", "stopping");
+    await delay(700);
+    setStatus("frontend", "stopped");
+    setStatus("backend", "stopped");
+    emitLog("system", "Services stopped.");
+
     await delay(400);
-    await mockRepoRunnerAPI.startBackend();
+
+    // Start backend and AWAIT it fully before touching frontend.
+    // This is the key fix — no shared interval, no race condition.
+    emitLog("backend", "Starting backend...");
+    await doFakeStart(
+      "backend",
+      project?.backendCommand ?? "node server.js",
+      project?.backendPort
+    );
+    emitLog("backend", "Backend is running.");
+
     await delay(200);
-    await mockRepoRunnerAPI.startFrontend();
+
+    emitLog("frontend", "Starting frontend...");
+    await doFakeStart(
+      "frontend",
+      project?.frontendCommand ?? "npm run dev",
+      project?.frontendPort
+    );
+    emitLog("frontend", "Frontend is running.");
+
+    emitLog("system", "Restart complete.");
   },
 
   async openPreview() {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const project = raw ? (JSON.parse(raw) as ProjectProfile) : null;
+    const project = getProject();
     const url = project?.previewUrl ?? "http://localhost:3000";
     window.open(url, "_blank");
   },
 
   async copyLogs() {
-    const text = logs
-      .map((l) => `[${l.source}] ${l.text}`)
-      .join("\n");
-    await navigator.clipboard.writeText(text);
+    const text = logs.map((l) => `[${l.source}] ${l.text}`).join("\n");
+    await navigator.clipboard.writeText(text).catch(() => {});
   },
 
   async clearLogs() {
@@ -177,6 +228,7 @@ export const mockRepoRunnerAPI: RepoRunnerAPI = {
 
   onStatus(callback) {
     statusListeners.push(callback);
+    // Deliver current state immediately so the UI doesn't start blank
     setTimeout(() => callback({ ...statuses }), 0);
     return () => {
       statusListeners = statusListeners.filter((fn) => fn !== callback);

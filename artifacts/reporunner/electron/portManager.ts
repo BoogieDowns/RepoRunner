@@ -5,7 +5,12 @@ import tcpPortUsed from "tcp-port-used";
 const execAsync = promisify(exec);
 
 export async function isPortInUse(port: number): Promise<boolean> {
-  return tcpPortUsed.check(port, "127.0.0.1");
+  // Check both addresses — dev servers may bind to either
+  const [on127, onLocalhost] = await Promise.all([
+    tcpPortUsed.check(port, "127.0.0.1").catch(() => false),
+    tcpPortUsed.check(port, "localhost").catch(() => false),
+  ]);
+  return on127 || onLocalhost;
 }
 
 export async function waitUntilPortIsFree(
@@ -21,17 +26,24 @@ export async function waitUntilPortIsFree(
   return false;
 }
 
+/**
+ * Polls until the given port accepts a connection on either 127.0.0.1 or localhost.
+ * Returns true as soon as the port is reachable, false on timeout.
+ */
 export async function waitUntilPortIsReachable(
   port: number,
-  timeoutMs: number = 30000
+  timeoutMs: number = 15000
 ): Promise<boolean> {
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
     try {
-      const inUse = await tcpPortUsed.check(port, "127.0.0.1");
-      if (inUse) return true;
+      const [on127, onLocalhost] = await Promise.all([
+        tcpPortUsed.check(port, "127.0.0.1").catch(() => false),
+        tcpPortUsed.check(port, "localhost").catch(() => false),
+      ]);
+      if (on127 || onLocalhost) return true;
     } catch {
-      // ignore
+      // ignore transient errors
     }
     await new Promise((r) => setTimeout(r, 500));
   }
@@ -42,9 +54,7 @@ export async function killProcessUsingPort(port: number): Promise<void> {
   const platform = process.platform;
   try {
     if (platform === "win32") {
-      const { stdout } = await execAsync(
-        `netstat -ano | findstr :${port}`
-      );
+      const { stdout } = await execAsync(`netstat -ano | findstr :${port}`);
       const lines = stdout.trim().split("\n");
       const pids = new Set<string>();
       for (const line of lines) {
