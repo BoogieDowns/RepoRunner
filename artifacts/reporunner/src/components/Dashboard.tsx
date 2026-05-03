@@ -1,16 +1,16 @@
 import { useState, useEffect, useRef } from "react";
-import { 
-  Download, 
-  Package, 
-  Play, 
-  Server, 
-  SquareSquare, 
-  RotateCw, 
-  ExternalLink, 
-  Copy, 
+import {
+  Download,
+  Package,
+  Play,
+  Server,
+  SquareSquare,
+  RotateCw,
+  ExternalLink,
+  Copy,
   Trash2,
   Settings2,
-  Loader2
+  Loader2,
 } from "lucide-react";
 import { ProjectProfile, ServiceStatuses, LogEntry } from "@/types";
 import { CommandButton } from "./CommandButton";
@@ -21,8 +21,8 @@ import { Separator } from "@/components/ui/separator";
 
 function RepoRunnerLogo() {
   return (
-    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" className="flex-none">
-      <rect width="28" height="28" rx="7" fill="hsl(142 70% 45% / 0.15)" stroke="hsl(142 70% 45% / 0.4)" strokeWidth="1"/>
+    <svg width="26" height="26" viewBox="0 0 28 28" fill="none" className="flex-none">
+      <rect width="28" height="28" rx="7" fill="hsl(142 70% 45% / 0.15)" stroke="hsl(142 70% 45% / 0.35)" strokeWidth="1"/>
       <path d="M9 8h5.5a3.5 3.5 0 0 1 0 7H9V8z" fill="hsl(142 70% 45%)" opacity="0.9"/>
       <path d="M9 15h4l4 5" stroke="hsl(142 70% 45%)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
@@ -48,11 +48,9 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
     const unsubLog = window.repoRunner.onLog((entry) => {
       setLogs((prev) => [...prev, entry]);
     });
-    
     const unsubStatus = window.repoRunner.onStatus((s) => {
       setStatuses(s);
     });
-
     return () => {
       unsubLog();
       unsubStatus();
@@ -66,17 +64,17 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
   }, [logs]);
 
   const wrapAction = (name: string, fn: () => Promise<void>) => async () => {
-    setActionLoading(prev => ({ ...prev, [name]: true }));
+    setActionLoading((prev) => ({ ...prev, [name]: true }));
     try {
       await fn();
     } catch (err) {
       toast({
         title: "Action failed",
         description: err instanceof Error ? err.message : String(err),
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
-      setActionLoading(prev => ({ ...prev, [name]: false }));
+      setActionLoading((prev) => ({ ...prev, [name]: false }));
     }
   };
 
@@ -94,98 +92,114 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
 
   const getStatusDisplay = (status: string) => {
     switch (status) {
-      case "running": 
+      case "running":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-medium border border-emerald-500/20">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            {capitalize(status)}
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-medium border border-emerald-500/20 leading-none">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse flex-none" />
+            Running
           </span>
         );
       case "starting":
       case "stopping":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 text-xs font-medium border border-amber-500/20">
-            <Loader2 className="w-3 h-3 animate-spin" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 text-xs font-medium border border-amber-500/20 leading-none">
+            <Loader2 className="w-3 h-3 animate-spin flex-none" />
             {capitalize(status)}
           </span>
         );
-      case "failed": 
+      case "failed":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 text-xs font-medium border border-red-500/20">
-            <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-            {capitalize(status)}
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/10 text-red-400 text-xs font-medium border border-red-500/20 leading-none">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-500 flex-none" />
+            Failed
           </span>
         );
       case "unknown":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 text-xs font-medium border border-purple-500/20">
-            <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
-            {capitalize(status)}
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-purple-500/10 text-purple-400 text-xs font-medium border border-purple-500/20 leading-none">
+            <span className="w-1.5 h-1.5 rounded-full bg-purple-400 flex-none" />
+            Unknown
           </span>
         );
-      case "stopped": 
-      default: 
+      case "stopped":
+      default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-500 text-xs font-medium border border-zinc-700">
-            <span className="w-1.5 h-1.5 rounded-full bg-zinc-600" />
-            {capitalize(status || "stopped")}
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-800/80 text-zinc-500 text-xs font-medium border border-zinc-700/80 leading-none">
+            <span className="w-1.5 h-1.5 rounded-full bg-zinc-600 flex-none" />
+            Stopped
           </span>
         );
     }
   };
 
-  const getLogColor = (source: string) => {
+  const getLogSourceColor = (source: string) => {
     switch (source) {
-      case "git": return "text-cyan-400";
+      case "git":     return "text-cyan-400";
       case "install": return "text-yellow-400";
       case "frontend": return "text-emerald-400";
       case "backend": return "text-blue-400";
-      case "system": default: return "text-muted-foreground";
+      case "system":
+      default:        return "text-zinc-500";
     }
   };
 
-  const bothRunning = statuses.frontend === "running" && statuses.backend === "running";
-  const bothStopped = statuses.frontend === "stopped" && statuses.backend === "stopped";
+  const bothStopped =
+    statuses.frontend === "stopped" && statuses.backend === "stopped";
 
   return (
-    <div className="h-screen flex flex-col bg-background text-foreground animate-in fade-in duration-500">
-      {/* Header Bar */}
-      <header className="h-[60px] flex-none border-b border-border bg-card/60 backdrop-blur flex items-center px-6">
-        <div className="flex items-center gap-4 flex-1">
-          <div className="flex items-center gap-2">
-            <RepoRunnerLogo />
-            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">RepoRunner</span>
-          </div>
-          
-          <div className="w-px h-6 bg-border mx-2" />
-          
-          <div className="flex items-baseline gap-3">
-            <h1 className="text-base font-bold text-white">{project.name}</h1>
-            <span className="text-xs text-muted-foreground font-mono truncate max-w-[40ch]" title={project.repoPath}>
-              {project.repoPath}
-            </span>
-          </div>
+    <div className="h-screen flex flex-col bg-background text-foreground animate-in fade-in duration-300">
+
+      {/* Header */}
+      <header className="h-[60px] flex-none border-b border-border bg-card/50 backdrop-blur-sm flex items-center px-5 gap-4">
+        {/* Brand */}
+        <div className="flex items-center gap-2.5 flex-none">
+          <RepoRunnerLogo />
+          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/70 select-none">
+            RepoRunner
+          </span>
         </div>
 
-        <div className="flex-none flex items-center gap-4">
-          <Button variant="ghost" size="sm" onClick={onEdit} className="text-muted-foreground h-8 px-2 hover:text-foreground">
-            <Settings2 className="w-4 h-4 mr-1.5" />
-            Edit Setup
-          </Button>
+        {/* Divider */}
+        <div className="w-px h-5 bg-border flex-none" />
+
+        {/* Project identity */}
+        <div className="flex flex-col justify-center min-w-0 flex-1">
+          <span className="text-[14px] font-semibold text-foreground leading-tight truncate">
+            {project.name}
+          </span>
+          <span
+            className="text-[11px] font-mono text-muted-foreground/55 leading-tight truncate mt-px"
+            title={project.repoPath}
+          >
+            {project.repoPath}
+          </span>
         </div>
+
+        {/* Actions */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onEdit}
+          className="flex-none h-8 px-3 gap-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-white/[0.06]"
+        >
+          <Settings2 className="w-3.5 h-3.5" />
+          Edit Setup
+        </Button>
       </header>
 
-      {/* Main Content - Scrollable */}
+      {/* Main Content */}
       <div className="flex-none overflow-y-auto w-full">
-        <div className="max-w-5xl mx-auto p-6 space-y-6">
-          
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Quick Actions Card */}
-            <Card className="lg:col-span-2 border border-border bg-card shadow-sm rounded-xl">
-              <CardHeader className="py-4 border-b border-border/60">
-                <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Quick Actions</CardTitle>
+        <div className="max-w-5xl mx-auto px-5 py-5 space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+            {/* Quick Actions */}
+            <Card className="lg:col-span-2 border border-border/80 bg-card rounded-xl shadow-sm">
+              <CardHeader className="px-5 pt-4 pb-3 border-b border-border/50">
+                <CardTitle className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/80">
+                  Quick Actions
+                </CardTitle>
               </CardHeader>
-              <CardContent className="p-4 sm:p-6">
+              <CardContent className="p-5">
                 <div className="flex flex-wrap items-center gap-2">
                   <CommandButton
                     label="Pull Latest"
@@ -201,9 +215,9 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                     loading={actionLoading["install"]}
                     variant="outline"
                   />
-                  
-                  <div className="w-px h-6 bg-border/60 mx-1 hidden sm:block" />
-                  
+
+                  <div className="w-px h-5 bg-border/50 mx-0.5 hidden sm:block" />
+
                   <CommandButton
                     label="Start Frontend"
                     icon={Play}
@@ -220,9 +234,9 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                     loading={actionLoading["startBack"]}
                     variant="default"
                   />
-                  
-                  <div className="w-px h-6 bg-border/60 mx-1 hidden sm:block" />
-                  
+
+                  <div className="w-px h-5 bg-border/50 mx-0.5 hidden sm:block" />
+
                   <CommandButton
                     label="Stop Services"
                     icon={SquareSquare}
@@ -231,9 +245,9 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                     loading={actionLoading["stop"]}
                     variant="destructive"
                   />
-                  
-                  <div className="w-px h-6 bg-border/60 mx-1 hidden sm:block" />
-                  
+
+                  <div className="w-px h-5 bg-border/50 mx-0.5 hidden sm:block" />
+
                   <CommandButton
                     label="Restart All"
                     icon={RotateCw}
@@ -252,77 +266,117 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
               </CardContent>
             </Card>
 
-            {/* Status Card */}
-            <Card className="border border-border bg-card shadow-sm rounded-xl">
-              <CardHeader className="py-4 border-b border-border/60">
-                <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Services</CardTitle>
+            {/* Services */}
+            <Card className="border border-border/80 bg-card rounded-xl shadow-sm">
+              <CardHeader className="px-5 pt-4 pb-3 border-b border-border/50">
+                <CardTitle className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/80">
+                  Services
+                </CardTitle>
               </CardHeader>
-              <CardContent className="p-4 sm:p-6 flex flex-col gap-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Frontend</span>
+              <CardContent className="p-5 flex flex-col gap-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground leading-none">
+                      Frontend
+                    </p>
                     {project.frontendPort && (
-                      <span className="text-xs font-mono text-muted-foreground/60 mt-0.5">Port {project.frontendPort}</span>
+                      <p className="text-[11px] font-mono text-muted-foreground/45 mt-1 leading-none">
+                        :{project.frontendPort}
+                      </p>
                     )}
                   </div>
                   {getStatusDisplay(statuses.frontend)}
                 </div>
-                <Separator className="bg-border/60" />
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Backend</span>
+                <Separator className="bg-border/40" />
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground leading-none">
+                      Backend
+                    </p>
                     {project.backendPort && (
-                      <span className="text-xs font-mono text-muted-foreground/60 mt-0.5">Port {project.backendPort}</span>
+                      <p className="text-[11px] font-mono text-muted-foreground/45 mt-1 leading-none">
+                        :{project.backendPort}
+                      </p>
                     )}
                   </div>
                   {getStatusDisplay(statuses.backend)}
                 </div>
               </CardContent>
             </Card>
-          </div>
 
+          </div>
         </div>
       </div>
 
       {/* Logs Panel */}
-      <section className="flex-1 min-h-0 flex flex-col bg-black/60 border-t border-border">
-        <div className="flex-none h-10 flex items-center justify-between px-4 border-b border-border/30 bg-card/40">
-          <div className="flex items-center gap-3">
-            <h2 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">App Logs</h2>
-            <span className="text-[10px] bg-white/5 px-1.5 py-0.5 rounded text-muted-foreground">{logs.length}</span>
+      <section className="flex-1 min-h-0 flex flex-col border-t border-border/70">
+        {/* Log toolbar */}
+        <div className="flex-none h-[42px] flex items-center justify-between px-5 border-b border-border/40 bg-card/30">
+          <div className="flex items-center gap-2.5">
+            <span className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/70">
+              App Logs
+            </span>
+            <span className="text-[10px] bg-white/[0.05] border border-white/[0.07] px-1.5 py-0.5 rounded text-muted-foreground/60 tabular-nums leading-none">
+              {logs.length}
+            </span>
           </div>
-          <div className="flex gap-2">
-            <Button variant="ghost" size="sm" onClick={handleCopyLogs} className="h-7 text-xs text-muted-foreground hover:text-foreground">
-              <Copy className="w-3.5 h-3.5 mr-1.5" />
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleCopyLogs}
+              className="h-7 px-2.5 gap-1.5 text-[11px] text-muted-foreground/60 hover:text-foreground hover:bg-white/[0.05]"
+            >
+              <Copy className="w-3 h-3" />
               Copy
             </Button>
-            <Button variant="ghost" size="sm" onClick={handleClearLogs} className="h-7 text-xs text-muted-foreground hover:text-foreground">
-              <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleClearLogs}
+              className="h-7 px-2.5 gap-1.5 text-[11px] text-muted-foreground/60 hover:text-foreground hover:bg-white/[0.05]"
+            >
+              <Trash2 className="w-3 h-3" />
               Clear
             </Button>
           </div>
         </div>
-        
-        <div 
+
+        {/* Log output */}
+        <div
           ref={scrollRef}
-          className="flex-1 overflow-y-auto p-4 bg-black/40 font-mono text-[12.5px] leading-relaxed break-all"
+          className="flex-1 overflow-y-auto px-3 py-3 bg-black/50 font-mono text-[12px] leading-relaxed"
         >
           {logs.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-muted-foreground/40 italic gap-1 text-[13px]">
-              <span>No logs yet.</span>
-              <span>Run Pull, Install, or Start a service to see output here.</span>
+            <div className="h-full flex flex-col items-center justify-center gap-1.5 select-none">
+              <span className="text-sm text-muted-foreground/30 italic">No logs yet.</span>
+              <span className="text-xs text-muted-foreground/20 italic">
+                Run Pull, Install, or Start a service to see output here.
+              </span>
             </div>
           ) : (
-            <div className="flex flex-col gap-1">
+            <div>
               {logs.map((log) => (
-                <div key={log.id} className="flex gap-3 hover:bg-white/[0.025] px-2 py-0.5 rounded transition-colors group">
-                  <span className="text-muted-foreground/40 flex-none select-none w-[64px]">
-                    {new Date(log.timestamp).toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                <div
+                  key={log.id}
+                  className="flex gap-3 hover:bg-white/[0.02] px-2 py-[3px] rounded transition-colors"
+                >
+                  <span className="flex-none select-none text-muted-foreground/30 w-[56px] text-right">
+                    {new Date(log.timestamp).toLocaleTimeString([], {
+                      hour12: false,
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      second: "2-digit",
+                    })}
                   </span>
-                  <span className={`font-semibold flex-none w-[80px] uppercase text-[11.5px] tracking-wider pt-0.5 ${getLogColor(log.source)}`}>
+                  <span
+                    className={`flex-none w-[72px] font-semibold uppercase text-[10.5px] tracking-wide ${getLogSourceColor(log.source)}`}
+                  >
                     [{log.source}]
                   </span>
-                  <span className="text-foreground/85 whitespace-pre-wrap">{log.text}</span>
+                  <span className="text-foreground/80 whitespace-pre-wrap break-all">
+                    {log.text}
+                  </span>
                 </div>
               ))}
             </div>

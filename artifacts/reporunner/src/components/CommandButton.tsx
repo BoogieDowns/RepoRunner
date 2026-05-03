@@ -27,9 +27,9 @@ export function CommandButton({
       disabled={disabled || loading}
       data-testid={`button-${label.toLowerCase().replace(/\s+/g, "-")}`}
       className={cn(
-        "flex items-center gap-1.5 h-9 px-3.5 font-medium text-sm rounded-lg transition-all duration-150",
-        "disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none",
-        "hover:-translate-y-px active:translate-y-0"
+        "flex items-center gap-2 h-9 px-3.5 font-medium text-[13px] rounded-lg transition-all duration-150",
+        "disabled:opacity-35 disabled:cursor-not-allowed disabled:pointer-events-none",
+        "hover:-translate-y-px active:translate-y-0 active:scale-[0.99]"
       )}
     >
       {loading ? (

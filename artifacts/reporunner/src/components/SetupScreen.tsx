@@ -82,7 +82,7 @@ export function SetupScreen({ onSave, onClose }: { onSave: (profile: ProjectProf
               type="button"
               onClick={onClose}
               aria-label="Close setup"
-              className="absolute top-4 right-4 flex items-center justify-center w-7 h-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-white/8 transition-colors"
+              className="absolute top-5 right-5 flex items-center justify-center w-7 h-7 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-white/[0.08] transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
