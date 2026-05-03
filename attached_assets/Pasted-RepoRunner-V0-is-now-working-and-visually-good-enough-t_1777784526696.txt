@@ -1,0 +1,154 @@
+RepoRunner V0 is now working and visually good enough to push to GitHub.
+
+Please do a final **pre-GitHub cleanup pass**.
+
+Do not add new product features.
+Do not redesign the UI.
+Do not change process management unless there is an obvious bug.
+Do not change the current visual theme.
+
+## Goal
+
+Prepare the project for a clean first GitHub commit.
+
+## Tasks
+
+### 1. Add or improve README.md
+
+Create a simple `README.md` for RepoRunner.
+
+Include:
+
+* Project name: RepoRunner
+* Short description
+* Target user
+* Current V0 scope
+* Tech stack
+* Local development instructions
+* Current limitations / not included yet
+
+Use this positioning:
+
+```text
+RepoRunner is a simple desktop app for AI-assisted builders who want to run local GitHub/local repo apps without using Git Bash or juggling terminals.
+```
+
+Mention that V0 supports:
+
+* saving one local project profile
+* pull latest
+* install
+* start frontend
+* start backend
+* stop services
+* restart all
+* open preview URL
+* view/copy/clear logs
+
+Mention that V0 does **not** include:
+
+* IDE/editor features
+* deployment
+* GitHub OAuth
+* cloning
+* branch switching
+* AI debugging
+* multi-project support
+
+### 2. Add a basic .gitignore
+
+Make sure `.gitignore` includes common Electron/React/Node ignores:
+
+```text
+node_modules
+dist
+dist-electron
+build
+out
+.env
+.env.local
+.DS_Store
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+```
+
+Also ignore any local app config files if the project writes them inside the repo during development.
+
+### 3. Check package scripts
+
+Make sure `package.json` has clear scripts such as:
+
+```json
+{
+  "dev": "...",
+  "build": "...",
+  "preview": "..."
+}
+```
+
+Do not invent scripts that do not work.
+Only keep scripts that are valid for the current project.
+
+### 4. Remove obvious dead code or unused placeholder files
+
+Do a light cleanup only.
+
+Remove:
+
+* unused components
+* unused imports
+* obvious old placeholder assets
+* console spam that is not useful
+
+Do not do a risky refactor.
+
+### 5. Add a small V0 checklist to README
+
+Add a checklist like:
+
+```md
+## V0 Test Checklist
+
+- [ ] Save project config
+- [ ] Reopen app and confirm config persists
+- [ ] Pull latest
+- [ ] Run install
+- [ ] Start frontend
+- [ ] Start backend
+- [ ] Stop services
+- [ ] Restart all
+- [ ] Open preview
+- [ ] Copy logs
+- [ ] Clear logs
+```
+
+### 6. Keep current functionality intact
+
+After cleanup, make sure these still work:
+
+* setup and save config
+* edit setup
+* close X
+* pull latest
+* install
+* start frontend
+* start backend
+* stop services
+* restart all
+* open preview
+* logs
+* copy logs
+* clear logs
+
+## Acceptance criteria
+
+1. README.md exists and clearly explains RepoRunner.
+2. .gitignore exists and covers normal Node/Electron artifacts.
+3. package scripts are clear and valid.
+4. Obvious dead code/placeholders are cleaned up.
+5. No product behavior changes.
+6. App still runs successfully.
+7. Project is ready for first GitHub push.
