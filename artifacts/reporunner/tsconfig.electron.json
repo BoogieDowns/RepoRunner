@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "include": ["electron/**/*", "src/types.ts"],
+  "exclude": ["node_modules", "dist", "electron-dist"],
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "outDir": "electron-dist",
+    "declaration": false,
+    "noEmit": false,
+    "jsx": "react-jsx",
+    "lib": ["ES2022"],
+    "types": ["node"],
+    "paths": {}
+  }
+}

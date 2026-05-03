@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "RepoRunner"
+version = "1.0.0"
+id = "artifacts/reporunner"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 19233
+
+[services.development]
+run = "pnpm --filter @workspace/reporunner run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/reporunner", "run", "build" ]
+publicDir = "artifacts/reporunner/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19233"
+BASE_PATH = "/"
