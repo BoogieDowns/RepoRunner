@@ -78,16 +78,29 @@ export function SetupScreen({
     onSave(profile);
   };
 
+  const inputClass =
+    "bg-[#080e0b] border-[#1a3326] text-[#B8FFCA] placeholder:text-[#243d30] " +
+    "focus-visible:ring-[#1EFF5A]/25 focus-visible:border-[#1EFF5A]/35 " +
+    "focus-visible:shadow-[0_0_10px_rgba(30,255,90,0.1)] transition-shadow";
+
   return (
     <div className="flex min-h-screen items-center justify-center p-4 sm:p-8 bg-background animate-in fade-in duration-300">
-      <Card className="w-full max-w-2xl border border-[#173126] bg-[#0f1713] shadow-lg rounded-xl">
-        <CardHeader className="space-y-2 pb-6 pt-8 px-8 sm:px-10 relative">
+      <Card
+        className="w-full max-w-2xl border border-[#173126] bg-[#090e0b] rounded-xl"
+        style={{
+          boxShadow:
+            "0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(30,255,90,0.05), 0 0 40px rgba(30,255,90,0.04)",
+        }}
+      >
+        <CardHeader className="space-y-1.5 pb-6 pt-8 px-8 sm:px-10 relative">
           {onClose && (
             <button
               type="button"
               onClick={onClose}
               aria-label="Close setup"
-              className="absolute top-5 right-5 flex items-center justify-center w-7 h-7 rounded-md text-[#5D7465] hover:text-[#7FA18B] hover:bg-[#173126]/60 transition-colors"
+              className="absolute top-5 right-5 flex items-center justify-center w-7 h-7 rounded-md
+                text-[#3d6050] hover:text-[#7FA18B] hover:bg-[#0f1a14] border border-transparent
+                hover:border-[#173126] transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -95,7 +108,7 @@ export function SetupScreen({
           <CardTitle className="text-2xl font-bold tracking-tight text-[#B8FFCA]">
             Setup RepoRunner
           </CardTitle>
-          <CardDescription className="text-sm text-[#5D7465]">
+          <CardDescription className="text-sm text-[#4a6655]">
             Save your local app setup once. Run it with buttons after that.
           </CardDescription>
         </CardHeader>
@@ -114,11 +127,7 @@ export function SetupScreen({
                         Project Name
                       </FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="My Cool App"
-                          {...field}
-                          className="bg-[#0b120f] border-[#173126] text-[#B8FFCA] placeholder:text-[#2a4535] focus-visible:ring-[#1EFF5A]/40 focus-visible:border-[#1EFF5A]/30"
-                        />
+                        <Input placeholder="My Cool App" {...field} className={inputClass} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -139,7 +148,7 @@ export function SetupScreen({
                             placeholder="/path/to/project"
                             readOnly
                             {...field}
-                            className="font-mono text-sm flex-1 bg-[#0b120f] border-[#173126] text-[#B8FFCA] placeholder:text-[#2a4535] focus-visible:ring-[#1EFF5A]/40"
+                            className={`font-mono text-sm flex-1 ${inputClass}`}
                           />
                         </FormControl>
                         <Button
@@ -147,13 +156,14 @@ export function SetupScreen({
                           variant="secondary"
                           onClick={handleSelectFolder}
                           disabled={isSelecting}
-                          className="flex-none border border-[#173126] bg-[#0b120f] text-[#7FA18B] hover:bg-[#173126]/80 hover:text-[#B8FFCA]"
+                          className="flex-none border border-[#1a3326] bg-[#080e0b] text-[#7FA18B]
+                            hover:bg-[#0f1a14] hover:text-[#B8FFCA] hover:border-[#2a5542]"
                         >
                           <Folder className="h-4 w-4 mr-2" />
                           Choose Folder
                         </Button>
                       </div>
-                      <FormDescription className="text-xs text-[#5D7465]">
+                      <FormDescription className="text-xs text-[#3d6050]">
                         The folder where your project lives locally.
                       </FormDescription>
                       <FormMessage />
@@ -172,12 +182,9 @@ export function SetupScreen({
                         Install Command
                       </FormLabel>
                       <FormControl>
-                        <Input
-                          {...field}
-                          className="font-mono text-sm bg-[#0b120f] border-[#173126] text-[#B8FFCA] placeholder:text-[#2a4535] focus-visible:ring-[#1EFF5A]/40"
-                        />
+                        <Input {...field} className={`font-mono text-sm ${inputClass}`} />
                       </FormControl>
-                      <FormDescription className="text-xs text-[#5D7465]">
+                      <FormDescription className="text-xs text-[#3d6050]">
                         Runs once to install dependencies (e.g. npm install).
                       </FormDescription>
                       <FormMessage />
@@ -194,12 +201,9 @@ export function SetupScreen({
                         Frontend Command
                       </FormLabel>
                       <FormControl>
-                        <Input
-                          {...field}
-                          className="font-mono text-sm bg-[#0b120f] border-[#173126] text-[#B8FFCA] placeholder:text-[#2a4535] focus-visible:ring-[#1EFF5A]/40"
-                        />
+                        <Input {...field} className={`font-mono text-sm ${inputClass}`} />
                       </FormControl>
-                      <FormDescription className="text-xs text-[#5D7465]">
+                      <FormDescription className="text-xs text-[#3d6050]">
                         Starts your frontend dev server (e.g. npm run dev).
                       </FormDescription>
                       <FormMessage />
@@ -216,12 +220,9 @@ export function SetupScreen({
                         Backend Command
                       </FormLabel>
                       <FormControl>
-                        <Input
-                          {...field}
-                          className="font-mono text-sm bg-[#0b120f] border-[#173126] text-[#B8FFCA] placeholder:text-[#2a4535] focus-visible:ring-[#1EFF5A]/40"
-                        />
+                        <Input {...field} className={`font-mono text-sm ${inputClass}`} />
                       </FormControl>
-                      <FormDescription className="text-xs text-[#5D7465]">
+                      <FormDescription className="text-xs text-[#3d6050]">
                         Starts your backend server (e.g. node server.js).
                       </FormDescription>
                       <FormMessage />
@@ -240,12 +241,9 @@ export function SetupScreen({
                         Preview URL
                       </FormLabel>
                       <FormControl>
-                        <Input
-                          {...field}
-                          className="font-mono text-sm bg-[#0b120f] border-[#173126] text-[#B8FFCA] placeholder:text-[#2a4535] focus-visible:ring-[#1EFF5A]/40"
-                        />
+                        <Input {...field} className={`font-mono text-sm ${inputClass}`} />
                       </FormControl>
-                      <FormDescription className="text-xs text-[#5D7465]">
+                      <FormDescription className="text-xs text-[#3d6050]">
                         The URL to open when you click Open Preview.
                       </FormDescription>
                       <FormMessage />
@@ -266,7 +264,7 @@ export function SetupScreen({
                           type="number"
                           {...field}
                           value={field.value || ""}
-                          className="font-mono text-sm bg-[#0b120f] border-[#173126] text-[#B8FFCA] placeholder:text-[#2a4535] focus-visible:ring-[#1EFF5A]/40"
+                          className={`font-mono text-sm ${inputClass}`}
                         />
                       </FormControl>
                       <FormMessage />
@@ -287,7 +285,7 @@ export function SetupScreen({
                           type="number"
                           {...field}
                           value={field.value || ""}
-                          className="font-mono text-sm bg-[#0b120f] border-[#173126] text-[#B8FFCA] placeholder:text-[#2a4535] focus-visible:ring-[#1EFF5A]/40"
+                          className={`font-mono text-sm ${inputClass}`}
                         />
                       </FormControl>
                       <FormMessage />
@@ -300,8 +298,8 @@ export function SetupScreen({
                 <Button
                   type="submit"
                   size="lg"
-                  className="w-full font-semibold"
                   variant="default"
+                  className="w-full font-semibold shadow-[0_0_20px_rgba(30,255,90,0.25)] hover:shadow-[0_0_28px_rgba(30,255,90,0.35)] transition-shadow"
                 >
                   <Save className="w-4 h-4 mr-2" />
                   Save Configuration

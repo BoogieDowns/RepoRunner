@@ -1,0 +1,256 @@
+RepoRunner is in a good place functionally and the dark green theme is now close. I want one final **targeted visual refinement pass** based on the current UI and the attached screenshots.
+
+Use the screenshots as visual context for the current state of the app.
+
+## Goal
+
+Keep the current layout, structure, and functionality, but do a tasteful final pass to make the interface feel a bit more premium, cohesive, and alive.
+
+This is **not** a redesign.
+Do **not** change app behavior.
+Do **not** change architecture, IPC, process management, or workflow logic.
+
+The UI should still feel:
+
+* simple
+* desktop-app practical
+* dark
+* matrix-inspired
+* polished
+* readable
+* restrained
+
+## Main refinement goals
+
+### 1. Add subtle soft glow in the right places
+
+The current green theme is good, but it can be brought to life with very restrained glow treatment.
+
+Please add **soft glow effects** only where they improve the feel of the product.
+
+Use best judgment, but focus on:
+
+* primary green action buttons
+* the RepoRunner logo mark in the top-left
+* active/focused input states
+* active status pills
+* maybe a very subtle edge glow or shadow on key cards
+
+Important:
+
+* Keep glows subtle and premium, not neon-gimmicky.
+* Avoid blurry overdone glow everywhere.
+* Most surfaces should still feel crisp.
+* Glow should feel like a soft green luminance, not a special effect.
+
+### 2. Improve green status styling
+
+Please refine the status styling so service states feel clearer and better integrated with the green theme.
+
+Use best judgment, but improve:
+
+* Running
+* Starting
+* Stopping
+* Stopped
+* Failed
+* Unknown
+
+Suggested direction:
+
+#### Running
+
+* should feel clearly active and healthy
+* use a rich green pill with better contrast
+* possibly a small green dot or slightly more alive treatment
+* this is the most important “good” state
+
+#### Starting / Stopping
+
+* currently these can feel a bit flat or ambiguous
+* refine them with an amber-yellow/green-adjacent tone that still fits the theme
+* they should look transitional, not failed
+
+#### Stopped
+
+* should look neutral and quiet
+* use a muted dark pill with subtle border contrast
+* it should visually recede
+
+#### Failed
+
+* should still be clearly red, but more refined and theme-compatible
+* keep it readable and serious, not loud/cartoonish
+
+#### Unknown
+
+* muted gray-green or subtle desaturated tone is fine
+
+Please make the **status pills in the Services card** feel more polished and clearer at a glance.
+
+### 3. Improve the top-left branding
+
+The logo/wordmark area is decent, but it can be tightened up.
+
+Please refine:
+
+* logo mark sizing
+* spacing between logo and “RepoRunner”
+* divider spacing
+* wordmark weight/color
+* overall balance with the project name beside it
+
+The logo mark should feel like it belongs in this green theme.
+
+If helpful:
+
+* give the mark a slightly better surface treatment
+* refine its border/fill
+* add a very subtle green glow or highlight
+* keep it simple and geometric
+
+Do not fully redesign the logo. Just improve what is already there.
+
+### 4. Improve primary action button presence
+
+The green Start buttons look good, but they could feel slightly more premium.
+
+Please refine:
+
+* green fill tone
+* text contrast
+* icon contrast
+* subtle shadow or glow
+* hover state
+* pressed/active state
+
+The goal is for Start Frontend and Start Backend to feel like the main positive actions without looking too flashy.
+
+### 5. Improve secondary and danger button balance
+
+Please lightly refine:
+
+* Pull Latest
+* Install
+* Restart All
+* Open Preview
+* Stop Services
+
+Suggestions:
+
+* secondary buttons should feel crisp and clean against the dark surface
+* they can use a subtle green border or muted green text treatment
+* Stop Services should still read as danger, but perhaps slightly more harmonious with the green theme
+
+Do not change labels or layout.
+
+### 6. Improve card depth and readability
+
+The cards are working, but they could feel a touch more premium.
+
+Please refine:
+
+* card background depth
+* border clarity
+* internal contrast
+* subtle shadow/elevation
+* section divider visibility
+
+Use very subtle treatment only.
+The UI should still feel minimalist.
+
+### 7. Improve Services card legibility
+
+The Services card is good, but can be slightly easier to scan.
+
+Please refine:
+
+* service name emphasis
+* port readability
+* spacing between service rows
+* divider lines
+* alignment of status pills
+
+The card should feel cleaner and more informative without adding anything new.
+
+### 8. Improve empty logs state
+
+The logs empty state in the dashboard is okay, but visually it fades too much into the background.
+
+Please refine:
+
+* “No logs yet.”
+* helper text underneath
+
+Make it a bit easier to notice while still subdued.
+
+The logs section should still feel quiet when empty, just not invisible.
+
+### 9. Improve setup panel finish
+
+The setup panel looks good overall. Please give it a final visual pass so it feels fully consistent with the dashboard.
+
+Please refine:
+
+* close X styling
+* heading/subheading contrast
+* helper text readability
+* input borders and focus states
+* button polish
+* subtle panel depth/glow if appropriate
+
+Make the Save Configuration button feel especially polished and aligned with the theme.
+
+### 10. Maintain restraint
+
+This is very important:
+
+Do **not** overdo the theme.
+Do **not** turn RepoRunner into a novelty hacker app.
+Do **not** add excessive glow, blur, animation, or decoration.
+
+The desired result is:
+
+* slightly more premium
+* slightly more alive
+* slightly more branded
+* still practical and calm
+
+## Functional constraints
+
+Do not break or change:
+
+* setup flow
+* edit setup flow
+* close X behavior
+* saving config
+* pull latest
+* install
+* start frontend
+* start backend
+* stop services
+* restart all
+* open preview
+* logs
+* copy logs
+* clear logs
+* status updates
+
+Do not add any new product features.
+
+## Acceptance criteria
+
+After this pass:
+
+1. The UI still uses the same layout and structure.
+2. The app feels a bit more premium and visually finished.
+3. Soft glow is present only in the right places and remains subtle.
+4. Status pills look clearer and better styled, especially Running and Starting.
+5. The top-left branding looks more cohesive.
+6. Primary green buttons feel more polished.
+7. Cards feel slightly richer without becoming busy.
+8. The setup panel feels more finished.
+9. The logs empty state is easier to read.
+10. No functionality or workflow has changed.
+
+Please use your best design judgment and keep the end result tasteful and restrained.

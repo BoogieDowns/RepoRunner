@@ -21,10 +21,33 @@ import { Separator } from "@/components/ui/separator";
 
 function RepoRunnerLogo() {
   return (
-    <svg width="26" height="26" viewBox="0 0 28 28" fill="none" className="flex-none">
-      <rect width="28" height="28" rx="7" fill="hsl(142 100% 56% / 0.1)" stroke="hsl(142 100% 56% / 0.35)" strokeWidth="1"/>
-      <path d="M9 8h5.5a3.5 3.5 0 0 1 0 7H9V8z" fill="hsl(142 100% 56%)" opacity="0.85"/>
-      <path d="M9 15h4l4 5" stroke="hsl(142 100% 56%)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <svg
+      width="27"
+      height="27"
+      viewBox="0 0 28 28"
+      fill="none"
+      className="flex-none [filter:drop-shadow(0_0_6px_rgba(30,255,90,0.28))]"
+    >
+      <rect
+        width="28"
+        height="28"
+        rx="7"
+        fill="hsl(142 100% 56% / 0.12)"
+        stroke="hsl(142 100% 56% / 0.45)"
+        strokeWidth="1"
+      />
+      <path
+        d="M9 8h5.5a3.5 3.5 0 0 1 0 7H9V8z"
+        fill="hsl(142 100% 56%)"
+        opacity="0.95"
+      />
+      <path
+        d="M9 15h4l4 5"
+        stroke="hsl(142 100% 56%)"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -92,43 +115,64 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
     switch (status) {
       case "running":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full leading-none
-            bg-[#1EFF5A]/10 text-[#1EFF5A] border border-[#1EFF5A]/25 text-xs font-medium">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#1EFF5A] animate-pulse flex-none" />
+          <span
+            className="inline-flex items-center gap-1.5 px-2.5 py-[5px] rounded-full leading-none text-xs font-medium
+              bg-[#1EFF5A]/[0.12] text-[#1EFF5A] border border-[#1EFF5A]/30
+              shadow-[0_0_10px_rgba(30,255,90,0.15)]"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-[#1EFF5A] animate-pulse flex-none shadow-[0_0_4px_rgba(30,255,90,0.8)]" />
             Running
           </span>
         );
       case "starting":
+        return (
+          <span
+            className="inline-flex items-center gap-1.5 px-2.5 py-[5px] rounded-full leading-none text-xs font-medium
+              bg-[#c6a84a]/[0.12] text-[#d4b558] border border-[#c6a84a]/25"
+          >
+            <Loader2 className="w-3 h-3 animate-spin flex-none" />
+            Starting
+          </span>
+        );
       case "stopping":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full leading-none
-            bg-[#c6a84a]/10 text-[#c6a84a] border border-[#c6a84a]/25 text-xs font-medium">
+          <span
+            className="inline-flex items-center gap-1.5 px-2.5 py-[5px] rounded-full leading-none text-xs font-medium
+              bg-[#c6a84a]/[0.08] text-[#c6a84a]/90 border border-[#c6a84a]/20"
+          >
             <Loader2 className="w-3 h-3 animate-spin flex-none" />
-            {status.charAt(0).toUpperCase() + status.slice(1)}
+            Stopping
           </span>
         );
       case "failed":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full leading-none
-            bg-[#c94b57]/10 text-[#c94b57] border border-[#c94b57]/25 text-xs font-medium">
+          <span
+            className="inline-flex items-center gap-1.5 px-2.5 py-[5px] rounded-full leading-none text-xs font-medium
+              bg-[#c94b57]/[0.12] text-[#e05e6a] border border-[#c94b57]/25
+              shadow-[0_0_8px_rgba(201,75,87,0.1)]"
+          >
             <span className="w-1.5 h-1.5 rounded-full bg-[#c94b57] flex-none" />
             Failed
           </span>
         );
       case "unknown":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full leading-none
-            bg-[#7FA18B]/10 text-[#7FA18B] border border-[#7FA18B]/20 text-xs font-medium">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#7FA18B] flex-none" />
+          <span
+            className="inline-flex items-center gap-1.5 px-2.5 py-[5px] rounded-full leading-none text-xs font-medium
+              bg-[#7FA18B]/[0.08] text-[#7FA18B]/70 border border-[#7FA18B]/15"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-[#7FA18B]/50 flex-none" />
             Unknown
           </span>
         );
       case "stopped":
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full leading-none
-            bg-[#0b120f] text-[#5D7465] border border-[#173126] text-xs font-medium">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#2a4535] flex-none" />
+          <span
+            className="inline-flex items-center gap-1.5 px-2.5 py-[5px] rounded-full leading-none text-xs font-medium
+              bg-[#080e0b] text-[#3a5243] border border-[#122019]"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-[#1e3429] flex-none" />
             Stopped
           </span>
         );
@@ -137,12 +181,12 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
 
   const getLogSourceColor = (source: string) => {
     switch (source) {
-      case "git":      return "text-cyan-400/80";
-      case "install":  return "text-[#c6a84a]";
-      case "frontend": return "text-[#1EFF5A]/90";
-      case "backend":  return "text-blue-400/80";
+      case "git":      return "text-cyan-400/75";
+      case "install":  return "text-[#c6a84a]/90";
+      case "frontend": return "text-[#1EFF5A]/85";
+      case "backend":  return "text-blue-400/75";
       case "system":
-      default:         return "text-[#5D7465]";
+      default:         return "text-[#4a6655]";
     }
   };
 
@@ -153,11 +197,11 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
     <div className="h-screen flex flex-col bg-background text-foreground animate-in fade-in duration-300">
 
       {/* Header */}
-      <header className="h-[60px] flex-none border-b border-[#173126] bg-[#0b120f]/80 backdrop-blur-sm flex items-center px-5 gap-4">
+      <header className="h-[60px] flex-none border-b border-[#173126] bg-[#080e0b] flex items-center px-5 gap-4">
         {/* Brand */}
         <div className="flex items-center gap-2.5 flex-none">
           <RepoRunnerLogo />
-          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#5D7465] select-none">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.13em] text-[#3d6050] select-none">
             RepoRunner
           </span>
         </div>
@@ -171,7 +215,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
             {project.name}
           </span>
           <span
-            className="text-[11px] font-mono text-[#5D7465] leading-tight truncate mt-px"
+            className="text-[11px] font-mono text-[#3d6050] leading-tight truncate mt-px"
             title={project.repoPath}
           >
             {project.repoPath}
@@ -183,7 +227,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
           variant="ghost"
           size="sm"
           onClick={onEdit}
-          className="flex-none h-8 px-3 gap-1.5 text-xs text-[#5D7465] hover:text-[#7FA18B] hover:bg-[#173126]/60"
+          className="flex-none h-8 px-3 gap-1.5 text-xs text-[#4a6655] hover:text-[#7FA18B] hover:bg-[#0f1a14]"
         >
           <Settings2 className="w-3.5 h-3.5" />
           Edit Setup
@@ -196,9 +240,12 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
             {/* Quick Actions */}
-            <Card className="lg:col-span-2 border border-[#173126] bg-[#0f1713] rounded-xl shadow-sm">
-              <CardHeader className="px-5 pt-4 pb-3 border-b border-[#173126]/60">
-                <CardTitle className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-[#5D7465]">
+            <Card
+              className="lg:col-span-2 rounded-xl border border-[#173126] bg-[#0a1510]"
+              style={{ boxShadow: "0 4px 16px rgba(0,0,0,0.5), 0 0 0 1px rgba(30,255,90,0.04)" }}
+            >
+              <CardHeader className="px-5 pt-4 pb-3 border-b border-[#173126]/70">
+                <CardTitle className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-[#3d6050]">
                   Quick Actions
                 </CardTitle>
               </CardHeader>
@@ -270,35 +317,38 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
             </Card>
 
             {/* Services */}
-            <Card className="border border-[#173126] bg-[#0f1713] rounded-xl shadow-sm">
-              <CardHeader className="px-5 pt-4 pb-3 border-b border-[#173126]/60">
-                <CardTitle className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-[#5D7465]">
+            <Card
+              className="rounded-xl border border-[#173126] bg-[#0a1510]"
+              style={{ boxShadow: "0 4px 16px rgba(0,0,0,0.5), 0 0 0 1px rgba(30,255,90,0.04)" }}
+            >
+              <CardHeader className="px-5 pt-4 pb-3 border-b border-[#173126]/70">
+                <CardTitle className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-[#3d6050]">
                   Services
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-5 flex flex-col gap-4">
+              <CardContent className="p-5 flex flex-col gap-5">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-[#7FA18B] leading-none">
+                    <p className="text-[12px] font-semibold text-[#7FA18B] leading-none tracking-wide">
                       Frontend
                     </p>
                     {project.frontendPort && (
-                      <p className="text-[11px] font-mono text-[#5D7465] mt-1 leading-none">
-                        :{project.frontendPort}
+                      <p className="text-[11px] font-mono text-[#3d6050] mt-1.5 leading-none">
+                        port {project.frontendPort}
                       </p>
                     )}
                   </div>
                   {getStatusDisplay(statuses.frontend)}
                 </div>
-                <Separator className="bg-[#173126]/60" />
+                <Separator className="bg-[#173126]/50" />
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-[#7FA18B] leading-none">
+                    <p className="text-[12px] font-semibold text-[#7FA18B] leading-none tracking-wide">
                       Backend
                     </p>
                     {project.backendPort && (
-                      <p className="text-[11px] font-mono text-[#5D7465] mt-1 leading-none">
-                        :{project.backendPort}
+                      <p className="text-[11px] font-mono text-[#3d6050] mt-1.5 leading-none">
+                        port {project.backendPort}
                       </p>
                     )}
                   </div>
@@ -314,12 +364,12 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
       {/* Logs Panel */}
       <section className="flex-1 min-h-0 flex flex-col border-t border-[#173126]">
         {/* Log toolbar */}
-        <div className="flex-none h-[42px] flex items-center justify-between px-5 border-b border-[#173126]/50 bg-[#0b120f]/60">
+        <div className="flex-none h-[42px] flex items-center justify-between px-5 border-b border-[#173126]/50 bg-[#080e0b]">
           <div className="flex items-center gap-2.5">
-            <span className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-[#5D7465]">
+            <span className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-[#3d6050]">
               App Logs
             </span>
-            <span className="text-[10px] bg-[#173126]/60 border border-[#1f4132]/50 px-1.5 py-0.5 rounded text-[#5D7465] tabular-nums leading-none">
+            <span className="text-[10px] bg-[#0f1a14] border border-[#173126]/60 px-1.5 py-0.5 rounded text-[#3d6050] tabular-nums leading-none">
               {logs.length}
             </span>
           </div>
@@ -328,7 +378,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
               variant="ghost"
               size="sm"
               onClick={handleCopyLogs}
-              className="h-7 px-2.5 gap-1.5 text-[11px] text-[#5D7465] hover:text-[#7FA18B] hover:bg-[#173126]/50"
+              className="h-7 px-2.5 gap-1.5 text-[11px] text-[#3d6050] hover:text-[#7FA18B] hover:bg-[#0f1a14]"
             >
               <Copy className="w-3 h-3" />
               Copy
@@ -337,7 +387,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
               variant="ghost"
               size="sm"
               onClick={handleClearLogs}
-              className="h-7 px-2.5 gap-1.5 text-[11px] text-[#5D7465] hover:text-[#7FA18B] hover:bg-[#173126]/50"
+              className="h-7 px-2.5 gap-1.5 text-[11px] text-[#3d6050] hover:text-[#7FA18B] hover:bg-[#0f1a14]"
             >
               <Trash2 className="w-3 h-3" />
               Clear
@@ -352,8 +402,8 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
         >
           {logs.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center gap-1.5 select-none">
-              <span className="text-sm text-[#2a4535] italic">No logs yet.</span>
-              <span className="text-xs text-[#1f3028] italic">
+              <span className="text-[13px] text-[#3a6048] italic">No logs yet.</span>
+              <span className="text-[11px] text-[#2a4a38] italic">
                 Run Pull, Install, or Start a service to see output here.
               </span>
             </div>
@@ -364,7 +414,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                   key={log.id}
                   className="flex gap-3 hover:bg-[#1EFF5A]/[0.025] px-2 py-[3px] rounded transition-colors"
                 >
-                  <span className="flex-none select-none text-[#2a4535] w-[56px] text-right">
+                  <span className="flex-none select-none text-[#253d2e] w-[56px] text-right">
                     {new Date(log.timestamp).toLocaleTimeString([], {
                       hour12: false,
                       hour: "2-digit",
