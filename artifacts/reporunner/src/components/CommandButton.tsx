@@ -24,14 +24,15 @@ export function CommandButton({
       onClick={onClick}
       disabled={disabled || loading}
       data-testid={`button-${label.toLowerCase().replace(/\s+/g, "-")}`}
-      className="w-full flex flex-col items-center justify-center gap-2 h-24 sm:h-32 transition-all hover-elevate hover:-translate-y-0.5 active:translate-y-0"
+      size="sm"
+      className="flex items-center gap-2 h-9 sm:h-10 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none"
     >
       {loading ? (
-        <div className="h-6 w-6 sm:h-8 sm:w-8 animate-spin rounded-full border-2 border-current border-t-transparent" />
+        <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
       ) : (
-        <Icon className="h-6 w-6 sm:h-8 sm:w-8" strokeWidth={1.5} />
+        <Icon className="h-4 w-4" strokeWidth={1.5} />
       )}
-      <span className="font-medium tracking-tight text-sm sm:text-base">{label}</span>
+      <span className="font-medium tracking-tight text-sm">{label}</span>
     </Button>
   );
 }

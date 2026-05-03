@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Folder } from "lucide-react";
+import { Folder, Save, ArrowRight } from "lucide-react";
 import { ProjectProfile } from "@/types";
 import { Button } from "@/components/ui/button";
 import {
@@ -74,15 +74,15 @@ export function SetupScreen({ onSave }: { onSave: (profile: ProjectProfile) => v
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4 sm:p-8 animate-in fade-in zoom-in duration-500">
-      <Card className="w-full max-w-2xl border-border/50 shadow-2xl">
-        <CardHeader className="space-y-2 pb-6">
-          <CardTitle className="text-3xl font-semibold tracking-tight">Setup RepoRunner</CardTitle>
-          <CardDescription className="text-base text-muted-foreground">
-            Configure your local project once. Run it with a click forever.
+    <div className="flex min-h-screen items-center justify-center p-4 sm:p-8 bg-background animate-in fade-in duration-500">
+      <Card className="w-full max-w-2xl border-border/50 shadow-xl bg-card/50 backdrop-blur">
+        <CardHeader className="space-y-2 pb-6 pt-8 px-8 sm:px-10">
+          <CardTitle className="text-2xl font-bold tracking-tight">Setup RepoRunner</CardTitle>
+          <CardDescription className="text-sm text-muted-foreground">
+            Save your local app setup once. Run it with buttons after that.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-8 pb-8 sm:px-10 sm:pb-10">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               
@@ -105,22 +105,24 @@ export function SetupScreen({ onSave }: { onSave: (profile: ProjectProfile) => v
                   control={form.control}
                   name="repoPath"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="flex flex-col justify-end">
                       <FormLabel>Local Repository Folder</FormLabel>
                       <div className="flex gap-2">
                         <FormControl>
-                          <Input placeholder="/path/to/project" readOnly {...field} />
+                          <Input placeholder="/path/to/project" readOnly {...field} className="font-mono text-sm flex-1" />
                         </FormControl>
                         <Button 
                           type="button" 
                           variant="secondary" 
                           onClick={handleSelectFolder}
                           disabled={isSelecting}
+                          className="flex-none"
                         >
                           <Folder className="h-4 w-4 mr-2" />
-                          Choose
+                          Choose Folder
                         </Button>
                       </div>
+                      <FormDescription className="text-[11px]">The folder where your project lives locally.</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -135,8 +137,9 @@ export function SetupScreen({ onSave }: { onSave: (profile: ProjectProfile) => v
                     <FormItem>
                       <FormLabel>Install Command</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input {...field} className="font-mono text-sm" />
                       </FormControl>
+                      <FormDescription className="text-[11px]">Runs once to install dependencies (e.g. npm install).</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -149,8 +152,9 @@ export function SetupScreen({ onSave }: { onSave: (profile: ProjectProfile) => v
                     <FormItem>
                       <FormLabel>Frontend Command</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input {...field} className="font-mono text-sm" />
                       </FormControl>
+                      <FormDescription className="text-[11px]">Starts your frontend dev server (e.g. npm run dev).</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -163,8 +167,9 @@ export function SetupScreen({ onSave }: { onSave: (profile: ProjectProfile) => v
                     <FormItem>
                       <FormLabel>Backend Command</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input {...field} className="font-mono text-sm" />
                       </FormControl>
+                      <FormDescription className="text-[11px]">Starts your backend server (e.g. node server.js).</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -179,8 +184,9 @@ export function SetupScreen({ onSave }: { onSave: (profile: ProjectProfile) => v
                     <FormItem>
                       <FormLabel>Preview URL</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input {...field} className="font-mono text-sm" />
                       </FormControl>
+                      <FormDescription className="text-[11px]">The URL to open when you click Open Preview.</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -193,7 +199,7 @@ export function SetupScreen({ onSave }: { onSave: (profile: ProjectProfile) => v
                     <FormItem>
                       <FormLabel>Frontend Port (Optional)</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} value={field.value || ""} />
+                        <Input type="number" {...field} value={field.value || ""} className="font-mono text-sm" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -207,7 +213,7 @@ export function SetupScreen({ onSave }: { onSave: (profile: ProjectProfile) => v
                     <FormItem>
                       <FormLabel>Backend Port (Optional)</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} value={field.value || ""} />
+                        <Input type="number" {...field} value={field.value || ""} className="font-mono text-sm" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -215,9 +221,11 @@ export function SetupScreen({ onSave }: { onSave: (profile: ProjectProfile) => v
                 />
               </div>
 
-              <div className="pt-4 flex justify-end">
-                <Button type="submit" size="lg" className="w-full sm:w-auto px-8 font-medium">
+              <div className="pt-6 mt-6 border-t border-border/50">
+                <Button type="submit" size="lg" className="w-full font-semibold">
+                  <Save className="w-4 h-4 mr-2" />
                   Save Configuration
+                  <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </div>
             </form>

@@ -66,6 +66,7 @@ export default defineConfig({
       "@radix-ui/react-tooltip",
       "@radix-ui/react-dialog",
       "@radix-ui/react-select",
+      "@radix-ui/react-separator",
       "lucide-react",
       "wouter",
       "clsx",
