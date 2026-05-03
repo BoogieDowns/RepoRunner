@@ -22,31 +22,43 @@ import { Separator } from "@/components/ui/separator";
 function RepoRunnerLogo() {
   return (
     <svg
-      width="27"
-      height="27"
-      viewBox="0 0 28 28"
+      width="26"
+      height="26"
+      viewBox="0 0 26 26"
       fill="none"
-      className="flex-none [filter:drop-shadow(0_0_6px_rgba(30,255,90,0.28))]"
+      aria-hidden="true"
+      className="flex-none [filter:drop-shadow(0_0_5px_rgba(30,255,90,0.22))]"
     >
       <rect
-        width="28"
-        height="28"
-        rx="7"
-        fill="hsl(142 100% 56% / 0.12)"
-        stroke="hsl(142 100% 56% / 0.45)"
+        width="26"
+        height="26"
+        rx="6"
+        fill="rgba(30,255,90,0.08)"
+        stroke="rgba(30,255,90,0.36)"
         strokeWidth="1"
       />
+      {/* Vertical stem — repo / source */}
       <path
-        d="M9 8h5.5a3.5 3.5 0 0 1 0 7H9V8z"
-        fill="hsl(142 100% 56%)"
-        opacity="0.95"
-      />
-      <path
-        d="M9 15h4l4 5"
-        stroke="hsl(142 100% 56%)"
+        d="M8 6v14"
+        stroke="#1EFF5A"
         strokeWidth="2"
         strokeLinecap="round"
+      />
+      {/* Horizontal bar — pipeline / run */}
+      <path
+        d="M8 13h9"
+        stroke="#1EFF5A"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      {/* Arrowhead — execute / forward motion */}
+      <path
+        d="M13 9.5l4 3.5-4 3.5"
+        stroke="#1EFF5A"
+        strokeWidth="1.8"
+        strokeLinecap="round"
         strokeLinejoin="round"
+        fill="none"
       />
     </svg>
   );
@@ -201,8 +213,12 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
         {/* Brand */}
         <div className="flex items-center gap-2.5 flex-none">
           <RepoRunnerLogo />
-          <span className="text-[11px] font-semibold uppercase tracking-[0.13em] text-[#3d6050] select-none">
-            RepoRunner
+          <span
+            className="select-none leading-none"
+            style={{ fontFamily: "'IBM Plex Sans', sans-serif", fontSize: "13px", letterSpacing: "0.01em" }}
+          >
+            <span style={{ fontWeight: 400, color: "#4d7060" }}>Repo</span>
+            <span style={{ fontWeight: 600, color: "#6a9278" }}>Runner</span>
           </span>
         </div>
 
@@ -211,11 +227,15 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
 
         {/* Project identity */}
         <div className="flex flex-col justify-center min-w-0 flex-1">
-          <span className="text-[14px] font-semibold text-[#B8FFCA] leading-tight truncate">
+          <span
+            className="text-[14.5px] text-[#B8FFCA] leading-tight truncate"
+            style={{ fontWeight: 600, fontFamily: "'IBM Plex Sans', sans-serif" }}
+          >
             {project.name}
           </span>
           <span
-            className="text-[11px] font-mono text-[#3d6050] leading-tight truncate mt-px"
+            className="text-[11px] leading-tight truncate mt-[3px] text-[#3a5a48]"
+            style={{ fontFamily: "'JetBrains Mono', monospace" }}
             title={project.repoPath}
           >
             {project.repoPath}
@@ -227,7 +247,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
           variant="ghost"
           size="sm"
           onClick={onEdit}
-          className="flex-none h-8 px-3 gap-1.5 text-xs text-[#4a6655] hover:text-[#7FA18B] hover:bg-[#0f1a14]"
+          className="flex-none h-8 px-3 gap-1.5 text-[12px] font-medium text-[#4a6655] hover:text-[#7FA18B] hover:bg-[#0f1a14]"
         >
           <Settings2 className="w-3.5 h-3.5" />
           Edit Setup
