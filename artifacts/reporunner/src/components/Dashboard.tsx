@@ -168,10 +168,6 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
         </div>
 
         <div className="flex-none flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            {getStatusDisplay(statuses.frontend)}
-            {getStatusDisplay(statuses.backend)}
-          </div>
           <Button variant="ghost" size="sm" onClick={onEdit} className="text-muted-foreground h-8 px-2 hover:text-foreground">
             <Settings2 className="w-4 h-4 mr-1.5" />
             Edit Setup

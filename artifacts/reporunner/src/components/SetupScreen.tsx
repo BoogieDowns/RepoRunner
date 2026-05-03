@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Folder, Save, ArrowRight } from "lucide-react";
+import { Folder, Save, ArrowRight, X } from "lucide-react";
 import { ProjectProfile } from "@/types";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,7 +30,7 @@ const setupSchema = z.object({
 
 type SetupFormValues = z.infer<typeof setupSchema>;
 
-export function SetupScreen({ onSave }: { onSave: (profile: ProjectProfile) => void }) {
+export function SetupScreen({ onSave, onClose }: { onSave: (profile: ProjectProfile) => void; onClose?: () => void }) {
   const [isSelecting, setIsSelecting] = useState(false);
 
   const form = useForm<SetupFormValues>({
@@ -76,7 +76,17 @@ export function SetupScreen({ onSave }: { onSave: (profile: ProjectProfile) => v
   return (
     <div className="flex min-h-screen items-center justify-center p-4 sm:p-8 bg-background animate-in fade-in duration-500">
       <Card className="w-full max-w-2xl border-border bg-card shadow-lg rounded-xl">
-        <CardHeader className="space-y-2 pb-6 pt-8 px-8 sm:px-10">
+        <CardHeader className="space-y-2 pb-6 pt-8 px-8 sm:px-10 relative">
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close setup"
+              className="absolute top-4 right-4 flex items-center justify-center w-7 h-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-white/8 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
           <CardTitle className="text-2xl font-bold tracking-tight">Setup RepoRunner</CardTitle>
           <CardDescription className="text-sm text-muted-foreground">
             Save your local app setup once. Run it with buttons after that.

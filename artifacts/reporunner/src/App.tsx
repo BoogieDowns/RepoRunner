@@ -13,6 +13,7 @@ if (typeof window !== "undefined" && !window.repoRunner) {
 
 function App() {
   const [project, setProject] = useState<ProjectProfile | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,10 +30,6 @@ function App() {
     load();
   }, []);
 
-  const handleSave = (profile: ProjectProfile) => {
-    setProject(profile);
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center bg-background text-foreground">
@@ -41,13 +38,18 @@ function App() {
     );
   }
 
+  const showSetup = !project || isEditing;
+
   return (
     <TooltipProvider>
       <div className="min-h-screen w-full bg-background text-foreground font-sans selection:bg-primary selection:text-primary-foreground">
-        {project ? (
-          <Dashboard project={project} onEdit={() => setProject(null)} />
+        {showSetup ? (
+          <SetupScreen
+            onSave={(profile) => { setProject(profile); setIsEditing(false); }}
+            onClose={isEditing ? () => setIsEditing(false) : undefined}
+          />
         ) : (
-          <SetupScreen onSave={handleSave} />
+          <Dashboard project={project!} onEdit={() => setIsEditing(true)} />
         )}
       </div>
       <Toaster />
