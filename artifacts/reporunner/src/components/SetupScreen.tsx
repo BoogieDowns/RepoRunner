@@ -30,7 +30,13 @@ const setupSchema = z.object({
 
 type SetupFormValues = z.infer<typeof setupSchema>;
 
-export function SetupScreen({ onSave, onClose }: { onSave: (profile: ProjectProfile) => void; onClose?: () => void }) {
+export function SetupScreen({
+  onSave,
+  onClose,
+}: {
+  onSave: (profile: ProjectProfile) => void;
+  onClose?: () => void;
+}) {
   const [isSelecting, setIsSelecting] = useState(false);
 
   const form = useForm<SetupFormValues>({
@@ -54,7 +60,6 @@ export function SetupScreen({ onSave, onClose }: { onSave: (profile: ProjectProf
       if (folder) {
         form.setValue("repoPath", folder);
         if (!form.getValues("name")) {
-          // Extract last part of path for project name
           const parts = folder.split(/[/\\]/);
           form.setValue("name", parts[parts.length - 1] || "My Project");
         }
@@ -74,74 +79,83 @@ export function SetupScreen({ onSave, onClose }: { onSave: (profile: ProjectProf
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4 sm:p-8 bg-background animate-in fade-in duration-500">
-      <Card className="w-full max-w-2xl border-border bg-card shadow-lg rounded-xl">
+    <div className="flex min-h-screen items-center justify-center p-4 sm:p-8 bg-background animate-in fade-in duration-300">
+      <Card className="w-full max-w-2xl border border-[#173126] bg-[#0f1713] shadow-lg rounded-xl">
         <CardHeader className="space-y-2 pb-6 pt-8 px-8 sm:px-10 relative">
           {onClose && (
             <button
               type="button"
               onClick={onClose}
               aria-label="Close setup"
-              className="absolute top-5 right-5 flex items-center justify-center w-7 h-7 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-white/[0.08] transition-colors"
+              className="absolute top-5 right-5 flex items-center justify-center w-7 h-7 rounded-md text-[#5D7465] hover:text-[#7FA18B] hover:bg-[#173126]/60 transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
           )}
-          <CardTitle className="text-2xl font-bold tracking-tight">Setup RepoRunner</CardTitle>
-          <CardDescription className="text-sm text-muted-foreground">
+          <CardTitle className="text-2xl font-bold tracking-tight text-[#B8FFCA]">
+            Setup RepoRunner
+          </CardTitle>
+          <CardDescription className="text-sm text-[#5D7465]">
             Save your local app setup once. Run it with buttons after that.
           </CardDescription>
         </CardHeader>
+
         <CardContent className="px-8 pb-8 sm:px-10 sm:pb-10">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-medium text-foreground">Project Name</FormLabel>
+                      <FormLabel className="text-sm font-medium text-[#7FA18B]">
+                        Project Name
+                      </FormLabel>
                       <FormControl>
-                        <Input 
-                          placeholder="My Cool App" 
-                          {...field} 
-                          className="bg-input border-border text-foreground placeholder:text-muted-foreground/50 focus-visible:ring-ring"
+                        <Input
+                          placeholder="My Cool App"
+                          {...field}
+                          className="bg-[#0b120f] border-[#173126] text-[#B8FFCA] placeholder:text-[#2a4535] focus-visible:ring-[#1EFF5A]/40 focus-visible:border-[#1EFF5A]/30"
                         />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="repoPath"
                   render={({ field }) => (
                     <FormItem className="flex flex-col justify-end">
-                      <FormLabel className="text-sm font-medium text-foreground">Local Repository Folder</FormLabel>
+                      <FormLabel className="text-sm font-medium text-[#7FA18B]">
+                        Local Repository Folder
+                      </FormLabel>
                       <div className="flex gap-2">
                         <FormControl>
-                          <Input 
-                            placeholder="/path/to/project" 
-                            readOnly 
-                            {...field} 
-                            className="font-mono text-sm flex-1 bg-input border-border text-foreground placeholder:text-muted-foreground/50 focus-visible:ring-ring" 
+                          <Input
+                            placeholder="/path/to/project"
+                            readOnly
+                            {...field}
+                            className="font-mono text-sm flex-1 bg-[#0b120f] border-[#173126] text-[#B8FFCA] placeholder:text-[#2a4535] focus-visible:ring-[#1EFF5A]/40"
                           />
                         </FormControl>
-                        <Button 
-                          type="button" 
-                          variant="secondary" 
+                        <Button
+                          type="button"
+                          variant="secondary"
                           onClick={handleSelectFolder}
                           disabled={isSelecting}
-                          className="flex-none"
+                          className="flex-none border border-[#173126] bg-[#0b120f] text-[#7FA18B] hover:bg-[#173126]/80 hover:text-[#B8FFCA]"
                         >
                           <Folder className="h-4 w-4 mr-2" />
                           Choose Folder
                         </Button>
                       </div>
-                      <FormDescription className="text-xs text-muted-foreground">The folder where your project lives locally.</FormDescription>
+                      <FormDescription className="text-xs text-[#5D7465]">
+                        The folder where your project lives locally.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -154,14 +168,18 @@ export function SetupScreen({ onSave, onClose }: { onSave: (profile: ProjectProf
                   name="installCommand"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-medium text-foreground">Install Command</FormLabel>
+                      <FormLabel className="text-sm font-medium text-[#7FA18B]">
+                        Install Command
+                      </FormLabel>
                       <FormControl>
-                        <Input 
-                          {...field} 
-                          className="font-mono text-sm bg-input border-border text-foreground placeholder:text-muted-foreground/50 focus-visible:ring-ring" 
+                        <Input
+                          {...field}
+                          className="font-mono text-sm bg-[#0b120f] border-[#173126] text-[#B8FFCA] placeholder:text-[#2a4535] focus-visible:ring-[#1EFF5A]/40"
                         />
                       </FormControl>
-                      <FormDescription className="text-xs text-muted-foreground">Runs once to install dependencies (e.g. npm install).</FormDescription>
+                      <FormDescription className="text-xs text-[#5D7465]">
+                        Runs once to install dependencies (e.g. npm install).
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -172,14 +190,18 @@ export function SetupScreen({ onSave, onClose }: { onSave: (profile: ProjectProf
                   name="frontendCommand"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-medium text-foreground">Frontend Command</FormLabel>
+                      <FormLabel className="text-sm font-medium text-[#7FA18B]">
+                        Frontend Command
+                      </FormLabel>
                       <FormControl>
-                        <Input 
-                          {...field} 
-                          className="font-mono text-sm bg-input border-border text-foreground placeholder:text-muted-foreground/50 focus-visible:ring-ring" 
+                        <Input
+                          {...field}
+                          className="font-mono text-sm bg-[#0b120f] border-[#173126] text-[#B8FFCA] placeholder:text-[#2a4535] focus-visible:ring-[#1EFF5A]/40"
                         />
                       </FormControl>
-                      <FormDescription className="text-xs text-muted-foreground">Starts your frontend dev server (e.g. npm run dev).</FormDescription>
+                      <FormDescription className="text-xs text-[#5D7465]">
+                        Starts your frontend dev server (e.g. npm run dev).
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -190,14 +212,18 @@ export function SetupScreen({ onSave, onClose }: { onSave: (profile: ProjectProf
                   name="backendCommand"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-medium text-foreground">Backend Command</FormLabel>
+                      <FormLabel className="text-sm font-medium text-[#7FA18B]">
+                        Backend Command
+                      </FormLabel>
                       <FormControl>
-                        <Input 
-                          {...field} 
-                          className="font-mono text-sm bg-input border-border text-foreground placeholder:text-muted-foreground/50 focus-visible:ring-ring" 
+                        <Input
+                          {...field}
+                          className="font-mono text-sm bg-[#0b120f] border-[#173126] text-[#B8FFCA] placeholder:text-[#2a4535] focus-visible:ring-[#1EFF5A]/40"
                         />
                       </FormControl>
-                      <FormDescription className="text-xs text-muted-foreground">Starts your backend server (e.g. node server.js).</FormDescription>
+                      <FormDescription className="text-xs text-[#5D7465]">
+                        Starts your backend server (e.g. node server.js).
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -210,31 +236,37 @@ export function SetupScreen({ onSave, onClose }: { onSave: (profile: ProjectProf
                   name="previewUrl"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-medium text-foreground">Preview URL</FormLabel>
+                      <FormLabel className="text-sm font-medium text-[#7FA18B]">
+                        Preview URL
+                      </FormLabel>
                       <FormControl>
-                        <Input 
-                          {...field} 
-                          className="font-mono text-sm bg-input border-border text-foreground placeholder:text-muted-foreground/50 focus-visible:ring-ring" 
+                        <Input
+                          {...field}
+                          className="font-mono text-sm bg-[#0b120f] border-[#173126] text-[#B8FFCA] placeholder:text-[#2a4535] focus-visible:ring-[#1EFF5A]/40"
                         />
                       </FormControl>
-                      <FormDescription className="text-xs text-muted-foreground">The URL to open when you click Open Preview.</FormDescription>
+                      <FormDescription className="text-xs text-[#5D7465]">
+                        The URL to open when you click Open Preview.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="frontendPort"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-medium text-foreground">Frontend Port (Optional)</FormLabel>
+                      <FormLabel className="text-sm font-medium text-[#7FA18B]">
+                        Frontend Port (Optional)
+                      </FormLabel>
                       <FormControl>
-                        <Input 
-                          type="number" 
-                          {...field} 
-                          value={field.value || ""} 
-                          className="font-mono text-sm bg-input border-border text-foreground placeholder:text-muted-foreground/50 focus-visible:ring-ring" 
+                        <Input
+                          type="number"
+                          {...field}
+                          value={field.value || ""}
+                          className="font-mono text-sm bg-[#0b120f] border-[#173126] text-[#B8FFCA] placeholder:text-[#2a4535] focus-visible:ring-[#1EFF5A]/40"
                         />
                       </FormControl>
                       <FormMessage />
@@ -247,13 +279,15 @@ export function SetupScreen({ onSave, onClose }: { onSave: (profile: ProjectProf
                   name="backendPort"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-medium text-foreground">Backend Port (Optional)</FormLabel>
+                      <FormLabel className="text-sm font-medium text-[#7FA18B]">
+                        Backend Port (Optional)
+                      </FormLabel>
                       <FormControl>
-                        <Input 
-                          type="number" 
-                          {...field} 
-                          value={field.value || ""} 
-                          className="font-mono text-sm bg-input border-border text-foreground placeholder:text-muted-foreground/50 focus-visible:ring-ring" 
+                        <Input
+                          type="number"
+                          {...field}
+                          value={field.value || ""}
+                          className="font-mono text-sm bg-[#0b120f] border-[#173126] text-[#B8FFCA] placeholder:text-[#2a4535] focus-visible:ring-[#1EFF5A]/40"
                         />
                       </FormControl>
                       <FormMessage />
@@ -262,13 +296,19 @@ export function SetupScreen({ onSave, onClose }: { onSave: (profile: ProjectProf
                 />
               </div>
 
-              <div className="pt-6 mt-6 border-t border-border/50">
-                <Button type="submit" size="lg" className="w-full font-semibold" variant="default">
+              <div className="pt-6 mt-6 border-t border-[#173126]/60">
+                <Button
+                  type="submit"
+                  size="lg"
+                  className="w-full font-semibold"
+                  variant="default"
+                >
                   <Save className="w-4 h-4 mr-2" />
                   Save Configuration
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </div>
+
             </form>
           </Form>
         </CardContent>

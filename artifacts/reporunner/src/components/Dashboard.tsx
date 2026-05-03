@@ -22,9 +22,9 @@ import { Separator } from "@/components/ui/separator";
 function RepoRunnerLogo() {
   return (
     <svg width="26" height="26" viewBox="0 0 28 28" fill="none" className="flex-none">
-      <rect width="28" height="28" rx="7" fill="hsl(142 70% 45% / 0.15)" stroke="hsl(142 70% 45% / 0.35)" strokeWidth="1"/>
-      <path d="M9 8h5.5a3.5 3.5 0 0 1 0 7H9V8z" fill="hsl(142 70% 45%)" opacity="0.9"/>
-      <path d="M9 15h4l4 5" stroke="hsl(142 70% 45%)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      <rect width="28" height="28" rx="7" fill="hsl(142 100% 56% / 0.1)" stroke="hsl(142 100% 56% / 0.35)" strokeWidth="1"/>
+      <path d="M9 8h5.5a3.5 3.5 0 0 1 0 7H9V8z" fill="hsl(142 100% 56%)" opacity="0.85"/>
+      <path d="M9 15h4l4 5" stroke="hsl(142 100% 56%)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   );
 }
@@ -88,44 +88,47 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
     setLogs([]);
   };
 
-  const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-
   const getStatusDisplay = (status: string) => {
     switch (status) {
       case "running":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-medium border border-emerald-500/20 leading-none">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse flex-none" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full leading-none
+            bg-[#1EFF5A]/10 text-[#1EFF5A] border border-[#1EFF5A]/25 text-xs font-medium">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#1EFF5A] animate-pulse flex-none" />
             Running
           </span>
         );
       case "starting":
       case "stopping":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 text-xs font-medium border border-amber-500/20 leading-none">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full leading-none
+            bg-[#c6a84a]/10 text-[#c6a84a] border border-[#c6a84a]/25 text-xs font-medium">
             <Loader2 className="w-3 h-3 animate-spin flex-none" />
-            {capitalize(status)}
+            {status.charAt(0).toUpperCase() + status.slice(1)}
           </span>
         );
       case "failed":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/10 text-red-400 text-xs font-medium border border-red-500/20 leading-none">
-            <span className="w-1.5 h-1.5 rounded-full bg-red-500 flex-none" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full leading-none
+            bg-[#c94b57]/10 text-[#c94b57] border border-[#c94b57]/25 text-xs font-medium">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#c94b57] flex-none" />
             Failed
           </span>
         );
       case "unknown":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-purple-500/10 text-purple-400 text-xs font-medium border border-purple-500/20 leading-none">
-            <span className="w-1.5 h-1.5 rounded-full bg-purple-400 flex-none" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full leading-none
+            bg-[#7FA18B]/10 text-[#7FA18B] border border-[#7FA18B]/20 text-xs font-medium">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#7FA18B] flex-none" />
             Unknown
           </span>
         );
       case "stopped":
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-800/80 text-zinc-500 text-xs font-medium border border-zinc-700/80 leading-none">
-            <span className="w-1.5 h-1.5 rounded-full bg-zinc-600 flex-none" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full leading-none
+            bg-[#0b120f] text-[#5D7465] border border-[#173126] text-xs font-medium">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#2a4535] flex-none" />
             Stopped
           </span>
         );
@@ -134,12 +137,12 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
 
   const getLogSourceColor = (source: string) => {
     switch (source) {
-      case "git":     return "text-cyan-400";
-      case "install": return "text-yellow-400";
-      case "frontend": return "text-emerald-400";
-      case "backend": return "text-blue-400";
+      case "git":      return "text-cyan-400/80";
+      case "install":  return "text-[#c6a84a]";
+      case "frontend": return "text-[#1EFF5A]/90";
+      case "backend":  return "text-blue-400/80";
       case "system":
-      default:        return "text-zinc-500";
+      default:         return "text-[#5D7465]";
     }
   };
 
@@ -150,37 +153,37 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
     <div className="h-screen flex flex-col bg-background text-foreground animate-in fade-in duration-300">
 
       {/* Header */}
-      <header className="h-[60px] flex-none border-b border-border bg-card/50 backdrop-blur-sm flex items-center px-5 gap-4">
+      <header className="h-[60px] flex-none border-b border-[#173126] bg-[#0b120f]/80 backdrop-blur-sm flex items-center px-5 gap-4">
         {/* Brand */}
         <div className="flex items-center gap-2.5 flex-none">
           <RepoRunnerLogo />
-          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/70 select-none">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#5D7465] select-none">
             RepoRunner
           </span>
         </div>
 
         {/* Divider */}
-        <div className="w-px h-5 bg-border flex-none" />
+        <div className="w-px h-5 bg-[#173126] flex-none" />
 
         {/* Project identity */}
         <div className="flex flex-col justify-center min-w-0 flex-1">
-          <span className="text-[14px] font-semibold text-foreground leading-tight truncate">
+          <span className="text-[14px] font-semibold text-[#B8FFCA] leading-tight truncate">
             {project.name}
           </span>
           <span
-            className="text-[11px] font-mono text-muted-foreground/55 leading-tight truncate mt-px"
+            className="text-[11px] font-mono text-[#5D7465] leading-tight truncate mt-px"
             title={project.repoPath}
           >
             {project.repoPath}
           </span>
         </div>
 
-        {/* Actions */}
+        {/* Edit Setup */}
         <Button
           variant="ghost"
           size="sm"
           onClick={onEdit}
-          className="flex-none h-8 px-3 gap-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-white/[0.06]"
+          className="flex-none h-8 px-3 gap-1.5 text-xs text-[#5D7465] hover:text-[#7FA18B] hover:bg-[#173126]/60"
         >
           <Settings2 className="w-3.5 h-3.5" />
           Edit Setup
@@ -193,9 +196,9 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
             {/* Quick Actions */}
-            <Card className="lg:col-span-2 border border-border/80 bg-card rounded-xl shadow-sm">
-              <CardHeader className="px-5 pt-4 pb-3 border-b border-border/50">
-                <CardTitle className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/80">
+            <Card className="lg:col-span-2 border border-[#173126] bg-[#0f1713] rounded-xl shadow-sm">
+              <CardHeader className="px-5 pt-4 pb-3 border-b border-[#173126]/60">
+                <CardTitle className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-[#5D7465]">
                   Quick Actions
                 </CardTitle>
               </CardHeader>
@@ -216,7 +219,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                     variant="outline"
                   />
 
-                  <div className="w-px h-5 bg-border/50 mx-0.5 hidden sm:block" />
+                  <div className="w-px h-5 bg-[#173126] mx-0.5 hidden sm:block" />
 
                   <CommandButton
                     label="Start Frontend"
@@ -235,7 +238,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                     variant="default"
                   />
 
-                  <div className="w-px h-5 bg-border/50 mx-0.5 hidden sm:block" />
+                  <div className="w-px h-5 bg-[#173126] mx-0.5 hidden sm:block" />
 
                   <CommandButton
                     label="Stop Services"
@@ -246,7 +249,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                     variant="destructive"
                   />
 
-                  <div className="w-px h-5 bg-border/50 mx-0.5 hidden sm:block" />
+                  <div className="w-px h-5 bg-[#173126] mx-0.5 hidden sm:block" />
 
                   <CommandButton
                     label="Restart All"
@@ -267,34 +270,34 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
             </Card>
 
             {/* Services */}
-            <Card className="border border-border/80 bg-card rounded-xl shadow-sm">
-              <CardHeader className="px-5 pt-4 pb-3 border-b border-border/50">
-                <CardTitle className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/80">
+            <Card className="border border-[#173126] bg-[#0f1713] rounded-xl shadow-sm">
+              <CardHeader className="px-5 pt-4 pb-3 border-b border-[#173126]/60">
+                <CardTitle className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-[#5D7465]">
                   Services
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-5 flex flex-col gap-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground leading-none">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-[#7FA18B] leading-none">
                       Frontend
                     </p>
                     {project.frontendPort && (
-                      <p className="text-[11px] font-mono text-muted-foreground/45 mt-1 leading-none">
+                      <p className="text-[11px] font-mono text-[#5D7465] mt-1 leading-none">
                         :{project.frontendPort}
                       </p>
                     )}
                   </div>
                   {getStatusDisplay(statuses.frontend)}
                 </div>
-                <Separator className="bg-border/40" />
+                <Separator className="bg-[#173126]/60" />
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground leading-none">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-[#7FA18B] leading-none">
                       Backend
                     </p>
                     {project.backendPort && (
-                      <p className="text-[11px] font-mono text-muted-foreground/45 mt-1 leading-none">
+                      <p className="text-[11px] font-mono text-[#5D7465] mt-1 leading-none">
                         :{project.backendPort}
                       </p>
                     )}
@@ -309,14 +312,14 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
       </div>
 
       {/* Logs Panel */}
-      <section className="flex-1 min-h-0 flex flex-col border-t border-border/70">
+      <section className="flex-1 min-h-0 flex flex-col border-t border-[#173126]">
         {/* Log toolbar */}
-        <div className="flex-none h-[42px] flex items-center justify-between px-5 border-b border-border/40 bg-card/30">
+        <div className="flex-none h-[42px] flex items-center justify-between px-5 border-b border-[#173126]/50 bg-[#0b120f]/60">
           <div className="flex items-center gap-2.5">
-            <span className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/70">
+            <span className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-[#5D7465]">
               App Logs
             </span>
-            <span className="text-[10px] bg-white/[0.05] border border-white/[0.07] px-1.5 py-0.5 rounded text-muted-foreground/60 tabular-nums leading-none">
+            <span className="text-[10px] bg-[#173126]/60 border border-[#1f4132]/50 px-1.5 py-0.5 rounded text-[#5D7465] tabular-nums leading-none">
               {logs.length}
             </span>
           </div>
@@ -325,7 +328,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
               variant="ghost"
               size="sm"
               onClick={handleCopyLogs}
-              className="h-7 px-2.5 gap-1.5 text-[11px] text-muted-foreground/60 hover:text-foreground hover:bg-white/[0.05]"
+              className="h-7 px-2.5 gap-1.5 text-[11px] text-[#5D7465] hover:text-[#7FA18B] hover:bg-[#173126]/50"
             >
               <Copy className="w-3 h-3" />
               Copy
@@ -334,7 +337,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
               variant="ghost"
               size="sm"
               onClick={handleClearLogs}
-              className="h-7 px-2.5 gap-1.5 text-[11px] text-muted-foreground/60 hover:text-foreground hover:bg-white/[0.05]"
+              className="h-7 px-2.5 gap-1.5 text-[11px] text-[#5D7465] hover:text-[#7FA18B] hover:bg-[#173126]/50"
             >
               <Trash2 className="w-3 h-3" />
               Clear
@@ -345,12 +348,12 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
         {/* Log output */}
         <div
           ref={scrollRef}
-          className="flex-1 overflow-y-auto px-3 py-3 bg-black/50 font-mono text-[12px] leading-relaxed"
+          className="flex-1 overflow-y-auto px-3 py-3 bg-[#040805] font-mono text-[12px] leading-relaxed"
         >
           {logs.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center gap-1.5 select-none">
-              <span className="text-sm text-muted-foreground/30 italic">No logs yet.</span>
-              <span className="text-xs text-muted-foreground/20 italic">
+              <span className="text-sm text-[#2a4535] italic">No logs yet.</span>
+              <span className="text-xs text-[#1f3028] italic">
                 Run Pull, Install, or Start a service to see output here.
               </span>
             </div>
@@ -359,9 +362,9 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
               {logs.map((log) => (
                 <div
                   key={log.id}
-                  className="flex gap-3 hover:bg-white/[0.02] px-2 py-[3px] rounded transition-colors"
+                  className="flex gap-3 hover:bg-[#1EFF5A]/[0.025] px-2 py-[3px] rounded transition-colors"
                 >
-                  <span className="flex-none select-none text-muted-foreground/30 w-[56px] text-right">
+                  <span className="flex-none select-none text-[#2a4535] w-[56px] text-right">
                     {new Date(log.timestamp).toLocaleTimeString([], {
                       hour12: false,
                       hour: "2-digit",
@@ -374,7 +377,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                   >
                     [{log.source}]
                   </span>
-                  <span className="text-foreground/80 whitespace-pre-wrap break-all">
+                  <span className="text-[#7FA18B] whitespace-pre-wrap break-all">
                     {log.text}
                   </span>
                 </div>

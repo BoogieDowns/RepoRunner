@@ -69,85 +69,116 @@
 
 :root {
   color-scheme: dark;
-  --button-outline: rgba(255,255,255, .10);
-  --badge-outline: rgba(255,255,255, .05);
 
-  --opaque-button-border-intensity: 9;
+  /* ─── RepoRunner dark-green theme ─────────────────────────────────────── */
+  /* Raw palette (for reference):
+     bg:           #040805  → hsl(158 38% 2.5%)
+     surface:      #0b120f  → hsl(155 28% 5.7%)
+     card:         #0f1713  → hsl(155 25% 7.5%)
+     border:       #173126  → hsl(153 37% 14%)
+     border-hi:    #1f4132  → hsl(153 36% 18%)
+     accent:       #1EFF5A  → hsl(142 100% 56%)
+     accent-soft:  #27d96b  → hsl(143 73% 50%)
+     text:         #B8FFCA  → hsl(140 100% 87%)
+     text-sec:     #7FA18B  → hsl(148 14% 57%)
+     text-muted:   #5D7465  → hsl(148 11% 40%)
+     danger:       #c94b57  → hsl(354 55% 54%)
+  */
 
-  --elevate-1: rgba(255,255,255, .04);
-  --elevate-2: rgba(255,255,255, .09);
+  --opaque-button-border-intensity: 8;
+  --elevate-1: rgba(30, 255, 90, 0.03);
+  --elevate-2: rgba(30, 255, 90, 0.06);
 
-  --background: 220 16% 7%;
-  --foreground: 220 10% 92%;
-  --border: 220 10% 18%;
-  --card: 220 14% 11%;
-  --card-foreground: 220 10% 92%;
-  --card-border: 220 10% 18%;
+  /* Core */
+  --background:          158 38% 2.5%;   /* #040805 */
+  --foreground:          140 100% 87%;   /* #B8FFCA — pale mint */
 
-  --sidebar: 220 14% 11%;
-  --sidebar-foreground: 220 10% 92%;
-  --sidebar-border: 220 10% 18%;
-  --sidebar-primary: 142 70% 45%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 220 14% 18%;
-  --sidebar-accent-foreground: 220 10% 90%;
-  --sidebar-ring: 142 70% 45%;
+  /* Card / Panel surfaces */
+  --card:                155 25% 7.5%;   /* #0f1713 */
+  --card-foreground:     140 100% 87%;
+  --card-border:         153 37% 14%;    /* #173126 */
 
-  --popover: 220 14% 11%;
-  --popover-foreground: 220 10% 92%;
-  --popover-border: 220 10% 18%;
+  /* Borders */
+  --border:              153 37% 14%;    /* #173126 */
 
-  --primary: 142 70% 45%;
-  --primary-foreground: 0 0% 100%;
+  /* Popover */
+  --popover:             155 25% 7.5%;
+  --popover-foreground:  140 100% 87%;
+  --popover-border:      153 37% 14%;
 
-  --secondary: 220 14% 18%;
-  --secondary-foreground: 220 10% 80%;
+  /* Primary — neon green accent */
+  --primary:             142 100% 56%;   /* #1EFF5A */
+  --primary-foreground:  158 38% 4%;     /* very dark for text on bright green */
 
-  --muted: 220 12% 15%;
-  --muted-foreground: 220 8% 50%;
+  /* Secondary — elevated dark surface */
+  --secondary:           155 28% 10%;    /* between card and border */
+  --secondary-foreground: 148 14% 57%;   /* #7FA18B */
 
-  --accent: 220 14% 18%;
-  --accent-foreground: 220 10% 90%;
+  /* Muted */
+  --muted:               155 25% 6%;
+  --muted-foreground:    148 11% 40%;    /* #5D7465 */
 
-  --destructive: 0 62% 50%;
+  /* Accent (same as secondary for neutral hover) */
+  --accent:              155 28% 12%;
+  --accent-foreground:   140 100% 87%;
+
+  /* Danger */
+  --destructive:         354 55% 54%;    /* #c94b57 */
   --destructive-foreground: 0 0% 100%;
 
-  --input: 220 14% 14%;
-  --ring: 142 70% 45%;
-  
-  --chart-1: 142 70% 45%;
-  --chart-2: 160 84% 39%;
+  /* Input */
+  --input:               155 28% 9%;     /* slightly lighter than card */
+
+  /* Focus ring */
+  --ring:                142 100% 56%;
+
+  /* Charts */
+  --chart-1: 142 100% 56%;
+  --chart-2: 143 73% 50%;
   --chart-3: 30 80% 55%;
   --chart-4: 280 65% 60%;
   --chart-5: 340 75% 55%;
 
+  /* Sidebar */
+  --sidebar:                    155 25% 7.5%;
+  --sidebar-foreground:         140 100% 87%;
+  --sidebar-border:             153 37% 14%;
+  --sidebar-primary:            142 100% 56%;
+  --sidebar-primary-foreground: 158 38% 4%;
+  --sidebar-accent:             155 28% 12%;
+  --sidebar-accent-foreground:  140 100% 87%;
+  --sidebar-ring:               142 100% 56%;
+
+  /* Fonts */
   --app-font-sans: 'Inter', sans-serif;
   --app-font-serif: Georgia, serif;
   --app-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  --radius: .5rem; 
+  --radius: .5rem;
 
-  --shadow-2xs: 0px 2px 0px 0px rgba(0,0,0,0.5);
-  --shadow-xs: 0px 2px 0px 0px rgba(0,0,0,0.5);
-  --shadow-sm: 0px 2px 0px 0px rgba(0,0,0,0.5), 0px 1px 2px -1px rgba(0,0,0,0.5);
-  --shadow: 0px 2px 0px 0px rgba(0,0,0,0.5), 0px 1px 2px -1px rgba(0,0,0,0.5);
-  --shadow-md: 0px 2px 0px 0px rgba(0,0,0,0.5), 0px 2px 4px -1px rgba(0,0,0,0.5);
-  --shadow-lg: 0px 2px 0px 0px rgba(0,0,0,0.5), 0px 4px 6px -1px rgba(0,0,0,0.5);
-  --shadow-xl: 0px 2px 0px 0px rgba(0,0,0,0.5), 0px 8px 10px -1px rgba(0,0,0,0.5);
-  --shadow-2xl: 0px 2px 0px 0px rgba(0,0,0,0.5);
+  /* Shadows — green-tinted */
+  --shadow-2xs: 0px 1px 3px 0px rgba(0,0,0,0.7);
+  --shadow-xs:  0px 1px 3px 0px rgba(0,0,0,0.7);
+  --shadow-sm:  0px 2px 4px 0px rgba(0,0,0,0.7), 0 0 0 1px rgba(30,255,90,0.04);
+  --shadow:     0px 2px 4px 0px rgba(0,0,0,0.7), 0 0 0 1px rgba(30,255,90,0.04);
+  --shadow-md:  0px 4px 8px 0px rgba(0,0,0,0.7), 0 0 0 1px rgba(30,255,90,0.05);
+  --shadow-lg:  0px 6px 12px 0px rgba(0,0,0,0.8), 0 0 0 1px rgba(30,255,90,0.06);
+  --shadow-xl:  0px 10px 20px 0px rgba(0,0,0,0.8), 0 0 0 1px rgba(30,255,90,0.06);
+  --shadow-2xl: 0px 10px 20px 0px rgba(0,0,0,0.8);
   --tracking-normal: 0em;
   --spacing: 0.25rem;
 
+  /* Computed border variants */
   --sidebar-primary-border: hsl(from hsl(var(--sidebar-primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
-  --sidebar-accent-border: hsl(from hsl(var(--sidebar-accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
-  --primary-border: hsl(from hsl(var(--primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
-  --secondary-border: hsl(from hsl(var(--secondary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
-  --muted-border: hsl(from hsl(var(--muted)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
-  --accent-border: hsl(from hsl(var(--accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --sidebar-accent-border:  hsl(from hsl(var(--sidebar-accent))  h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --primary-border:     hsl(from hsl(var(--primary))     h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --secondary-border:   hsl(from hsl(var(--secondary))   h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --muted-border:       hsl(from hsl(var(--muted))       h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --accent-border:      hsl(from hsl(var(--accent))      h s calc(l + var(--opaque-button-border-intensity)) / alpha);
   --destructive-border: hsl(from hsl(var(--destructive)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
 }
 
 .dark {
-  /* No need to duplicate, :root is dark already */
+  /* :root is already dark */
 }
 
 @layer base {
