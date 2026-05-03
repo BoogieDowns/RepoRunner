@@ -1,0 +1,249 @@
+RepoRunner is now functionally working well. The core flows are working, including the important start/stop/restart loops.
+
+Now do a **UI refinement pass only**.
+
+## Goal
+
+Make RepoRunner feel more polished, branded, and visually cohesive while keeping it simple and practical.
+
+This is **not** a redesign.
+Do **not** change the app architecture.
+Do **not** change process management.
+Do **not** change the service lifecycle logic.
+Do **not** add new product features.
+
+The app should still feel like a simple desktop control panel for noob AI builders, not an IDE.
+
+## Design direction
+
+Polish the current dark UI so it feels:
+
+* clean
+* modern
+* slightly more premium
+* friendly
+* less harsh/basic
+* more like a small real product
+
+Keep the dark theme, but improve the color system.
+
+## Main visual requests
+
+### 1. Refine the color palette
+
+The current blue and red feel a bit too raw/basic.
+
+Please introduce a more cohesive palette with **green as a key accent color**.
+
+Suggested direction:
+
+* Background: very dark charcoal / near-black
+* Cards/panels: slightly lifted dark gray
+* Borders: subtle muted gray
+* Primary accent: green
+* Secondary accent: muted blue or slate-blue
+* Danger: softer refined red, not overly bright
+* Warning/starting: amber/gold
+* Running/success: green
+* Text: off-white / soft gray
+* Muted text: lower-contrast gray
+
+The goal is not “make everything green.”
+The goal is to make the product feel more balanced and less default/basic.
+
+### 2. Add a simple placeholder RepoRunner logo/mark
+
+Add a small placeholder logo in the **top-left corner** next to the RepoRunner name.
+
+Keep it simple and geometric.
+Do not overdesign it.
+
+Possible directions:
+
+* simple rounded square with a stylized “R”
+* simple arrow/runner/repo-inspired glyph
+* small abstract icon suggesting motion / flow / run
+* minimalist terminal-free brand mark
+
+It should work as a lightweight placeholder brand icon, not a final brand identity.
+
+Please pair it with the wordmark:
+
+```text
+RepoRunner
+```
+
+Make the wordmark cleaner and more intentional than the current plain text.
+
+### 3. Improve the top bar/header
+
+The top bar currently feels a bit bare/basic.
+
+Polish it so it feels more like a proper product header.
+
+Suggested structure:
+
+* left: logo + RepoRunner wordmark
+* center or left-center: current project name
+* optional small repo path beneath or beside it
+* right: service status pills and Edit Setup
+
+Make this feel cleaner and more balanced.
+The project name should stand out a bit more.
+The repo path should be secondary/muted.
+
+### 4. Refine the action cards/buttons
+
+Keep the current quick actions layout, but polish it.
+
+Requirements:
+
+* buttons should feel slightly more tactile and polished
+* use consistent sizing and spacing
+* improve hover states
+* improve disabled states
+* slightly soften corners if needed
+* primary actions should stand out clearly
+* danger action should still be obvious without looking harsh/ugly
+
+Suggested visual hierarchy:
+
+* Start Frontend / Start Backend: primary-accent treatment
+* Pull Latest / Install / Restart All / Open Preview: secondary neutral treatment
+* Stop Services: danger treatment
+
+Do not make the buttons oversized.
+Do not make the dashboard feel toy-like.
+
+### 5. Improve service status presentation
+
+The service status card is good structurally, but it could feel more refined.
+
+Make the frontend/backend status blocks cleaner and easier to scan.
+
+Show:
+
+* service name
+* configured port
+* status pill
+
+Use polished color coding:
+
+* Running = green
+* Starting / Stopping = amber
+* Failed = red
+* Stopped = neutral gray
+* Unknown = muted purple/gray if needed
+
+Make status pills feel cleaner and more branded.
+
+### 6. Improve logs panel styling
+
+The logs panel is working, but visually it can be cleaner.
+
+Please polish:
+
+* logs header
+* copy / clear controls
+* spacing
+* line readability
+* source labels
+* empty state styling
+
+Keep logs monospace.
+Keep them simple.
+Do not add filters, search, or tabs.
+
+The logs area should feel like part of the product, not an afterthought.
+
+### 7. Improve spacing and visual rhythm
+
+Please do a pass on:
+
+* padding
+* margins
+* section spacing
+* alignment
+* card balance
+* empty space distribution
+
+The UI should feel intentional and tidy.
+
+Avoid:
+
+* awkward floating elements
+* cramped controls
+* overly huge dead zones
+* inconsistent spacing between cards/buttons/text
+
+### 8. Keep setup screen consistent with dashboard polish
+
+The setup screen should visually match the refined dashboard.
+
+Please update:
+
+* the card styling
+* the button styling
+* the field styling
+* spacing/alignment
+* typography hierarchy
+
+Keep the fields exactly the same.
+Do not add new setup fields.
+
+## Important constraints
+
+Do not change the existing product scope.
+
+Do not add:
+
+* IDE/editor features
+* terminal tabs
+* charts
+* analytics
+* repo history
+* GitHub login
+* branch switching
+* clone from GitHub
+* AI debugging
+* multi-project support
+
+Do not turn this into a redesign exercise.
+
+This is a **polish pass**, not a re-architecture.
+
+## Functional safety requirement
+
+Preserve all working behavior exactly as it is now, including:
+
+* setup and save config
+* edit setup
+* pull latest
+* install
+* start frontend
+* start backend
+* stop services
+* restart all
+* open preview
+* logs
+* copy logs
+* clear logs
+* service status updates
+
+UI polish must not break functionality.
+
+## Acceptance criteria
+
+After this pass:
+
+1. RepoRunner looks more polished and branded.
+2. The color system feels more cohesive, with green included as a key accent.
+3. The top bar looks better.
+4. A small placeholder RepoRunner logo appears in the top-left.
+5. Buttons feel cleaner and more intentional.
+6. Status pills feel more polished.
+7. Logs panel feels cleaner.
+8. Setup screen matches the dashboard better.
+9. All current functionality still works exactly as before.
+
+Please keep the implementation tasteful, restrained, and practical.

@@ -19,6 +19,16 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
+function RepoRunnerLogo() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" className="flex-none">
+      <rect width="28" height="28" rx="7" fill="hsl(142 70% 45% / 0.15)" stroke="hsl(142 70% 45% / 0.4)" strokeWidth="1"/>
+      <path d="M9 8h5.5a3.5 3.5 0 0 1 0 7H9V8z" fill="hsl(142 70% 45%)" opacity="0.9"/>
+      <path d="M9 15h4l4 5" stroke="hsl(142 70% 45%)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
 interface DashboardProps {
   project: ProjectProfile;
   onEdit: () => void;
@@ -86,31 +96,38 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
     switch (status) {
       case "running": 
         return (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-green-500/10 text-green-500 text-xs font-medium border border-green-500/20">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-medium border border-emerald-500/20">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             {capitalize(status)}
           </span>
         );
       case "starting":
       case "stopping":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-yellow-500/10 text-yellow-500 text-xs font-medium border border-yellow-500/20">
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 text-xs font-medium border border-amber-500/20">
             <Loader2 className="w-3 h-3 animate-spin" />
             {capitalize(status)}
           </span>
         );
       case "failed": 
         return (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-500/10 text-red-500 text-xs font-medium border border-red-500/20">
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 text-xs font-medium border border-red-500/20">
             <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+            {capitalize(status)}
+          </span>
+        );
+      case "unknown":
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 text-xs font-medium border border-purple-500/20">
+            <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
             {capitalize(status)}
           </span>
         );
       case "stopped": 
       default: 
         return (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-muted text-muted-foreground text-xs font-medium border border-border">
-            <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50" />
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-500 text-xs font-medium border border-zinc-700">
+            <span className="w-1.5 h-1.5 rounded-full bg-zinc-600" />
             {capitalize(status || "stopped")}
           </span>
         );
@@ -121,7 +138,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
     switch (source) {
       case "git": return "text-cyan-400";
       case "install": return "text-yellow-400";
-      case "frontend": return "text-green-400";
+      case "frontend": return "text-emerald-400";
       case "backend": return "text-blue-400";
       case "system": default: return "text-muted-foreground";
     }
@@ -133,20 +150,24 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
   return (
     <div className="h-screen flex flex-col bg-background text-foreground animate-in fade-in duration-500">
       {/* Header Bar */}
-      <header className="h-[56px] flex-none border-b border-border bg-card/50 backdrop-blur flex items-center px-6">
-        <div className="flex-1 flex items-center gap-2">
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">RepoRunner</span>
-          <span className="text-muted-foreground/40 text-xs">/</span>
-          <h1 className="text-sm font-bold text-white">{project.name}</h1>
-        </div>
-        
-        <div className="flex-1 flex justify-center">
-          <span className="text-xs text-muted-foreground font-mono truncate max-w-[40ch]" title={project.repoPath}>
-            {project.repoPath}
-          </span>
+      <header className="h-[60px] flex-none border-b border-border bg-card/60 backdrop-blur flex items-center px-6">
+        <div className="flex items-center gap-4 flex-1">
+          <div className="flex items-center gap-2">
+            <RepoRunnerLogo />
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">RepoRunner</span>
+          </div>
+          
+          <div className="w-px h-6 bg-border mx-2" />
+          
+          <div className="flex items-baseline gap-3">
+            <h1 className="text-base font-bold text-white">{project.name}</h1>
+            <span className="text-xs text-muted-foreground font-mono truncate max-w-[40ch]" title={project.repoPath}>
+              {project.repoPath}
+            </span>
+          </div>
         </div>
 
-        <div className="flex-1 flex justify-end items-center gap-4">
+        <div className="flex-none flex items-center gap-4">
           <div className="flex items-center gap-2">
             {getStatusDisplay(statuses.frontend)}
             {getStatusDisplay(statuses.backend)}
@@ -164,8 +185,8 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
           
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Quick Actions Card */}
-            <Card className="lg:col-span-2 border-border/50 bg-card/50 shadow-sm">
-              <CardHeader className="py-4 border-b border-border/50">
+            <Card className="lg:col-span-2 border border-border bg-card shadow-sm rounded-xl">
+              <CardHeader className="py-4 border-b border-border/60">
                 <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="p-4 sm:p-6">
@@ -184,6 +205,9 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                     loading={actionLoading["install"]}
                     variant="outline"
                   />
+                  
+                  <div className="w-px h-6 bg-border/60 mx-1 hidden sm:block" />
+                  
                   <CommandButton
                     label="Start Frontend"
                     icon={Play}
@@ -200,7 +224,9 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                     loading={actionLoading["startBack"]}
                     variant="default"
                   />
-                  <div className="w-px h-8 bg-border/50 mx-1 hidden sm:block" />
+                  
+                  <div className="w-px h-6 bg-border/60 mx-1 hidden sm:block" />
+                  
                   <CommandButton
                     label="Stop Services"
                     icon={SquareSquare}
@@ -209,7 +235,9 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                     loading={actionLoading["stop"]}
                     variant="destructive"
                   />
-                  <div className="w-px h-8 bg-border/50 mx-1 hidden sm:block" />
+                  
+                  <div className="w-px h-6 bg-border/60 mx-1 hidden sm:block" />
+                  
                   <CommandButton
                     label="Restart All"
                     icon={RotateCw}
@@ -229,8 +257,8 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
             </Card>
 
             {/* Status Card */}
-            <Card className="border-border/50 bg-card/50 shadow-sm">
-              <CardHeader className="py-4 border-b border-border/50">
+            <Card className="border border-border bg-card shadow-sm rounded-xl">
+              <CardHeader className="py-4 border-b border-border/60">
                 <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Services</CardTitle>
               </CardHeader>
               <CardContent className="p-4 sm:p-6 flex flex-col gap-4">
@@ -238,17 +266,17 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                   <div className="flex flex-col">
                     <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Frontend</span>
                     {project.frontendPort && (
-                      <span className="text-[11px] font-mono text-muted-foreground/60 mt-0.5">Port {project.frontendPort}</span>
+                      <span className="text-xs font-mono text-muted-foreground/60 mt-0.5">Port {project.frontendPort}</span>
                     )}
                   </div>
                   {getStatusDisplay(statuses.frontend)}
                 </div>
-                <Separator className="bg-border/50" />
+                <Separator className="bg-border/60" />
                 <div className="flex items-center justify-between">
                   <div className="flex flex-col">
                     <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Backend</span>
                     {project.backendPort && (
-                      <span className="text-[11px] font-mono text-muted-foreground/60 mt-0.5">Port {project.backendPort}</span>
+                      <span className="text-xs font-mono text-muted-foreground/60 mt-0.5">Port {project.backendPort}</span>
                     )}
                   </div>
                   {getStatusDisplay(statuses.backend)}
@@ -262,10 +290,10 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
 
       {/* Logs Panel */}
       <section className="flex-1 min-h-0 flex flex-col bg-black/60 border-t border-border">
-        <div className="flex-none h-10 flex items-center justify-between px-6 border-b border-border/40 bg-card/30">
+        <div className="flex-none h-10 flex items-center justify-between px-4 border-b border-border/30 bg-card/40">
           <div className="flex items-center gap-3">
             <h2 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">App Logs</h2>
-            <span className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-muted-foreground">{logs.length} lines</span>
+            <span className="text-[10px] bg-white/5 px-1.5 py-0.5 rounded text-muted-foreground">{logs.length}</span>
           </div>
           <div className="flex gap-2">
             <Button variant="ghost" size="sm" onClick={handleCopyLogs} className="h-7 text-xs text-muted-foreground hover:text-foreground">
@@ -281,24 +309,24 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
         
         <div 
           ref={scrollRef}
-          className="flex-1 overflow-y-auto p-4 sm:p-6 font-mono text-[13px] leading-relaxed break-all"
+          className="flex-1 overflow-y-auto p-4 bg-black/40 font-mono text-[12.5px] leading-relaxed break-all"
         >
           {logs.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-muted-foreground/40 italic gap-1">
+            <div className="h-full flex flex-col items-center justify-center text-muted-foreground/40 italic gap-1 text-[13px]">
               <span>No logs yet.</span>
               <span>Run Pull, Install, or Start a service to see output here.</span>
             </div>
           ) : (
             <div className="flex flex-col gap-1">
               {logs.map((log) => (
-                <div key={log.id} className="flex gap-3 hover:bg-white/5 px-2 py-0.5 rounded transition-colors group">
-                  <span className="text-muted-foreground/40 flex-none select-none w-[60px]">
+                <div key={log.id} className="flex gap-3 hover:bg-white/[0.025] px-2 py-0.5 rounded transition-colors group">
+                  <span className="text-muted-foreground/40 flex-none select-none w-[64px]">
                     {new Date(log.timestamp).toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                   </span>
-                  <span className={`font-semibold flex-none w-[80px] uppercase text-[11px] tracking-wider pt-0.5 ${getLogColor(log.source)}`}>
+                  <span className={`font-semibold flex-none w-[80px] uppercase text-[11.5px] tracking-wider pt-0.5 ${getLogColor(log.source)}`}>
                     [{log.source}]
                   </span>
-                  <span className="text-foreground/90 whitespace-pre-wrap">{log.text}</span>
+                  <span className="text-foreground/85 whitespace-pre-wrap">{log.text}</span>
                 </div>
               ))}
             </div>

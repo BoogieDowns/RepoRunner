@@ -75,7 +75,7 @@ export function SetupScreen({ onSave }: { onSave: (profile: ProjectProfile) => v
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4 sm:p-8 bg-background animate-in fade-in duration-500">
-      <Card className="w-full max-w-2xl border-border/50 shadow-xl bg-card/50 backdrop-blur">
+      <Card className="w-full max-w-2xl border-border bg-card shadow-lg rounded-xl">
         <CardHeader className="space-y-2 pb-6 pt-8 px-8 sm:px-10">
           <CardTitle className="text-2xl font-bold tracking-tight">Setup RepoRunner</CardTitle>
           <CardDescription className="text-sm text-muted-foreground">
@@ -92,9 +92,13 @@ export function SetupScreen({ onSave }: { onSave: (profile: ProjectProfile) => v
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Project Name</FormLabel>
+                      <FormLabel className="text-sm font-medium text-foreground">Project Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="My Cool App" {...field} />
+                        <Input 
+                          placeholder="My Cool App" 
+                          {...field} 
+                          className="bg-input border-border text-foreground placeholder:text-muted-foreground/50 focus-visible:ring-ring"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -106,10 +110,15 @@ export function SetupScreen({ onSave }: { onSave: (profile: ProjectProfile) => v
                   name="repoPath"
                   render={({ field }) => (
                     <FormItem className="flex flex-col justify-end">
-                      <FormLabel>Local Repository Folder</FormLabel>
+                      <FormLabel className="text-sm font-medium text-foreground">Local Repository Folder</FormLabel>
                       <div className="flex gap-2">
                         <FormControl>
-                          <Input placeholder="/path/to/project" readOnly {...field} className="font-mono text-sm flex-1" />
+                          <Input 
+                            placeholder="/path/to/project" 
+                            readOnly 
+                            {...field} 
+                            className="font-mono text-sm flex-1 bg-input border-border text-foreground placeholder:text-muted-foreground/50 focus-visible:ring-ring" 
+                          />
                         </FormControl>
                         <Button 
                           type="button" 
@@ -122,7 +131,7 @@ export function SetupScreen({ onSave }: { onSave: (profile: ProjectProfile) => v
                           Choose Folder
                         </Button>
                       </div>
-                      <FormDescription className="text-[11px]">The folder where your project lives locally.</FormDescription>
+                      <FormDescription className="text-xs text-muted-foreground">The folder where your project lives locally.</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -135,11 +144,14 @@ export function SetupScreen({ onSave }: { onSave: (profile: ProjectProfile) => v
                   name="installCommand"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Install Command</FormLabel>
+                      <FormLabel className="text-sm font-medium text-foreground">Install Command</FormLabel>
                       <FormControl>
-                        <Input {...field} className="font-mono text-sm" />
+                        <Input 
+                          {...field} 
+                          className="font-mono text-sm bg-input border-border text-foreground placeholder:text-muted-foreground/50 focus-visible:ring-ring" 
+                        />
                       </FormControl>
-                      <FormDescription className="text-[11px]">Runs once to install dependencies (e.g. npm install).</FormDescription>
+                      <FormDescription className="text-xs text-muted-foreground">Runs once to install dependencies (e.g. npm install).</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -150,11 +162,14 @@ export function SetupScreen({ onSave }: { onSave: (profile: ProjectProfile) => v
                   name="frontendCommand"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Frontend Command</FormLabel>
+                      <FormLabel className="text-sm font-medium text-foreground">Frontend Command</FormLabel>
                       <FormControl>
-                        <Input {...field} className="font-mono text-sm" />
+                        <Input 
+                          {...field} 
+                          className="font-mono text-sm bg-input border-border text-foreground placeholder:text-muted-foreground/50 focus-visible:ring-ring" 
+                        />
                       </FormControl>
-                      <FormDescription className="text-[11px]">Starts your frontend dev server (e.g. npm run dev).</FormDescription>
+                      <FormDescription className="text-xs text-muted-foreground">Starts your frontend dev server (e.g. npm run dev).</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -165,11 +180,14 @@ export function SetupScreen({ onSave }: { onSave: (profile: ProjectProfile) => v
                   name="backendCommand"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Backend Command</FormLabel>
+                      <FormLabel className="text-sm font-medium text-foreground">Backend Command</FormLabel>
                       <FormControl>
-                        <Input {...field} className="font-mono text-sm" />
+                        <Input 
+                          {...field} 
+                          className="font-mono text-sm bg-input border-border text-foreground placeholder:text-muted-foreground/50 focus-visible:ring-ring" 
+                        />
                       </FormControl>
-                      <FormDescription className="text-[11px]">Starts your backend server (e.g. node server.js).</FormDescription>
+                      <FormDescription className="text-xs text-muted-foreground">Starts your backend server (e.g. node server.js).</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -182,11 +200,14 @@ export function SetupScreen({ onSave }: { onSave: (profile: ProjectProfile) => v
                   name="previewUrl"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Preview URL</FormLabel>
+                      <FormLabel className="text-sm font-medium text-foreground">Preview URL</FormLabel>
                       <FormControl>
-                        <Input {...field} className="font-mono text-sm" />
+                        <Input 
+                          {...field} 
+                          className="font-mono text-sm bg-input border-border text-foreground placeholder:text-muted-foreground/50 focus-visible:ring-ring" 
+                        />
                       </FormControl>
-                      <FormDescription className="text-[11px]">The URL to open when you click Open Preview.</FormDescription>
+                      <FormDescription className="text-xs text-muted-foreground">The URL to open when you click Open Preview.</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -197,9 +218,14 @@ export function SetupScreen({ onSave }: { onSave: (profile: ProjectProfile) => v
                   name="frontendPort"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Frontend Port (Optional)</FormLabel>
+                      <FormLabel className="text-sm font-medium text-foreground">Frontend Port (Optional)</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} value={field.value || ""} className="font-mono text-sm" />
+                        <Input 
+                          type="number" 
+                          {...field} 
+                          value={field.value || ""} 
+                          className="font-mono text-sm bg-input border-border text-foreground placeholder:text-muted-foreground/50 focus-visible:ring-ring" 
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -211,9 +237,14 @@ export function SetupScreen({ onSave }: { onSave: (profile: ProjectProfile) => v
                   name="backendPort"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Backend Port (Optional)</FormLabel>
+                      <FormLabel className="text-sm font-medium text-foreground">Backend Port (Optional)</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} value={field.value || ""} className="font-mono text-sm" />
+                        <Input 
+                          type="number" 
+                          {...field} 
+                          value={field.value || ""} 
+                          className="font-mono text-sm bg-input border-border text-foreground placeholder:text-muted-foreground/50 focus-visible:ring-ring" 
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -222,7 +253,7 @@ export function SetupScreen({ onSave }: { onSave: (profile: ProjectProfile) => v
               </div>
 
               <div className="pt-6 mt-6 border-t border-border/50">
-                <Button type="submit" size="lg" className="w-full font-semibold">
+                <Button type="submit" size="lg" className="w-full font-semibold" variant="default">
                   <Save className="w-4 h-4 mr-2" />
                   Save Configuration
                   <ArrowRight className="w-4 h-4 ml-2" />

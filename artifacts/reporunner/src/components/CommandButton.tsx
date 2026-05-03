@@ -1,5 +1,6 @@
-import { LucideIcon } from "lucide-react";
+import { LucideIcon, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface CommandButtonProps {
   label: string;
@@ -21,18 +22,22 @@ export function CommandButton({
   return (
     <Button
       variant={variant}
+      size="sm"
       onClick={onClick}
       disabled={disabled || loading}
       data-testid={`button-${label.toLowerCase().replace(/\s+/g, "-")}`}
-      size="sm"
-      className="flex items-center gap-2 h-9 sm:h-10 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none"
+      className={cn(
+        "flex items-center gap-1.5 h-9 px-3.5 font-medium text-sm rounded-lg transition-all duration-150",
+        "disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none",
+        "hover:-translate-y-px active:translate-y-0"
+      )}
     >
       {loading ? (
-        <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+        <Loader2 className="h-4 w-4 animate-spin" />
       ) : (
         <Icon className="h-4 w-4" strokeWidth={1.5} />
       )}
-      <span className="font-medium tracking-tight text-sm">{label}</span>
+      <span>{label}</span>
     </Button>
   );
 }
