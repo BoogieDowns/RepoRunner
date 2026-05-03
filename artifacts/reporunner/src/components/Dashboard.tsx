@@ -22,43 +22,46 @@ import { Separator } from "@/components/ui/separator";
 function RepoRunnerLogo() {
   return (
     <svg
-      width="26"
-      height="26"
-      viewBox="0 0 26 26"
+      width="28"
+      height="28"
+      viewBox="0 0 28 28"
       fill="none"
       aria-hidden="true"
-      className="flex-none [filter:drop-shadow(0_0_5px_rgba(30,255,90,0.22))]"
+      style={{ filter: "drop-shadow(0 0 6px rgba(30,200,90,0.25))", flexShrink: 0 }}
     >
-      <rect
-        width="26"
-        height="26"
-        rx="6"
-        fill="rgba(30,255,90,0.08)"
-        stroke="rgba(30,255,90,0.36)"
-        strokeWidth="1"
-      />
-      {/* Vertical stem — repo / source */}
+      <defs>
+        {/* Badge background — dark metallic */}
+        <linearGradient id="rr-badge" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#18281e" />
+          <stop offset="100%" stopColor="#0b1610" />
+        </linearGradient>
+        {/* Badge border — top-lit chrome green */}
+        <linearGradient id="rr-border" x1="0" y1="0" x2="0" y2="28" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="rgba(120,230,160,0.55)" />
+          <stop offset="100%" stopColor="rgba(18,80,40,0.28)" />
+        </linearGradient>
+        {/* R mark — chrome green gradient */}
+        <linearGradient id="rr-mark" x1="0" y1="7" x2="0" y2="22" gradientUnits="userSpaceOnUse">
+          <stop offset="0%"   stopColor="#b8ffd0" />
+          <stop offset="38%"  stopColor="#1EFF5A" />
+          <stop offset="100%" stopColor="#0b7a30" />
+        </linearGradient>
+      </defs>
+
+      {/* Badge face */}
+      <rect width="28" height="28" rx="7" fill="url(#rr-badge)" />
+      {/* Badge border */}
+      <rect width="28" height="28" rx="7" fill="none" stroke="url(#rr-border)" strokeWidth="1" />
+      {/* Top sheen — chrome highlight */}
+      <rect x="1.5" y="1.5" width="25" height="7" rx="5.5" fill="rgba(255,255,255,0.035)" />
+
+      {/* R lettermark: vertical bar + bowl + forward leg */}
       <path
-        d="M8 6v14"
-        stroke="#1EFF5A"
+        d="M8 7v14 M8 7h7.5a4 4 0 0 1 0 8H8 M14 15l6.5 6.5"
+        stroke="url(#rr-mark)"
         strokeWidth="2"
         strokeLinecap="round"
-      />
-      {/* Horizontal bar — pipeline / run */}
-      <path
-        d="M8 13h9"
-        stroke="#1EFF5A"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-      {/* Arrowhead — execute / forward motion */}
-      <path
-        d="M13 9.5l4 3.5-4 3.5"
-        stroke="#1EFF5A"
-        strokeWidth="1.8"
-        strokeLinecap="round"
         strokeLinejoin="round"
-        fill="none"
       />
     </svg>
   );
@@ -215,10 +218,18 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
           <RepoRunnerLogo />
           <span
             className="select-none leading-none"
-            style={{ fontFamily: "'IBM Plex Sans', sans-serif", fontSize: "13px", letterSpacing: "0.01em" }}
+            style={{
+              fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
+              fontSize: "13.5px",
+              fontWeight: 700,
+              letterSpacing: "0.04em",
+              background: "linear-gradient(158deg, #9de8b8 0%, #2cb865 45%, #1a6040 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+            }}
           >
-            <span style={{ fontWeight: 400, color: "#4d7060" }}>Repo</span>
-            <span style={{ fontWeight: 600, color: "#6a9278" }}>Runner</span>
+            RepoRunner
           </span>
         </div>
 

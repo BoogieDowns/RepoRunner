@@ -1,0 +1,290 @@
+RepoRunner is working well, but the current top-left branding still looks weak.
+
+The current logo/wordmark feels too placeholder and is now one of the main things letting the UI down.
+
+Please do one final **branding refinement pass** focused mainly on:
+
+1. the **top-left logo mark**
+2. the **RepoRunner wordmark**
+3. the **font choice / top-level typography feel**
+
+Use the current UI and screenshot as context.
+
+## Important constraints
+
+Do **not** redesign the app.
+Do **not** change layout significantly.
+Do **not** change functionality.
+Do **not** change process management, IPC, service lifecycle, logs behavior, or workflow.
+
+This is a **top-left branding + typography refinement pass only**.
+
+---
+
+## Goal
+
+Replace the current placeholder-feeling logo/brand treatment with something that looks noticeably better.
+
+The desired vibe is:
+
+* dark
+* polished
+* premium
+* techy
+* slightly chrome / metallic
+* slightly gamer-adjacent
+* still practical and product-like
+
+Important:
+Do **not** make it look like an esports logo, a gaming clan logo, or a cheesy RGB gamer logo.
+
+Think more:
+
+> premium chrome-tech utility tool
+
+rather than:
+
+> loud gaming brand
+
+---
+
+## 1. Improve the logo mark
+
+The current logo mark in the top-left is not working well enough.
+
+Please replace or refine it into a better simple brand mark for RepoRunner.
+
+### Desired logo direction
+
+Create a logo mark that feels:
+
+* cleaner
+* more confident
+* more intentional
+* more premium
+* more distinctive at small size
+
+Good idea directions:
+
+* a stylized **R**
+* an abstract **run / forward-motion / execution** symbol
+* a subtle **repo / flow / path** inspired mark
+* a minimal app-icon style symbol
+
+### Visual style direction
+
+I want a subtle **chrome-tech** influence.
+
+That means:
+
+* slight metallic / chromed feel is okay
+* subtle silver/steel highlights are okay
+* very restrained sheen or depth is okay
+* a small green edge glow or green accent is okay
+
+But:
+
+* do not make it overly 3D
+* do not make it look cheap
+* do not make it cartoonish
+* do not make it look like a gaming badge/emblem
+
+### Best balance
+
+Aim for something like:
+
+* dark green theme-compatible
+* slightly metallic
+* crisp
+* compact
+* premium
+* readable at header size
+
+A simple excellent mark is better than an ambitious messy one.
+
+---
+
+## 2. Refine the wordmark
+
+Please improve the “RepoRunner” wordmark next to the logo.
+
+The current wordmark should feel more polished and intentional.
+
+Please refine:
+
+* font choice
+* weight
+* letter spacing
+* color
+* spacing relative to logo
+* overall header balance
+
+The wordmark should feel like a real product name, not just default text.
+
+Do not make it decorative.
+Do not make it overly futuristic.
+Keep it clean.
+
+If helpful, the wordmark can lean slightly more premium/technical.
+
+---
+
+## 3. Improve the font choice across the app
+
+The font still needs improvement.
+
+Please choose a better font system for the app that supports the overall look.
+
+### Desired font feel
+
+The font should feel:
+
+* modern
+* clean
+* crisp
+* premium
+* readable
+* technical but not cold
+* good in dark UI
+* good at small sizes
+
+### Good candidates
+
+Please use a better modern UI font such as:
+
+* **Geist**
+* **Inter**
+* **Plus Jakarta Sans**
+* **IBM Plex Sans**
+
+Use your best judgment.
+
+My preference is for something that feels modern and premium, not generic.
+
+### Font structure
+
+Use:
+
+* a clean UI font for the interface
+* monospace only for logs / technical text
+
+For logs, keep or improve the monospace font, something like:
+
+* JetBrains Mono
+* IBM Plex Mono
+* ui-monospace fallback
+
+Do not use monospace for the whole app.
+
+---
+
+## 4. Apply the font refinement where it matters most
+
+After choosing the font, refine these areas:
+
+* RepoRunner wordmark
+* project name
+* repo path
+* section labels (`QUICK ACTIONS`, `SERVICES`, `APP LOGS`)
+* button labels
+* service names
+* port text
+* setup title/subtitle
+* form labels
+* helper text
+* empty state text
+
+Goal:
+
+* cleaner hierarchy
+* better readability
+* more premium feel
+* less prototype / default-looking
+
+---
+
+## 5. Keep the existing green theme
+
+Keep the current dark green theme overall.
+
+Do not undo the current theme work.
+
+The new branding should fit inside it.
+
+A good direction is:
+
+* dark green base
+* pale green / muted green text
+* subtle chrome/silver influence in the logo only
+* restrained soft glow if helpful
+
+Do not suddenly make the whole app metallic.
+Only the branding may carry a small chrome-tech flavor.
+
+---
+
+## 6. Do not overdo the “gamer” idea
+
+This is important.
+
+I mentioned a “chromed out gamer vibe,” but please interpret that carefully.
+
+What I want is:
+
+* a bit more attitude
+* a bit more edge
+* a bit more premium flair
+
+What I do **not** want is:
+
+* neon RGB everywhere
+* aggressive cyberpunk styling
+* esports branding
+* giant chrome gradients
+* loud or tacky gamer visuals
+
+Please keep it tasteful and product-appropriate.
+
+---
+
+## 7. Functional safety
+
+Do not break or change:
+
+* setup flow
+* edit setup flow
+* close X behavior
+* save configuration
+* pull latest
+* install
+* start frontend
+* start backend
+* stop services
+* restart all
+* open preview
+* logs
+* copy logs
+* clear logs
+* orange install label
+* orange starting/stopping pills
+* green running pills
+* layout structure
+
+Do not add new features.
+
+---
+
+## Acceptance criteria
+
+After this pass:
+
+1. The top-left logo looks noticeably better and less placeholder.
+2. The top-left branding feels more polished.
+3. The RepoRunner wordmark looks stronger.
+4. The font feels more premium and modern.
+5. The overall UI still feels clean and product-like.
+6. The branding has a subtle chrome-tech edge without becoming cheesy.
+7. The dark green theme is preserved.
+8. No functionality is changed or broken.
+
+Please use strong design judgment here. If the chrome influence makes it worse, keep it subtler and prioritize a better clean logo over forcing the chrome idea.
