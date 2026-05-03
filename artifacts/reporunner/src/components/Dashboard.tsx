@@ -127,8 +127,8 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
       case "starting":
         return (
           <span
-            className="inline-flex items-center gap-1.5 px-2.5 py-[5px] rounded-full leading-none text-xs font-medium
-              bg-[#c6a84a]/[0.12] text-[#d4b558] border border-[#c6a84a]/25"
+            className="inline-flex items-center gap-1.5 px-2.5 py-[5px] rounded-full leading-none text-xs font-medium"
+            style={{ background: "rgba(255,159,28,0.12)", color: "#ff9f1c", border: "1px solid rgba(255,159,28,0.45)" }}
           >
             <Loader2 className="w-3 h-3 animate-spin flex-none" />
             Starting
@@ -137,8 +137,8 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
       case "stopping":
         return (
           <span
-            className="inline-flex items-center gap-1.5 px-2.5 py-[5px] rounded-full leading-none text-xs font-medium
-              bg-[#c6a84a]/[0.08] text-[#c6a84a]/90 border border-[#c6a84a]/20"
+            className="inline-flex items-center gap-1.5 px-2.5 py-[5px] rounded-full leading-none text-xs font-medium"
+            style={{ background: "rgba(255,159,28,0.09)", color: "#ff9f1c", border: "1px solid rgba(255,159,28,0.35)" }}
           >
             <Loader2 className="w-3 h-3 animate-spin flex-none" />
             Stopping
@@ -182,7 +182,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
   const getLogSourceColor = (source: string) => {
     switch (source) {
       case "git":      return "text-cyan-400/75";
-      case "install":  return "text-[#c6a84a]/90";
+      case "install":  return "text-[#ff9f1c]";
       case "frontend": return "text-[#1EFF5A]/85";
       case "backend":  return "text-blue-400/75";
       case "system":
