@@ -1,0 +1,145 @@
+RepoRunner’s meteor effect is close, but the lifecycle behavior still needs one precise fix.
+
+Do **not** redesign the UI.
+Do **not** change layout.
+Do **not** change app functionality.
+Do **not** change cards, logs, modal, buttons, setup behavior, IPC, or process logic.
+
+This is only about the red meteor animation lifecycle.
+
+## Current problem
+
+The meteors no longer pause when they appear, which is good.
+
+But they still seem to appear around their normal visible positions instead of starting naturally from **above the viewport**.
+
+Also, when I click **Stop Services**, some meteors do not properly finish/clear in a predictable way.
+
+## Desired behavior
+
+The meteor system should work like a real stream:
+
+```text
+When active:
+Spawn meteors above the visible screen.
+Each meteor falls downward through the interface.
+Each meteor fades out naturally near the lower area.
+
+When inactive:
+Stop spawning new meteors.
+Existing meteors keep falling.
+Existing meteors are removed only after they finish their fall/fade.
+```
+
+## Required fix
+
+### 1. Spawn meteors above the viewport
+
+Every newly created meteor should begin above the visible screen, not already visible in the dashboard area.
+
+For example, its starting Y position should be something like:
+
+```text
+top: -120px
+top: -180px
+translateY(-100px)
+```
+
+Use whatever implementation fits the existing code, but the visual result must be:
+
+* meteor starts off-screen above the app
+* meteor enters the visible area already moving
+* no meteor appears mid-screen at spawn time
+
+### 2. Animate through the full app height
+
+Each meteor should travel far enough to pass through the dashboard area and into the logs/terminal area before fading.
+
+The animation should cover roughly:
+
+```text
+from above viewport
+to below the visible fade zone / lower app area
+```
+
+Not just a short travel inside the top section.
+
+### 3. Remove meteors after completion
+
+Each meteor should be cleaned up only after its animation finishes.
+
+Do not remove it early.
+Do not freeze it.
+Do not set it invisible mid-animation.
+
+### 4. Stop means stop spawning, not stop moving
+
+When services stop:
+
+* immediately stop creating new meteors
+* do not pause existing meteor animations
+* do not kill existing meteors instantly
+* let the current meteors finish falling and fade out
+* then remove them
+
+This means the meteor container can remain mounted briefly after stopping until the last active meteor has completed.
+
+### 5. Avoid persistent orphan meteors
+
+After Stop Services has completed and all meteor animations have finished:
+
+* no meteors should remain stuck
+* no invisible animation elements should pile up
+* no new meteors should spawn until a service starts again
+
+## Density behavior
+
+Please also tune density based on service state:
+
+### One service running
+
+Use a light meteor stream:
+
+* sparse
+* atmospheric
+* occasional streaks
+
+### Both frontend and backend running
+
+Use a slightly more active stream:
+
+* a few more streaks
+* still tasteful
+* not busy or distracting
+
+### No services running
+
+No new meteors should spawn.
+Only existing meteors should finish their fall and disappear.
+
+## Preserve current visual style
+
+Keep:
+
+* bright red meteor head
+* trailing red tail
+* cinematic black/red look
+* subtle grain/background
+* fade into lower terminal/logs region
+
+Do not revert to plain vertical lines.
+
+## Acceptance criteria
+
+After this fix:
+
+1. New meteors visibly enter from above the top of the app/screen.
+2. Meteors no longer spawn already visible in the dashboard area.
+3. Meteors travel down through the app and fade naturally.
+4. Clicking Stop Services stops new meteors from spawning.
+5. Existing meteors continue falling after Stop Services.
+6. Existing meteors disappear only after completing their animation.
+7. No meteors remain stuck after stopping.
+8. One running service creates a sparse stream.
+9. Two running services creates a slightly more active stream.
+10. No other UI or functionality changes are made.

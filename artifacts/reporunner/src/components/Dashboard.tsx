@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Download,
   Package,
@@ -21,55 +21,121 @@ import { Separator } from "@/components/ui/separator";
 
 /* ─── Ambient Background ──────────────────────────────────────────────────── */
 
-const LINE_CONFIGS = [
-  { left: 7,  delay: 0.0, dur: 5.2, h: 44, op: 0.50 },
-  { left: 15, delay: 3.1, dur: 7.4, h: 32, op: 0.30 },
-  { left: 23, delay: 1.4, dur: 6.0, h: 52, op: 0.58 },
-  { left: 34, delay: 4.8, dur: 5.7, h: 36, op: 0.40 },
-  { left: 44, delay: 2.2, dur: 6.8, h: 60, op: 0.55 },
-  { left: 53, delay: 0.6, dur: 5.4, h: 38, op: 0.35 },
-  { left: 62, delay: 3.9, dur: 7.1, h: 48, op: 0.62 },
-  { left: 71, delay: 1.8, dur: 5.9, h: 35, op: 0.38 },
-  { left: 80, delay: 5.2, dur: 6.3, h: 54, op: 0.48 },
-  { left: 88, delay: 2.7, dur: 4.8, h: 40, op: 0.42 },
-];
+interface MeteorDef {
+  id:   number;
+  left: number;  // % from left edge
+  dur:  number;  // fall duration (seconds)
+  h:    number;  // streak height (vh)
+  op:   number;  // base opacity
+}
 
-const EXTRA_LINES = [
-  { left: 19, delay: 1.1, dur: 6.6, h: 46, op: 0.52 },
-  { left: 40, delay: 3.5, dur: 5.2, h: 34, op: 0.36 },
-  { left: 76, delay: 0.9, dur: 6.9, h: 56, op: 0.60 },
-];
+/**
+ * A single meteor streak.
+ * Spawns at top: -32vh (above viewport), plays one full fall, then calls onDone.
+ * The parent removes it from state — no orphan elements.
+ */
+function MeteorLine({ id, left, dur, h, op, onDone }: MeteorDef & { onDone: (id: number) => void }) {
+  return (
+    <div
+      style={{
+        position: "absolute",
+        top: "-32vh",
+        left: `${left}%`,
+        width: "3px",
+        height: `${h}vh`,
+        transform: "translateX(-50%)",
+        animationName: "rr-fall",
+        animationDuration: `${dur}s`,
+        animationTimingFunction: "linear",
+        animationIterationCount: 1,
+        animationFillMode: "forwards",
+      }}
+      onAnimationEnd={() => onDone(id)}
+    >
+      {/* Tail — fades in gradually from top, brightens toward head */}
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: "1px",
+          width: "1px",
+          height: "100%",
+          background: `linear-gradient(to bottom,
+            transparent 0%,
+            rgba(140,10,10,${op * 0.03}) 10%,
+            rgba(158,14,14,${op * 0.12}) 32%,
+            rgba(188,24,24,${op * 0.34}) 58%,
+            rgba(210,38,38,${op * 0.64}) 80%,
+            rgba(224,45,45,${op * 0.88}) 100%
+          )`,
+        }}
+      />
+      {/* Head — bright leading point with glow */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: "0px",
+          width: "3px",
+          height: "11px",
+          background: `linear-gradient(to bottom,
+            rgba(210,40,40,${op * 0.80}),
+            rgba(255,82,82,${op * 0.97}),
+            rgba(255,115,115,${op * 0.50})
+          )`,
+          boxShadow: `0 0 5px 1px rgba(255,72,72,${op * 0.30})`,
+          borderRadius: "1px 1px 2px 2px",
+        }}
+      />
+    </div>
+  );
+}
 
 function AmbientBackground({ anyRunning, bothRunning }: { anyRunning: boolean; bothRunning: boolean }) {
-  /*
-   * Meteor lifecycle management:
-   *   ON  → meteorsLive=true  immediately, negative delays = already mid-fall on first frame
-   *   OFF → grace period (> longest cycle: 7.4s) lets every meteor complete its natural descent
-   *          and return to top:-32vh (invisible) before we kill the animation
-   */
-  const [meteorsLive, setMeteorsLive] = useState(anyRunning);
-  const stopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const wasLiveRef   = useRef(anyRunning);
+  const [meteors, setMeteors]   = useState<MeteorDef[]>([]);
+  const spawnerRef    = useRef<ReturnType<typeof setInterval> | null>(null);
+  const idRef         = useRef(0);
+  const wasRunningRef = useRef(false);
+
+  /* Stable callback: removes one meteor by id after its animation ends */
+  const removeMeteor = useCallback((id: number) => {
+    setMeteors(prev => prev.filter(m => m.id !== id));
+  }, []);
+
+  /* Stable callback: creates one new meteor with randomised properties */
+  const spawnMeteor = useCallback(() => {
+    setMeteors(prev => {
+      const id   = ++idRef.current;
+      const left = 5   + Math.random() * 87;    // 5–92 %
+      const dur  = 4.8 + Math.random() * 2.8;  // 4.8–7.6 s
+      const h    = 32  + Math.random() * 26;   // 32–58 vh
+      const op   = 0.28 + Math.random() * 0.36; // 0.28–0.64
+      return [...prev, { id, left, dur, h, op }];
+    });
+  }, []);
 
   useEffect(() => {
-    if (anyRunning) {
-      if (stopTimerRef.current) { clearTimeout(stopTimerRef.current); stopTimerRef.current = null; }
-      setMeteorsLive(true);
-      wasLiveRef.current = true;
-    } else {
-      if (wasLiveRef.current) {
-        // Give every meteor time to finish its current fall and loop back above-viewport
-        stopTimerRef.current = setTimeout(() => {
-          setMeteorsLive(false);
-          wasLiveRef.current = false;
-          stopTimerRef.current = null;
-        }, 8600); // safely above the longest dur (7.4s)
-      }
-    }
-    return () => { if (stopTimerRef.current) clearTimeout(stopTimerRef.current); };
-  }, [anyRunning]);
+    /* Clear any running spawner before reconfiguring */
+    if (spawnerRef.current) { clearInterval(spawnerRef.current); spawnerRef.current = null; }
 
-  const lines = bothRunning ? [...LINE_CONFIGS, ...EXTRA_LINES] : LINE_CONFIGS;
+    if (anyRunning) {
+      /* Initial burst — only on first activation, not on density change */
+      if (!wasRunningRef.current) {
+        const count = bothRunning ? 5 : 3;
+        for (let i = 0; i < count; i++) setTimeout(spawnMeteor, i * 380);
+      }
+      wasRunningRef.current = true;
+
+      /* Ongoing stream: sparser for 1 service, slightly denser for 2 */
+      const interval = bothRunning ? 1600 : 2600;
+      spawnerRef.current = setInterval(spawnMeteor, interval);
+    } else {
+      wasRunningRef.current = false;
+      /* No spawner — existing meteors self-remove via onAnimationEnd / removeMeteor */
+    }
+
+    return () => { if (spawnerRef.current) { clearInterval(spawnerRef.current); spawnerRef.current = null; } };
+  }, [anyRunning, bothRunning, spawnMeteor]);
 
   const moonBorder = anyRunning
     ? bothRunning ? "rgba(175,25,25,0.20)" : "rgba(155,20,20,0.13)"
@@ -91,7 +157,6 @@ function AmbientBackground({ anyRunning, bothRunning }: { anyRunning: boolean; b
         overflow: "hidden",
         pointerEvents: "none",
         zIndex: 0,
-        /* Vertical dissolve — full intensity top→mid, fades into terminal zone */
         WebkitMaskImage: "linear-gradient(to bottom, black 0%, black 46%, rgba(0,0,0,0.55) 65%, rgba(0,0,0,0.18) 84%, rgba(0,0,0,0.06) 100%)",
         maskImage:        "linear-gradient(to bottom, black 0%, black 46%, rgba(0,0,0,0.55) 65%, rgba(0,0,0,0.18) 84%, rgba(0,0,0,0.06) 100%)",
       }}
@@ -139,69 +204,10 @@ function AmbientBackground({ anyRunning, bothRunning }: { anyRunning: boolean; b
         }}
       />
 
-      {/* Falling red lines — meteor streak: bright head + trailing tail */}
-      {lines.map((line, i) => {
-        const op = line.op;
-        /*
-         * Negative delay = meteor is already mid-fall the moment the animation starts.
-         * e.g. delay:-3.1s on a 7.4s cycle → starts 3.1s into the fall (42% down).
-         * Meteors are naturally invisible above the viewport (top:-32vh, overflow:hidden)
-         * so no opacity tricks needed — they're only seen while within the container.
-         */
-        const anim = meteorsLive
-          ? `rr-fall ${line.dur}s -${line.delay}s infinite linear`
-          : "none";
-        return (
-          <div
-            key={i}
-            style={{
-              position: "absolute",
-              top: "-32vh",
-              left: `${line.left}%`,
-              width: "3px",
-              height: `${line.h}vh`,
-              transform: "translateX(-50%)",
-              animation: anim,
-            }}
-          >
-            {/* Tail — 1px, fades in from top, brightens toward the head */}
-            <div
-              style={{
-                position: "absolute",
-                top: 0,
-                left: "1px",
-                width: "1px",
-                height: "100%",
-                background: `linear-gradient(to bottom,
-                  transparent 0%,
-                  rgba(140,10,10,${op * 0.03}) 10%,
-                  rgba(158,14,14,${op * 0.12}) 32%,
-                  rgba(188,24,24,${op * 0.34}) 58%,
-                  rgba(210,38,38,${op * 0.64}) 80%,
-                  rgba(224,45,45,${op * 0.88}) 100%
-                )`,
-              }}
-            />
-            {/* Head — 3px wide, bright leading point with glow */}
-            <div
-              style={{
-                position: "absolute",
-                bottom: 0,
-                left: "0px",
-                width: "3px",
-                height: "11px",
-                background: `linear-gradient(to bottom,
-                  rgba(210,40,40,${op * 0.80}),
-                  rgba(255,82,82,${op * 0.97}),
-                  rgba(255,115,115,${op * 0.50})
-                )`,
-                boxShadow: `0 0 5px 1px rgba(255,72,72,${op * 0.30})`,
-                borderRadius: "1px 1px 2px 2px",
-              }}
-            />
-          </div>
-        );
-      })}
+      {/* Dynamic meteors — each spawns above viewport, falls once, self-removes */}
+      {meteors.map(m => (
+        <MeteorLine key={m.id} {...m} onDone={removeMeteor} />
+      ))}
     </div>
   );
 }
