@@ -321,6 +321,7 @@
   cursor: pointer;
   white-space: nowrap;
   user-select: none;
+  overflow: hidden;
   transition:
     background 0.15s ease,
     box-shadow 0.15s ease,
@@ -328,6 +329,46 @@
     color 0.15s ease,
     transform 0.1s ease,
     opacity 0.15s ease;
+}
+
+/* Angled specular reflection — simulates overhead light catching the glass */
+.btn-glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    128deg,
+    rgba(255, 255, 255, 0.13) 0%,
+    rgba(255, 255, 255, 0.07) 28%,
+    rgba(255, 255, 255, 0.02) 48%,
+    transparent 60%
+  );
+  z-index: 0;
+  transition: opacity 0.15s ease;
+}
+.btn-glass:hover:not(:disabled)::before {
+  background: linear-gradient(
+    128deg,
+    rgba(255, 255, 255, 0.19) 0%,
+    rgba(255, 255, 255, 0.10) 28%,
+    rgba(255, 255, 255, 0.03) 48%,
+    transparent 60%
+  );
+}
+.btn-glass:active:not(:disabled)::before {
+  background: linear-gradient(
+    128deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    transparent 40%
+  );
+}
+
+/* Flex content must sit above ::before */
+.btn-glass > * {
+  position: relative;
+  z-index: 1;
 }
 
 .btn-glass:disabled,
@@ -345,34 +386,34 @@
 .btn-glass-secondary {
   background: linear-gradient(
     178deg,
-    rgba(68, 58, 58, 0.72) 0%,
-    rgba(42, 34, 34, 0.80) 12%,
-    rgba(18, 14, 14, 0.90) 45%,
-    rgba(10, 8, 8, 0.94) 100%
+    rgba(72, 62, 62, 0.76) 0%,
+    rgba(44, 36, 36, 0.83) 14%,
+    rgba(18, 14, 14, 0.91) 45%,
+    rgba(10, 8, 8, 0.95) 100%
   );
-  border: 1px solid rgba(88, 72, 72, 0.38);
+  border: 1px solid rgba(100, 82, 82, 0.42);
   box-shadow:
     0 2px 6px rgba(0, 0, 0, 0.60),
     0 1px 2px rgba(0, 0, 0, 0.40),
-    inset 0 1px 0 rgba(255, 255, 255, 0.10),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.28);
-  color: #847e7c;
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.30);
+  color: #8c8482;
 }
 .btn-glass-secondary:hover:not(:disabled) {
   background: linear-gradient(
     178deg,
-    rgba(90, 74, 74, 0.78) 0%,
-    rgba(60, 48, 48, 0.84) 12%,
-    rgba(28, 20, 20, 0.92) 45%,
-    rgba(14, 10, 10, 0.96) 100%
+    rgba(96, 78, 78, 0.82) 0%,
+    rgba(64, 50, 50, 0.87) 14%,
+    rgba(28, 20, 20, 0.93) 45%,
+    rgba(14, 10, 10, 0.97) 100%
   );
-  border-color: rgba(130, 100, 100, 0.52);
+  border-color: rgba(145, 112, 112, 0.56);
   box-shadow:
     0 3px 9px rgba(0, 0, 0, 0.65),
     0 1px 3px rgba(0, 0, 0, 0.45),
-    inset 0 1px 0 rgba(255, 255, 255, 0.14),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.32);
-  color: #a89e9c;
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.34);
+  color: #b0a8a6;
 }
 .btn-glass-secondary:active:not(:disabled) {
   background: linear-gradient(
@@ -394,34 +435,34 @@
 .btn-glass-primary {
   background: linear-gradient(
     178deg,
-    rgba(90, 24, 24, 0.72) 0%,
-    rgba(62, 16, 16, 0.78) 12%,
-    rgba(20, 8, 8, 0.90) 45%,
-    rgba(10, 4, 4, 0.95) 100%
+    rgba(100, 26, 26, 0.76) 0%,
+    rgba(68, 18, 18, 0.82) 14%,
+    rgba(20, 8, 8, 0.91) 45%,
+    rgba(10, 4, 4, 0.96) 100%
   );
-  border: 1px solid rgba(204, 34, 34, 0.26);
+  border: 1px solid rgba(204, 34, 34, 0.30);
   box-shadow:
     0 2px 7px rgba(0, 0, 0, 0.60),
-    0 0 8px rgba(204, 34, 34, 0.07),
-    inset 0 1px 0 rgba(255, 130, 130, 0.17),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.32);
-  color: #c43232;
+    0 0 9px rgba(204, 34, 34, 0.09),
+    inset 0 1px 0 rgba(255, 150, 150, 0.26),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.34);
+  color: #c83535;
 }
 .btn-glass-primary:hover:not(:disabled) {
   background: linear-gradient(
     178deg,
-    rgba(118, 30, 30, 0.78) 0%,
-    rgba(82, 20, 20, 0.84) 12%,
-    rgba(30, 10, 10, 0.92) 45%,
+    rgba(132, 32, 32, 0.82) 0%,
+    rgba(90, 22, 22, 0.87) 14%,
+    rgba(30, 10, 10, 0.93) 45%,
     rgba(14, 5, 5, 0.97) 100%
   );
-  border-color: rgba(204, 34, 34, 0.50);
+  border-color: rgba(204, 34, 34, 0.55);
   box-shadow:
     0 3px 10px rgba(0, 0, 0, 0.65),
-    0 0 14px rgba(204, 34, 34, 0.14),
-    inset 0 1px 0 rgba(255, 130, 130, 0.24),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.36);
-  color: #dd3535;
+    0 0 16px rgba(204, 34, 34, 0.17),
+    inset 0 1px 0 rgba(255, 150, 150, 0.34),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.38);
+  color: #e03838;
 }
 .btn-glass-primary:active:not(:disabled) {
   background: linear-gradient(
@@ -444,34 +485,34 @@
 .btn-glass-danger {
   background: linear-gradient(
     178deg,
-    rgba(130, 18, 18, 0.70) 0%,
-    rgba(90, 12, 12, 0.78) 12%,
-    rgba(44, 8, 8, 0.90) 40%,
-    rgba(20, 4, 4, 0.96) 100%
+    rgba(148, 20, 20, 0.74) 0%,
+    rgba(100, 14, 14, 0.82) 14%,
+    rgba(44, 8, 8, 0.91) 40%,
+    rgba(20, 4, 4, 0.97) 100%
   );
-  border: 1px solid rgba(204, 34, 34, 0.50);
+  border: 1px solid rgba(204, 34, 34, 0.55);
   box-shadow:
     0 2px 8px rgba(0, 0, 0, 0.65),
-    0 0 12px rgba(204, 34, 34, 0.15),
-    inset 0 1px 0 rgba(255, 150, 150, 0.22),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.36);
-  color: #cd3030;
+    0 0 13px rgba(204, 34, 34, 0.18),
+    inset 0 1px 0 rgba(255, 160, 160, 0.32),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.38);
+  color: #d03232;
 }
 .btn-glass-danger:hover:not(:disabled) {
   background: linear-gradient(
     178deg,
-    rgba(165, 22, 22, 0.76) 0%,
-    rgba(118, 16, 16, 0.84) 12%,
-    rgba(60, 10, 10, 0.92) 40%,
+    rgba(182, 24, 24, 0.80) 0%,
+    rgba(132, 18, 18, 0.87) 14%,
+    rgba(60, 10, 10, 0.93) 40%,
     rgba(26, 5, 5, 0.97) 100%
   );
-  border-color: rgba(204, 34, 34, 0.72);
+  border-color: rgba(204, 34, 34, 0.76);
   box-shadow:
     0 3px 11px rgba(0, 0, 0, 0.70),
-    0 0 20px rgba(204, 34, 34, 0.24),
-    inset 0 1px 0 rgba(255, 150, 150, 0.30),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.40);
-  color: #e83838;
+    0 0 22px rgba(204, 34, 34, 0.28),
+    inset 0 1px 0 rgba(255, 160, 160, 0.42),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.42);
+  color: #ea3a3a;
 }
 .btn-glass-danger:active:not(:disabled) {
   background: linear-gradient(

@@ -1,0 +1,180 @@
+RepoRunner’s action buttons are looking better, but the glass effect still reads a little too matte.
+
+Please do one more **focused refinement pass on the action buttons only**.
+
+Do **not** redesign the app.
+Do **not** change layout.
+Do **not** change functionality.
+Do **not** change button order, labels, or sizing in any meaningful way.
+Do **not** change process management, logs behavior, setup behavior, IPC, product flow, or meteor behavior.
+
+This is only about making the action buttons feel **more reflective and more convincingly glass-like**.
+
+## Goal
+
+Push the action buttons a bit further toward:
+
+* dark smoked glass
+* more reflective
+* more premium
+* more polished
+* more obviously “glass”
+* still restrained and tasteful
+
+Important:
+I want **more reflective shine than the current version**, but it still must stay:
+
+* dark
+* premium
+* not plastic
+* not frosted white
+* not overly glossy
+* not wet-looking
+* not flashy
+
+## Requested changes
+
+Apply this only to the main dashboard action buttons:
+
+* Pull Latest
+* Install
+* Start Frontend
+* Start Backend
+* Stop Services
+* Restart All
+* Open Preview
+
+## What to increase
+
+### 1. Stronger top reflective band
+
+Make the upper reflective sheen more visible.
+
+I want a clearer glass reflection near the top of each button:
+
+* brighter than it is now
+* a little more defined
+* still soft-edged
+* still subtle overall
+
+Think:
+
+* a visible but tasteful top gloss band
+* like light catching the glass surface
+
+### 2. Add a faint angled reflection layer
+
+Add or increase a very subtle angled reflection, as if overhead light is catching the glass.
+
+This could be:
+
+* a faint diagonal sheen
+* a soft angled gradient
+* a subtle reflective streak across the upper half
+
+Important:
+
+* it should be visible enough to help sell the glass look
+* but still very restrained
+* no animated glint
+* no obvious chrome streak
+* no flashy lens flare look
+
+### 3. Slightly stronger edge highlights
+
+Increase the realism of the glass by making the edges feel a little more polished.
+
+For example:
+
+* a more visible inner top edge highlight
+* slightly clearer rim lighting
+* slightly more defined inner border/highlight
+* subtle separation between button face and edge
+
+### 4. Slightly richer hover reflection
+
+On hover:
+
+* let the reflection become a touch more noticeable
+* slightly increase the sheen/shine
+* maybe add a tiny increase in contrast or light catch
+
+Do not over-brighten hover.
+It should feel more premium, not louder.
+
+## Preserve the base look
+
+Keep:
+
+* dark smoked-glass body
+* current button hierarchy
+* current red-tinted logic for important buttons
+* current subdued styling for neutral buttons
+* current danger styling for Stop Services
+* current readability
+
+Do **not** wash the buttons out.
+
+## Important design reference
+
+The buttons should feel closer to:
+
+* premium smoked glass hardware controls
+* high-end sci-fi control panel buttons
+* polished dark glass
+
+Not:
+
+* matte plastic buttons
+* iOS frosted glass bubbles
+* cartoon shiny buttons
+
+## Implementation guidance
+
+Use CSS only if possible.
+
+A good result will likely come from refining:
+
+* layered gradients
+* top sheen pseudo-element
+* diagonal/angled reflection pseudo-element
+* inner highlight
+* outer depth shadow
+* subtle border/reflection tuning
+
+If using pseudo-elements, keep them subtle and blend them cleanly.
+
+## Strict constraints
+
+Do not change:
+
+* layout
+* action arrangement
+* labels
+* icons
+* logs
+* cards
+* modal
+* meteor styling
+* status pills
+* app behavior
+
+Do not add:
+
+* animated shine sweeps
+* big glows
+* thick white highlights
+* high blur glassmorphism
+* strong neon effects
+
+## Acceptance criteria
+
+After this change:
+
+1. The action buttons feel more reflective than they do now.
+2. The glass effect is clearer and more convincing.
+3. A stronger top sheen is visible.
+4. A subtle angled reflection helps sell the glass look.
+5. The buttons still feel dark, premium, and restrained.
+6. They do not look plastic, wet, or overly bright.
+7. No layout or functionality changes are made.
