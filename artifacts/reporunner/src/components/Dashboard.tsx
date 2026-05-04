@@ -175,35 +175,52 @@ function AmbientBackground({ anyRunning, bothRunning }: { anyRunning: boolean; b
 function RepoRunnerLogo() {
   return (
     <svg
-      width="28"
-      height="28"
-      viewBox="0 0 28 28"
+      width="30"
+      height="30"
+      viewBox="0 0 30 30"
       fill="none"
       aria-hidden="true"
-      style={{ filter: "drop-shadow(0 0 5px rgba(200,30,30,0.28))", flexShrink: 0 }}
+      style={{ filter: "drop-shadow(0 0 5px rgba(200,30,30,0.30))", flexShrink: 0 }}
     >
       <defs>
         <linearGradient id="rr-badge" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#1c0c0c" />
-          <stop offset="100%" stopColor="#0a0505" />
+          <stop offset="0%" stopColor="#1e0d0d" />
+          <stop offset="100%" stopColor="#0b0505" />
         </linearGradient>
-        <linearGradient id="rr-border" x1="0" y1="0" x2="0" y2="28" gradientUnits="userSpaceOnUse">
-          <stop offset="0%"   stopColor="rgba(200,50,50,0.52)" />
-          <stop offset="100%" stopColor="rgba(80,10,10,0.22)" />
+        <linearGradient id="rr-border-g" x1="0" y1="0" x2="0" y2="30" gradientUnits="userSpaceOnUse">
+          <stop offset="0%"   stopColor="rgba(200,50,50,0.55)" />
+          <stop offset="100%" stopColor="rgba(80,10,10,0.20)" />
         </linearGradient>
-        <linearGradient id="rr-mark" x1="0" y1="7" x2="0" y2="22" gradientUnits="userSpaceOnUse">
-          <stop offset="0%"   stopColor="#ffa8a8" />
-          <stop offset="38%"  stopColor="#e03030" />
+        <linearGradient id="rr-mark-g" x1="0" y1="7" x2="0" y2="23" gradientUnits="userSpaceOnUse">
+          <stop offset="0%"   stopColor="#ffb0b0" />
+          <stop offset="40%"  stopColor="#e03030" />
           <stop offset="100%" stopColor="#7a1010" />
         </linearGradient>
       </defs>
-      <rect width="28" height="28" rx="7" fill="url(#rr-badge)" />
-      <rect width="28" height="28" rx="7" fill="none" stroke="url(#rr-border)" strokeWidth="1" />
-      <rect x="1.5" y="1.5" width="25" height="7" rx="5.5" fill="rgba(255,255,255,0.028)" />
+
+      {/* Badge face */}
+      <rect width="30" height="30" rx="7" fill="url(#rr-badge)" />
+      {/* Badge border */}
+      <rect width="30" height="30" rx="7" fill="none" stroke="url(#rr-border-g)" strokeWidth="1" />
+      {/* Top sheen */}
+      <rect x="1.5" y="1.5" width="27" height="7" rx="5.5" fill="rgba(255,255,255,0.025)" />
+
+      {/*
+        Double-R monogram: two mirrored Rs sharing one center vertical bar.
+        Left R  — bowl curves left,  leg goes down-left.
+        Right R — bowl curves right, leg goes down-right.
+        Center vertical bar shared by both.
+      */}
       <path
-        d="M8 7v14 M8 7h7.5a4 4 0 0 1 0 8H8 M14 15l6.5 6.5"
-        stroke="url(#rr-mark)"
-        strokeWidth="2"
+        d={[
+          /* shared center bar */        "M 15 7.5 L 15 22",
+          /* right bowl */               "M 15 7.5 Q 22 7.5 22 11.2 Q 22 14.8 15 14.8",
+          /* right leg  */               "M 15 14.8 L 22 22",
+          /* left bowl  */               "M 15 7.5 Q 8 7.5 8 11.2 Q 8 14.8 15 14.8",
+          /* left leg   */               "M 15 14.8 L 8 22",
+        ].join(" ")}
+        stroke="url(#rr-mark-g)"
+        strokeWidth="1.9"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -396,11 +413,12 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
           <span
             className="select-none leading-none"
             style={{
-              fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
-              fontSize: "13.5px",
-              fontWeight: 700,
-              letterSpacing: "0.04em",
-              background: "linear-gradient(158deg, #e8a8a8 0%, #d12b2b 42%, #6a0a0a 100%)",
+              fontFamily: "'Orbitron', 'Plus Jakarta Sans', sans-serif",
+              fontSize: "11px",
+              fontWeight: 800,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              background: "linear-gradient(160deg, #e0dcd8 0%, #a8a4a0 55%, #d4d0cc 100%)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
               backgroundClip: "text",

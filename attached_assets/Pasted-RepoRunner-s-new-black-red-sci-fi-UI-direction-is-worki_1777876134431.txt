@@ -1,0 +1,142 @@
+RepoRunner’s new black/red sci-fi UI direction is working well. I want one focused branding refinement only.
+
+Do **not** redesign the app.
+Do **not** change layout.
+Do **not** change functionality.
+Do **not** change the product flow.
+Do **not** change cards, logs behavior, setup behavior, or service logic.
+
+This is a **top-left branding update only**.
+
+## Requested changes
+
+### 1. Change the top-left wordmark font
+
+I want the **RepoRunner** wordmark in the top-left header to use the same style as the reference image.
+
+The visual reference is the large **LUNA OBSCURA** wordmark style:
+
+* bold
+* futuristic
+* geometric
+* wide
+* sharp but clean
+* premium sci-fi
+* high-impact but still readable
+
+If the exact font is available and usable, use it for the **RepoRunner** wordmark.
+
+If the exact font is not easily available, use a **very close visual alternative** that captures the same feel:
+
+* futuristic
+* strong geometric forms
+* wide, clean letterforms
+* premium sci-fi aesthetic
+* readable at small header size
+
+Important:
+
+* This font treatment is mainly for the **RepoRunner wordmark in the header**
+* Do not force this font onto all body text if it hurts usability
+* Keep logs and general UI text readable
+* If needed, only the brand wordmark should use this stronger display font
+
+### 2. Change the logo mark to two back-to-back Rs
+
+I want the current logo icon in the top-left replaced with a mark based on:
+
+```text
+R R
+```
+
+specifically:
+
+* two **R** forms
+* mirrored or back-to-back
+* combined into one clean symbol
+* compact and readable at small size
+* designed as a proper logo mark, not just two typed letters placed together
+
+The mark should feel:
+
+* clean
+* intentional
+* minimal
+* strong
+* slightly futuristic
+* compatible with the black/red sci-fi UI
+
+Good directions:
+
+* mirrored Rs
+* interlocked Rs
+* back-to-back Rs sharing structure
+* a stylized monogram based on two Rs
+
+Important:
+
+* keep it simple
+* keep it crisp
+* do not make it too detailed
+* do not make it look like a sports team logo
+* do not make it look cartoonish
+* do not make it too decorative
+
+The mark should sit comfortably inside the existing top-left logo area.
+
+### 3. Keep the current theme and structure
+
+Keep:
+
+* the current black/red UI direction
+* the current header structure
+* the current overall layout
+* the current atmospheric background direction
+* the current cards, logs, buttons, and setup modal
+
+This is only a branding refinement.
+
+### 4. Styling direction for the logo/wordmark
+
+The new logo + wordmark should feel:
+
+* integrated with the current black/red theme
+* slightly premium / sci-fi
+* clean and refined
+* stronger than the current branding
+
+Suggested styling:
+
+* muted light gray / off-white or slightly warm metallic light tone for the wordmark
+* red accent only if tasteful
+* subtle glow if needed, but keep it restrained
+* do not overdo gradients or special effects
+
+If a subtle red accent helps the brand mark feel more alive, that is okay — but keep it tasteful.
+
+## Important constraints
+
+Do not change:
+
+* quick actions functionality
+* services functionality
+* logs behavior
+* setup modal behavior
+* product flow
+* status logic
+* install label color
+* running/stopped logic
+* background meteor/red line concept
+
+Do not add new features.
+
+## Acceptance criteria
+
+After this change:
+
+1. The top-left **RepoRunner** wordmark uses the reference-inspired futuristic font style, or a close equivalent if the exact font is unavailable.
+2. The top-left logo mark becomes a clean **double-R / back-to-back-R** monogram.
+3. The branding feels stronger and more intentional.
+4. The branding still fits the current black/red sci-fi theme.
+5. No layout or functionality changes are introduced.
+6. The app remains readable and usable.
