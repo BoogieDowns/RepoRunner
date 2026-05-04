@@ -376,16 +376,15 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
       case "running":
         return (
           <span
-            className={base}
+            className={`${base} rr-running-pulse`}
             style={{
               background: "rgba(204,34,34,0.12)",
               color: "#e03030",
               border: "1px solid rgba(204,34,34,0.32)",
-              boxShadow: "0 0 10px rgba(204,34,34,0.15)",
             }}
           >
             <span
-              className="w-1.5 h-1.5 rounded-full flex-none animate-pulse"
+              className="w-1.5 h-1.5 rounded-full flex-none"
               style={{ background: "#e03030", boxShadow: "0 0 4px rgba(224,48,48,0.9)" }}
             />
             Running

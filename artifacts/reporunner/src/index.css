@@ -188,6 +188,23 @@
   }
 }
 
+@keyframes rr-running-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0  8px rgba(204, 34, 34, 0.12),
+      0 0  2px rgba(204, 34, 34, 0.08);
+  }
+  50% {
+    box-shadow:
+      0 0 18px rgba(204, 34, 34, 0.34),
+      0 0  6px rgba(204, 34, 34, 0.20);
+  }
+}
+
+.rr-running-pulse {
+  animation: rr-running-pulse 2.8s ease-in-out infinite;
+}
+
 @keyframes rr-fall {
   0%   { transform: translateY(0); }
   100% { transform: translateY(175vh); }
