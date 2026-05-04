@@ -395,7 +395,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
         return (
           <span
             className={base}
-            style={{ background: "rgba(217,154,37,0.10)", color: "#d99a25", border: "1px solid rgba(217,154,37,0.42)" }}
+            style={{ background: "rgba(184,121,42,0.10)", color: "#b8792a", border: "1px solid rgba(184,121,42,0.40)" }}
           >
             <Loader2 className="w-3 h-3 animate-spin flex-none" />
             Starting
@@ -405,7 +405,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
         return (
           <span
             className={base}
-            style={{ background: "rgba(217,154,37,0.07)", color: "#b07d1a", border: "1px solid rgba(217,154,37,0.28)" }}
+            style={{ background: "rgba(184,121,42,0.07)", color: "#956120", border: "1px solid rgba(184,121,42,0.28)" }}
           >
             <Loader2 className="w-3 h-3 animate-spin flex-none" />
             Stopping
@@ -453,7 +453,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
   const getLogSourceColor = (source: string) => {
     switch (source) {
       case "git":      return "#4a9878";
-      case "install":  return "#d99a25";
+      case "install":  return "#b8792a";
       case "frontend": return "#cc4444";
       case "backend":  return "#5080a8";
       case "system":
