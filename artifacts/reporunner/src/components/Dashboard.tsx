@@ -281,23 +281,24 @@ function RepoRunnerLogo() {
       */}
       <path
         d={[
-          /* center spine */
-          "M 16 6 L 16 26",
+          /* ── center spine ── */
+          "M 16 6.5 L 16 25.5",
 
-          /* right R — bowl */
-          "M 16 6 L 22 6 Q 24.5 6 24.5 8.5 L 24.5 13.5 Q 24.5 16 22 16 L 16 16",
-          /* right R — leg */
-          "M 19.5 16 L 24.5 26",
+          /* ── right R: bowl ── */
+          /* top → outer → bottom → back to spine */
+          "M 16 6.5 L 21.5 6.5 Q 24 6.5 24 9.5 L 24 14 Q 24 16.5 21.5 16.5 L 16 16.5",
+          /* ── right R: leg ── */
+          "M 19.5 16.5 L 24.5 25.5",
 
-          /* left R — bowl (mirror) */
-          "M 16 6 L 10 6 Q 7.5 6 7.5 8.5 L 7.5 13.5 Q 7.5 16 10 16 L 16 16",
-          /* left R — leg */
-          "M 12.5 16 L 7.5 26",
+          /* ── left R: bowl (mirrored) ── */
+          "M 16 6.5 L 10.5 6.5 Q 8 6.5 8 9.5 L 8 14 Q 8 16.5 10.5 16.5 L 16 16.5",
+          /* ── left R: leg ── */
+          "M 12.5 16.5 L 7.5 25.5",
         ].join(" ")}
         stroke="url(#rr-mark-g)"
-        strokeWidth="2"
-        strokeLinecap="square"
-        strokeLinejoin="miter"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
         fill="none"
       />
     </svg>
@@ -488,36 +489,22 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
           style={{ filter: "drop-shadow(0 0 10px rgba(204,34,34,0.14))" }}
         >
           <RepoRunnerLogo />
-          <div className="flex flex-col gap-[3px] select-none">
-            <span
-              style={{
-                fontFamily: "'HS LunaObscura', 'Orbitron', 'Plus Jakarta Sans', sans-serif",
-                fontSize: "14px",
-                fontWeight: "normal",
-                letterSpacing: "0.18em",
-                textTransform: "uppercase",
-                lineHeight: 1,
-                background: "linear-gradient(155deg, #eceae6 0%, #b0aca8 45%, #d8d4d0 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}
-            >
-              RepoRunner
-            </span>
-            <span
-              style={{
-                fontFamily: "'JetBrains Mono', monospace",
-                fontSize: "7.5px",
-                letterSpacing: "0.20em",
-                textTransform: "uppercase",
-                color: "#4a2020",
-                lineHeight: 1,
-              }}
-            >
-              dev console
-            </span>
-          </div>
+          <span
+            className="select-none leading-none"
+            style={{
+              fontFamily: "'HS LunaObscura', 'Orbitron', 'Plus Jakarta Sans', sans-serif",
+              fontSize: "14px",
+              fontWeight: "normal",
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+              background: "linear-gradient(155deg, #eceae6 0%, #b0aca8 45%, #d8d4d0 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+            }}
+          >
+            RepoRunner
+          </span>
         </div>
 
         <div className={DIV} style={DIV_STYLE} />

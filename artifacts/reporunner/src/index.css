@@ -3,7 +3,9 @@
 /* HS LunaObscura — SIL Open Font License, Headspace Agency */
 @font-face {
   font-family: 'HS LunaObscura';
-  src: url('./assets/fonts/HS_LunaObscura.woff2') format('woff2');
+  src:
+    url('./assets/fonts/hs_lunaobscura Font/hs_lunaobscura/HS_LunaObscura.woff2') format('woff2'),
+    url('./assets/fonts/HS_LunaObscura.woff2') format('woff2');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
