@@ -441,9 +441,9 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
         return (
           <span
             className={base}
-            style={{ background: "#080808", color: "#2e2c2a", border: "1px solid #141414" }}
+            style={{ background: "#080808", color: "#3c3a38", border: "1px solid #141414" }}
           >
-            <span className="w-1.5 h-1.5 rounded-full flex-none" style={{ background: "#1a1a1a" }} />
+            <span className="w-1.5 h-1.5 rounded-full flex-none" style={{ background: "#282624" }} />
             Stopped
           </span>
         );
@@ -507,7 +507,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
           </span>
           <span
             className="text-[11px] leading-tight truncate mt-[3px]"
-            style={{ ...MONO, color: "#383432" }}
+            style={{ ...MONO, color: "#434040" }}
             title={project.repoPath}
           >
             {project.repoPath}
@@ -729,7 +729,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
           {logs.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center gap-1.5 select-none">
               <span className="italic" style={{ fontSize: "13px", color: "#363432" }}>No logs yet.</span>
-              <span className="italic" style={{ fontSize: "11px", color: "#262422" }}>
+              <span className="italic" style={{ fontSize: "11px", color: "#2e2c2a" }}>
                 Run Pull, Install, or Start a service to see output here.
               </span>
             </div>
@@ -744,7 +744,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                 >
                   <span
                     className="flex-none select-none w-[56px] text-right"
-                    style={{ color: "#282624" }}
+                    style={{ color: "#3a3836" }}
                   >
                     {new Date(log.timestamp).toLocaleTimeString([], {
                       hour12: false,

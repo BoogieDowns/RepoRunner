@@ -1,0 +1,194 @@
+RepoRunner is now visually close. Please do one final **last-pass UI cleanup**.
+
+This should be extremely restrained.
+
+Do **not** redesign the app.
+Do **not** change product flow.
+Do **not** add new screens.
+Do **not** change functionality.
+Do **not** change process management, IPC, service lifecycle, command execution, setup behavior, or logs behavior.
+Do **not** change the meteor animation logic unless there is an obvious visual bug.
+
+This is only a final polish pass for tiny visual inconsistencies.
+
+## Goal
+
+Make the current black/red RepoRunner UI feel a bit cleaner, tighter, and more finished without changing its identity.
+
+## Areas to check
+
+### 1. Header spacing and alignment
+
+Do a small pass on:
+
+* logo alignment
+* RepoRunner wordmark alignment
+* spacing between logo, wordmark, divider, project name, and repo path
+* Edit Setup alignment on the right
+
+Keep the current header structure.
+
+Do not redesign the logo or wordmark.
+
+### 2. Card alignment and spacing
+
+Check the Quick Actions and Services cards.
+
+Please lightly refine:
+
+* card alignment
+* internal padding
+* border consistency
+* heading spacing
+* spacing between cards
+* vertical alignment between the two cards
+
+Do not change the layout structure.
+
+### 3. Button consistency
+
+Check all dashboard buttons.
+
+Please lightly refine:
+
+* consistent button heights
+* icon/text spacing
+* hover states
+* disabled states
+* red outline/fill consistency
+* spacing between button groups
+
+Do not change labels.
+Do not add or remove buttons.
+
+### 4. Status pill consistency
+
+Check status pills for:
+
+* Running
+* Starting
+* Stopping
+* Stopped
+* Failed
+* Unknown
+
+Please make sure:
+
+* pill sizes are consistent
+* dot alignment is clean
+* text is vertically centered
+* colors remain readable
+* Stopped is subdued but still legible
+* Starting/Stopping use the current muted bronze/amber style
+* Running remains red and clear
+
+Do not change service status logic.
+
+### 5. Logs readability
+
+Do a subtle pass on the logs panel.
+
+Please check:
+
+* timestamp contrast
+* source label readability
+* row spacing
+* selected/current row background subtlety
+* copy/clear alignment
+* scrollbar styling consistency
+* empty state readability
+
+Do not add filters, tabs, search, or new log controls.
+
+### 6. Setup modal polish
+
+Check the setup modal.
+
+Please lightly refine:
+
+* modal padding
+* form grid spacing
+* input width consistency
+* URL and folder path input readability
+* close X alignment
+* Save Configuration button alignment
+* overlay/scrim polish
+
+Do not add fields.
+Do not remove fields.
+Do not change save/close behavior.
+
+### 7. Text contrast and hierarchy
+
+Make sure important text is readable but still fits the dark style.
+
+Check:
+
+* section labels
+* project name
+* repo path
+* form labels
+* input text
+* helper/error text if any
+* button text
+
+Avoid making the UI too bright.
+
+### 8. Tiny visual inconsistencies
+
+Look for and fix only small inconsistencies like:
+
+* mismatched border colors
+* awkward one-pixel alignment issues
+* inconsistent border radius
+* inconsistent opacity
+* icon misalignment
+* text that feels too dim or too loud
+
+Keep changes small.
+
+## Strict constraints
+
+Do not change:
+
+* app architecture
+* Electron IPC
+* process management
+* port handling
+* command execution
+* saved config behavior
+* setup workflow
+* dashboard workflow
+* logs behavior
+* copy/clear logs behavior
+* meteor lifecycle behavior
+* start/stop/restart logic
+
+Do not add:
+
+* new screens
+* landing page
+* scan/analyze flow
+* AI features
+* terminal tabs
+* IDE features
+* GitHub OAuth
+* deployment
+* multi-project support
+
+## Acceptance criteria
+
+After this pass:
+
+1. The app looks slightly cleaner and more finished.
+2. Header alignment feels tighter.
+3. Cards and buttons feel consistent.
+4. Status pills look polished.
+5. Logs remain readable and better integrated.
+6. Setup modal feels tidy and balanced.
+7. The current black/red visual identity is preserved.
+8. No functionality or workflow changes are made.
+9. No major redesign is introduced.
+10. No product scope creep is introduced.
+
+Please keep this as a small polish pass only. If a change feels risky or larger than visual cleanup, skip it.
