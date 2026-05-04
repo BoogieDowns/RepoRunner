@@ -1,66 +1,45 @@
 # RepoRunner
 
-> Paste a GitHub repo. Watch it wake up. No terminal required.
+> Run local GitHub repos with buttons — no terminal juggling required.
 
-RepoRunner is a desktop app for AI-assisted builders who want to run GitHub repos locally without using Git Bash, juggling terminals, or reading setup guides. Paste a URL, let the scanner do its work, and hit Launch.
-
----
-
-## Visual Direction — V1
-
-RepoRunner V1 uses a **"classified launch console"** aesthetic:
-
-- Near-black background with subtle grain texture and scanlines
-- Sparse layout with generous negative space
-- Small uppercase monospace labels throughout
-- Red signal accent (`#cc2222`) used for active states, beams, and primary actions
-- Muted grey body text — red is signal energy, not danger everywhere
+RepoRunner is a simple desktop app for AI-assisted builders who want to run local GitHub/local repo apps without using Git Bash or juggling terminals. Save your project config once, then pull, install, start, stop, and restart your services with a single click.
 
 ---
 
-## App Flow
+## Who it's for
 
-```
-LANDING → SCANNING → ANALYSIS → RUNNING
-```
-
-1. **Landing** — Paste a GitHub URL into the command input field
-2. **Scanning** — 6-step repo analysis sequence with animated step indicators
-3. **Analysis** — Detected run plan: framework, commands, port, env var requirements
-4. **Running** — Preview online: live log stream, uptime, Open Preview / Restart / Stop
+Developers and AI-assisted builders who:
+- Clone AI-generated repos and need a simple way to run them locally
+- Don't want to manage multiple terminal windows
+- Want a clean interface for starting frontend and backend services
 
 ---
 
-## Screens
+## V0 Feature Scope
 
-### Landing
-- Hero headline: "WAKE A REPO. NO LOCAL SETUP."
-- Command-style URL input with red `›` prompt
-- Full-width ANALYZE REPO button
-- Slow red scan beam animation
+### What RepoRunner V0 does
 
-### Scan Sequence
-Steps with animated indicators (pending → active → done):
-1. CLONING REPOSITORY
-2. READING PACKAGE FILES
-3. DETECTING FRAMEWORK
-4. IDENTIFYING START COMMAND
-5. SCANNING ENVIRONMENT VARIABLES
-6. BUILDING RUN PLAN
+- Save one local project profile (repo path, commands, ports, preview URL)
+- **Pull latest** — runs `git pull` in your repo directory
+- **Install** — runs your install command (e.g. `npm install`)
+- **Start Frontend** — starts your frontend dev server
+- **Start Backend** — starts your backend server
+- **Stop Services** — stops both frontend and backend
+- **Restart All** — sequentially restarts backend then frontend
+- **Open Preview** — opens your configured preview URL in a browser
+- **View live logs** — colored by source (git / install / frontend / backend / system)
+- **Copy logs** — copies full log output to clipboard
+- **Clear logs** — clears the log panel
 
-### Analysis / Run Plan
-Detected configuration panels:
-- Framework, Package Manager, Install Command, Start Command, Port, Branch, Runtime
+### What V0 does not include
 
-Environment requirements:
-- Each env var with READY / MISSING / OPTIONAL status tag
-- Missing required vars show a warning banner before launch
-
-### Running
-- PREVIEW ONLINE status with pulsing red dot
-- System state panel: framework, runtime, port, branch, URL
-- Full log stream: timestamped, colored by source (system / git / install / frontend / backend)
-- Controls: Open Preview · Restart · Stop
+- IDE or editor features
+- Deployment or hosting
+- GitHub OAuth or authentication
+- Repo cloning
+- Branch switching
+- AI-assisted debugging
+- Multi-project support (only one project profile at a time)
 
 ---
 
@@ -69,9 +48,10 @@ Environment requirements:
 | Layer | Technology |
 |---|---|
 | UI | React + Vite + TypeScript |
-| Styling | Tailwind CSS v4 + inline styles |
+| Styling | Tailwind CSS v4 + shadcn/ui |
 | Desktop | Electron |
-| Font | Plus Jakarta Sans (UI) + JetBrains Mono (mono) |
+| Forms | react-hook-form + Zod |
+| Font | Plus Jakarta Sans + JetBrains Mono |
 | Process management | Node.js `child_process` + `tree-kill` |
 | Port detection | `tcp-port-used` |
 | Config storage | Electron `app.getPath('userData')` |
@@ -81,30 +61,35 @@ Environment requirements:
 
 ## Local Development
 
-### Install
+### Prerequisites
+
+- Node.js 18+
+- pnpm 8+
+
+### Install dependencies
 
 ```bash
 pnpm install
 ```
 
-### Web preview (no Electron required)
+### Run web preview (browser mock — no Electron required)
 
 ```bash
 pnpm --filter @workspace/reporunner run dev
 ```
 
-The browser mock simulates all IPC calls — scan steps, launch, logs — so you can develop the full flow without Electron.
+Open the URL shown in your terminal. The browser mock simulates all IPC calls so you can develop the UI without Electron.
 
-### Full Electron mode
+### Run as Electron app (full desktop mode)
 
 ```bash
-# 1. Compile Electron main process
+# 1. Compile the Electron main process
 pnpm --filter @workspace/reporunner run electron:build-main
 
-# 2. Start Vite dev server
+# 2. Start the Vite dev server
 pnpm --filter @workspace/reporunner run dev
 
-# 3. Launch Electron (second terminal)
+# 3. In a second terminal, launch Electron
 pnpm --filter @workspace/reporunner run electron:dev
 ```
 
@@ -114,7 +99,7 @@ pnpm --filter @workspace/reporunner run electron:dev
 pnpm --filter @workspace/reporunner run electron:dist
 ```
 
-Output: `artifacts/reporunner/release/`
+Output goes to `artifacts/reporunner/release/`.
 
 ---
 
@@ -122,70 +107,53 @@ Output: `artifacts/reporunner/release/`
 
 ```
 artifacts/reporunner/
-├── electron/
-│   ├── main.ts             # Electron entry point
+├── electron/               # Electron main process
+│   ├── main.ts             # Entry point
 │   ├── preload.ts          # Exposes window.repoRunner to renderer
-│   ├── ipc.ts              # IPC handler setup
-│   ├── processManager.ts   # Spawn and kill service processes
+│   ├── ipc.ts              # IPC handlers (pull, install, start, stop...)
+│   ├── processManager.ts   # Spawns and kills service processes
 │   ├── portManager.ts      # Port readiness checks
-│   └── projectStore.ts     # Project profile persistence
-├── src/
+│   └── projectStore.ts     # Reads/writes project profile to disk
+├── src/                    # React renderer
 │   ├── components/
-│   │   ├── TopBar.tsx          # Shared top bar (phase-aware status)
-│   │   ├── LandingScreen.tsx   # URL input hero screen
-│   │   ├── ScanScreen.tsx      # Animated scan sequence
-│   │   ├── AnalysisScreen.tsx  # Run plan panels + launch
-│   │   └── RunningScreen.tsx   # Preview online + logs
+│   │   ├── Dashboard.tsx   # Main app view (actions, services, logs)
+│   │   ├── SetupScreen.tsx # Project config form
+│   │   └── CommandButton.tsx
 │   ├── mock/
-│   │   └── repoRunnerMock.ts   # Browser simulation of window.repoRunner
-│   ├── types.ts                # All TypeScript types
-│   ├── App.tsx                 # Phase state machine root
-│   └── index.css               # Theme, grain, keyframes
-├── electron-dist/              # Compiled Electron JS (git-ignored)
-├── dist/                       # Vite build output (git-ignored)
-└── release/                    # Electron-builder output (git-ignored)
+│   │   └── repoRunnerMock.ts  # Browser mock of window.repoRunner
+│   ├── types.ts            # Shared TypeScript types
+│   └── App.tsx             # Root component and routing state
+├── electron-dist/          # Compiled Electron JS (git-ignored)
+├── dist/                   # Vite build output (git-ignored)
+└── release/                # electron-builder output (git-ignored)
 ```
 
 ---
 
-## V1 Test Checklist
+## V0 Test Checklist
 
-### Landing
-- [ ] URL input accepts GitHub URL
-- [ ] Enter key submits
-- [ ] Empty submit shows error
-- [ ] Invalid URL shows error
-
-### Scan sequence
-- [ ] Steps animate one at a time
-- [ ] Active step shows red pulse dot
-- [ ] Done steps show ✓
-- [ ] Elapsed timer counts up
-- [ ] Transitions to Analysis when complete
-
-### Analysis
-- [ ] Project name, framework, commands display correctly
-- [ ] Env vars show correct READY / MISSING / OPTIONAL status
-- [ ] Missing input warning banner appears for required vars
-- [ ] Back button returns to landing
-- [ ] Launch Preview starts the running phase
-
-### Running
-- [ ] PREVIEW ONLINE status shows with pulse dot
-- [ ] Uptime counter increments
-- [ ] Logs stream in real-time
-- [ ] Open Preview opens in new tab
-- [ ] Restart stops and restarts services
-- [ ] Stop returns to landing
+- [ ] Save project config
+- [ ] Reopen app and confirm config persists
+- [ ] Pull latest
+- [ ] Run install
+- [ ] Start frontend
+- [ ] Start backend
+- [ ] Stop services
+- [ ] Restart all
+- [ ] Open preview
+- [ ] Copy logs
+- [ ] Clear logs
+- [ ] Edit setup (pencil icon)
+- [ ] Close edit without saving (X button)
 
 ---
 
 ## Current Limitations
 
-- **Browser mock only** — real process management requires Electron
-- **Single repo at a time** — no project switcher
-- **Simulated scan** — actual GitHub cloning + detection requires Electron IPC implementation
-- **No env var input** — missing vars are flagged but not yet fillable in-app
+- **Single project only** — no project switcher yet
+- **No process health checks** — if a process crashes silently, the pill stays "Running"
+- **No env var support** — commands must not require `.env` injection through the UI
+- **Browser preview only** — the Replit web preview runs the browser mock; real process management requires Electron
 
 ---
 
