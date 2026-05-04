@@ -242,62 +242,62 @@ function AmbientBackground({ anyRunning, bothRunning }: { anyRunning: boolean; b
 function RepoRunnerLogo() {
   return (
     <svg
-      width="30"
-      height="30"
-      viewBox="0 0 30 30"
+      width="32"
+      height="32"
+      viewBox="0 0 32 32"
       fill="none"
       aria-hidden="true"
-      style={{ filter: "drop-shadow(0 0 6px rgba(200,30,30,0.38))", flexShrink: 0 }}
+      style={{ filter: "drop-shadow(0 0 7px rgba(204,30,30,0.45))", flexShrink: 0 }}
     >
       <defs>
         <linearGradient id="rr-badge" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#1e0d0d" />
-          <stop offset="100%" stopColor="#0b0505" />
+          <stop offset="0%" stopColor="#210e0e" />
+          <stop offset="100%" stopColor="#090404" />
         </linearGradient>
-        <linearGradient id="rr-border-g" x1="0" y1="0" x2="0" y2="30" gradientUnits="userSpaceOnUse">
-          <stop offset="0%"   stopColor="rgba(220,60,60,0.65)" />
-          <stop offset="100%" stopColor="rgba(80,10,10,0.18)" />
+        <linearGradient id="rr-border-g" x1="0" y1="0" x2="0" y2="32" gradientUnits="userSpaceOnUse">
+          <stop offset="0%"   stopColor="rgba(230,55,55,0.70)" />
+          <stop offset="55%"  stopColor="rgba(150,20,20,0.35)" />
+          <stop offset="100%" stopColor="rgba(60,8,8,0.15)" />
         </linearGradient>
-        <linearGradient id="rr-mark-g" x1="0" y1="6" x2="0" y2="24" gradientUnits="userSpaceOnUse">
-          <stop offset="0%"   stopColor="#ffb8b8" />
-          <stop offset="35%"  stopColor="#e03030" />
-          <stop offset="100%" stopColor="#6a0e0e" />
+        <linearGradient id="rr-mark-g" x1="0" y1="6" x2="0" y2="27" gradientUnits="userSpaceOnUse">
+          <stop offset="0%"   stopColor="#ffa8a8" />
+          <stop offset="28%"  stopColor="#e03030" />
+          <stop offset="100%" stopColor="#5c0c0c" />
         </linearGradient>
       </defs>
 
-      {/* Badge face */}
-      <rect width="30" height="30" rx="6" fill="url(#rr-badge)" />
-      {/* Badge border */}
-      <rect width="30" height="30" rx="6" fill="none" stroke="url(#rr-border-g)" strokeWidth="1" />
-      {/* Top sheen */}
-      <rect x="1.5" y="1.5" width="27" height="6" rx="4.5" fill="rgba(255,255,255,0.03)" />
+      {/* Badge */}
+      <rect width="32" height="32" rx="7" fill="url(#rr-badge)" />
+      <rect width="32" height="32" rx="7" fill="none" stroke="url(#rr-border-g)" strokeWidth="1" />
+      {/* Top-edge gloss */}
+      <rect x="1.5" y="1.5" width="29" height="5.5" rx="5" fill="rgba(255,255,255,0.032)" />
 
       {/*
-        Back-to-back R monogram — geometric, LunaObscura-inspired.
-        Each R: vertical stem + rectangular bowl (with corner arcs) + diagonal leg.
-        Left R is mirrored. Both share the center spine at x=15.
+        Back-to-back R monogram.
+        Square caps + miter joins → crisp industrial geometry.
+        Two Rs share the center spine at x=16.
+        Each bowl: horizontal top + vertical outer edge + horizontal return.
+        Leg: diagonal from inner bowl edge to corner.
       */}
       <path
         d={[
-          /* ── center spine ── */
-          "M 15 6.5 L 15 23.5",
+          /* center spine */
+          "M 16 6 L 16 26",
 
-          /* ── right R ── */
-          /* bowl top: right from spine to corner */
-          "M 15 6.5 L 20.5 6.5 Q 22.5 6.5 22.5 8.5 L 22.5 12.5 Q 22.5 14.5 20.5 14.5 L 15 14.5",
-          /* leg: from bowl-junction diagonal to bottom-right */
-          "M 17.8 14.5 L 22.5 23.5",
+          /* right R — bowl */
+          "M 16 6 L 22 6 Q 24.5 6 24.5 8.5 L 24.5 13.5 Q 24.5 16 22 16 L 16 16",
+          /* right R — leg */
+          "M 19.5 16 L 24.5 26",
 
-          /* ── left R (mirrored) ── */
-          /* bowl top */
-          "M 15 6.5 L 9.5 6.5 Q 7.5 6.5 7.5 8.5 L 7.5 12.5 Q 7.5 14.5 9.5 14.5 L 15 14.5",
-          /* leg */
-          "M 12.2 14.5 L 7.5 23.5",
+          /* left R — bowl (mirror) */
+          "M 16 6 L 10 6 Q 7.5 6 7.5 8.5 L 7.5 13.5 Q 7.5 16 10 16 L 16 16",
+          /* left R — leg */
+          "M 12.5 16 L 7.5 26",
         ].join(" ")}
         stroke="url(#rr-mark-g)"
-        strokeWidth="1.65"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        strokeWidth="2"
+        strokeLinecap="square"
+        strokeLinejoin="miter"
         fill="none"
       />
     </svg>
@@ -483,24 +483,41 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
         style={{ borderBottom: "1px solid #161616", background: "rgba(7,7,7,0.92)" }}
       >
         {/* Brand */}
-        <div className="flex items-center gap-2.5 flex-none">
+        <div
+          className="flex items-center gap-3 flex-none"
+          style={{ filter: "drop-shadow(0 0 10px rgba(204,34,34,0.14))" }}
+        >
           <RepoRunnerLogo />
-          <span
-            className="select-none leading-none"
-            style={{
-              fontFamily: "'HS LunaObscura', 'Orbitron', 'Plus Jakarta Sans', sans-serif",
-              fontSize: "13px",
-              fontWeight: "normal",
-              letterSpacing: "0.14em",
-              textTransform: "uppercase",
-              background: "linear-gradient(160deg, #e4e0dc 0%, #a8a4a0 50%, #ccc8c4 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-            }}
-          >
-            RepoRunner
-          </span>
+          <div className="flex flex-col gap-[3px] select-none">
+            <span
+              style={{
+                fontFamily: "'HS LunaObscura', 'Orbitron', 'Plus Jakarta Sans', sans-serif",
+                fontSize: "14px",
+                fontWeight: "normal",
+                letterSpacing: "0.18em",
+                textTransform: "uppercase",
+                lineHeight: 1,
+                background: "linear-gradient(155deg, #eceae6 0%, #b0aca8 45%, #d8d4d0 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}
+            >
+              RepoRunner
+            </span>
+            <span
+              style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: "7.5px",
+                letterSpacing: "0.20em",
+                textTransform: "uppercase",
+                color: "#4a2020",
+                lineHeight: 1,
+              }}
+            >
+              dev console
+            </span>
+          </div>
         </div>
 
         <div className={DIV} style={DIV_STYLE} />
