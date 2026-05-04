@@ -1,0 +1,87 @@
+RepoRunner is looking good. Please make one very small fix only.
+
+Do **not** redesign the UI.
+Do **not** change layout.
+Do **not** change functionality.
+Do **not** change meteor behavior.
+Do **not** change status pill colors.
+Do **not** change any log colors except `[INSTALL]`.
+
+## Problem
+
+The `Starting` / `Stopping` pills changed correctly.
+
+However, the `[INSTALL]` source label in the logs/terminal section is still using the old orange color.
+
+So there is likely still a separate hardcoded color or CSS class for the install log source label.
+
+## Required fix
+
+Change the `[INSTALL]` source label in the logs/terminal section to the same **soft peach** color family already intended for transitional/install styling.
+
+Use this exact peach direction:
+
+```css
+--transition: #f2b8a0;
+--transition-bg: rgba(242, 184, 160, 0.12);
+--transition-border: rgba(242, 184, 160, 0.42);
+--transition-glow: rgba(242, 184, 160, 0.16);
+```
+
+For the log label text itself, use:
+
+```css
+color: #f2b8a0;
+```
+
+## Important implementation check
+
+Please inspect the logs source-label styling and find where `[INSTALL]` is styled.
+
+Search for:
+
+* install log label class
+* source label mapping for `"install"`
+* any hardcoded orange/yellow/amber values
+* any conditional color mapping for log source labels
+
+Examples of old values to replace if still present:
+
+```css
+#ff9f1c
+#ffb000
+#d99a25
+#b8792a
+orange
+amber
+yellow
+```
+
+Replace only the install-source styling with the peach color.
+
+## Scope
+
+Apply this only to the `[INSTALL]` source label in the terminal/logs section.
+
+Do not change:
+
+* Frontend log label color
+* Backend log label color
+* System log label color
+* Git log label color
+* Running pills
+* Stopped pills
+* Failed pills
+* Unknown pills
+* layout
+* functionality
+
+## Acceptance criteria
+
+After this fix:
+
+1. `[INSTALL]` log source labels are soft peach.
+2. `[INSTALL]` no longer appears orange.
+3. Starting/Stopping pills remain as they are now.
+4. No other log colors change.
+5. No layout or functionality changes are made.
