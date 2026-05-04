@@ -73,10 +73,12 @@ function App() {
             <div
               className="fixed inset-0 z-40"
               style={{
-                background: "rgba(0,0,0,0.62)",
+                background: "rgba(0,0,0,0.45)",
+                backdropFilter: "blur(2px)",
+                WebkitBackdropFilter: "blur(2px)",
                 animation: editClosing
-                  ? "rr-scrim-out 0.23s ease forwards"
-                  : "rr-scrim-in 0.26s ease forwards",
+                  ? "rr-scrim-out 0.16s ease forwards"
+                  : "rr-scrim-in 0.20s ease forwards",
               }}
               onClick={handleEditClose}
               aria-hidden="true"
@@ -86,8 +88,8 @@ function App() {
               className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8 pointer-events-none"
               style={{
                 animation: editClosing
-                  ? "rr-modal-out 0.23s cubic-bezier(0.4,0,0.6,1) forwards"
-                  : "rr-modal-in 0.26s cubic-bezier(0.16,1,0.3,1) forwards",
+                  ? "rr-modal-out 0.15s cubic-bezier(0.4,0,0.6,1) forwards"
+                  : "rr-modal-in 0.18s cubic-bezier(0.16,1,0.3,1) forwards",
               }}
             >
               <div className="pointer-events-auto w-full max-w-2xl">

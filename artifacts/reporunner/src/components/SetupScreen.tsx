@@ -115,9 +115,10 @@ export function SetupScreen({
         className="w-full max-w-2xl rounded-xl relative"
         style={{
           background: "#0a0a0a",
-          border: "1px solid #1a1a1a",
-          boxShadow:
-            "0 8px 40px rgba(0,0,0,0.8), 0 0 0 1px rgba(204,34,34,0.04), 0 0 60px rgba(204,34,34,0.03)",
+          border: overlay ? "1px solid #242020" : "1px solid #1a1a1a",
+          boxShadow: overlay
+            ? "0 24px 80px rgba(0,0,0,0.9), 0 0 0 1px rgba(204,34,34,0.10), 0 0 40px rgba(204,34,34,0.06)"
+            : "0 8px 40px rgba(0,0,0,0.8), 0 0 0 1px rgba(204,34,34,0.04), 0 0 60px rgba(204,34,34,0.03)",
           zIndex: 1,
         }}
       >
