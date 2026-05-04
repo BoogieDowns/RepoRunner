@@ -19,6 +19,119 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
+/* ─── Ambient Background ──────────────────────────────────────────────────── */
+
+const LINE_CONFIGS = [
+  { left: 7,  delay: 0.0, dur: 5.2, h: 22, op: 0.50 },
+  { left: 15, delay: 3.1, dur: 7.4, h: 16, op: 0.30 },
+  { left: 23, delay: 1.4, dur: 6.0, h: 26, op: 0.58 },
+  { left: 34, delay: 4.8, dur: 5.7, h: 18, op: 0.40 },
+  { left: 44, delay: 2.2, dur: 6.8, h: 30, op: 0.55 },
+  { left: 53, delay: 0.6, dur: 5.4, h: 20, op: 0.35 },
+  { left: 62, delay: 3.9, dur: 7.1, h: 24, op: 0.62 },
+  { left: 71, delay: 1.8, dur: 5.9, h: 19, op: 0.38 },
+  { left: 80, delay: 5.2, dur: 6.3, h: 27, op: 0.48 },
+  { left: 88, delay: 2.7, dur: 4.8, h: 21, op: 0.42 },
+];
+
+const EXTRA_LINES = [
+  { left: 19, delay: 1.1, dur: 6.6, h: 23, op: 0.52 },
+  { left: 40, delay: 3.5, dur: 5.2, h: 17, op: 0.36 },
+  { left: 76, delay: 0.9, dur: 6.9, h: 28, op: 0.60 },
+];
+
+function AmbientBackground({ anyRunning, bothRunning }: { anyRunning: boolean; bothRunning: boolean }) {
+  const lines = bothRunning ? [...LINE_CONFIGS, ...EXTRA_LINES] : LINE_CONFIGS;
+
+  const moonBorder = anyRunning
+    ? bothRunning ? "rgba(175,25,25,0.20)" : "rgba(155,20,20,0.13)"
+    : "rgba(90,8,8,0.06)";
+  const moonGlow = anyRunning
+    ? bothRunning
+      ? "0 0 60px rgba(175,25,25,0.18), 0 0 120px rgba(130,12,12,0.10)"
+      : "0 0 40px rgba(155,20,20,0.11)"
+    : "none";
+
+  const grainUrl = `url('data:image/svg+xml,<svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100%25" height="100%25" filter="url(%23n)"/></svg>')`;
+
+  return (
+    <div
+      aria-hidden="true"
+      style={{
+        position: "absolute",
+        inset: 0,
+        overflow: "hidden",
+        pointerEvents: "none",
+        zIndex: 0,
+      }}
+    >
+      {/* Film grain */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          backgroundImage: grainUrl,
+          backgroundSize: "200px 200px",
+          opacity: 0.048,
+          mixBlendMode: "overlay",
+        }}
+      />
+
+      {/* Outer halo ring */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: "-315px",
+          left: "50%",
+          transform: "translateX(-50%)",
+          width: "790px",
+          height: "790px",
+          borderRadius: "50%",
+          border: `1px solid ${anyRunning ? "rgba(130,12,12,0.07)" : "rgba(70,5,5,0.04)"}`,
+          transition: "border-color 2.5s ease",
+        }}
+      />
+
+      {/* Main moon arc */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: "-265px",
+          left: "50%",
+          transform: "translateX(-50%)",
+          width: "650px",
+          height: "650px",
+          borderRadius: "50%",
+          border: `1px solid ${moonBorder}`,
+          boxShadow: moonGlow,
+          transition: "border-color 2.5s ease, box-shadow 2.5s ease",
+        }}
+      />
+
+      {/* Falling red lines */}
+      {lines.map((line, i) => (
+        <div
+          key={i}
+          style={{
+            position: "absolute",
+            top: "-30vh",
+            left: `${line.left}%`,
+            width: "1px",
+            height: `${line.h}vh`,
+            background: `linear-gradient(to bottom, transparent, rgba(204,34,34,${anyRunning ? line.op : 0}), rgba(204,34,34,${anyRunning ? line.op * 0.4 : 0}), transparent)`,
+            animation: anyRunning
+              ? `rr-fall ${line.dur}s ${line.delay}s infinite linear`
+              : "none",
+            transition: "background 1.8s ease",
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+/* ─── Logo ──────────────────────────────────────────────────────────────────*/
+
 function RepoRunnerLogo() {
   return (
     <svg
@@ -27,35 +140,26 @@ function RepoRunnerLogo() {
       viewBox="0 0 28 28"
       fill="none"
       aria-hidden="true"
-      style={{ filter: "drop-shadow(0 0 6px rgba(30,200,90,0.25))", flexShrink: 0 }}
+      style={{ filter: "drop-shadow(0 0 5px rgba(200,30,30,0.28))", flexShrink: 0 }}
     >
       <defs>
-        {/* Badge background — dark metallic */}
         <linearGradient id="rr-badge" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#18281e" />
-          <stop offset="100%" stopColor="#0b1610" />
+          <stop offset="0%" stopColor="#1c0c0c" />
+          <stop offset="100%" stopColor="#0a0505" />
         </linearGradient>
-        {/* Badge border — top-lit chrome green */}
         <linearGradient id="rr-border" x1="0" y1="0" x2="0" y2="28" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="rgba(120,230,160,0.55)" />
-          <stop offset="100%" stopColor="rgba(18,80,40,0.28)" />
+          <stop offset="0%"   stopColor="rgba(200,50,50,0.52)" />
+          <stop offset="100%" stopColor="rgba(80,10,10,0.22)" />
         </linearGradient>
-        {/* R mark — chrome green gradient */}
         <linearGradient id="rr-mark" x1="0" y1="7" x2="0" y2="22" gradientUnits="userSpaceOnUse">
-          <stop offset="0%"   stopColor="#b8ffd0" />
-          <stop offset="38%"  stopColor="#1EFF5A" />
-          <stop offset="100%" stopColor="#0b7a30" />
+          <stop offset="0%"   stopColor="#ffa8a8" />
+          <stop offset="38%"  stopColor="#e03030" />
+          <stop offset="100%" stopColor="#7a1010" />
         </linearGradient>
       </defs>
-
-      {/* Badge face */}
       <rect width="28" height="28" rx="7" fill="url(#rr-badge)" />
-      {/* Badge border */}
       <rect width="28" height="28" rx="7" fill="none" stroke="url(#rr-border)" strokeWidth="1" />
-      {/* Top sheen — chrome highlight */}
-      <rect x="1.5" y="1.5" width="25" height="7" rx="5.5" fill="rgba(255,255,255,0.035)" />
-
-      {/* R lettermark: vertical bar + bowl + forward leg */}
+      <rect x="1.5" y="1.5" width="25" height="7" rx="5.5" fill="rgba(255,255,255,0.028)" />
       <path
         d="M8 7v14 M8 7h7.5a4 4 0 0 1 0 8H8 M14 15l6.5 6.5"
         stroke="url(#rr-mark)"
@@ -67,10 +171,21 @@ function RepoRunnerLogo() {
   );
 }
 
+/* ─── Dashboard ─────────────────────────────────────────────────────────────*/
+
 interface DashboardProps {
   project: ProjectProfile;
   onEdit: () => void;
 }
+
+const MONO: React.CSSProperties = { fontFamily: "'JetBrains Mono', monospace" };
+const LABEL: React.CSSProperties = {
+  fontFamily: "'JetBrains Mono', monospace",
+  fontSize: "10px",
+  fontWeight: 500,
+  letterSpacing: "0.13em",
+  textTransform: "uppercase",
+};
 
 export function Dashboard({ project, onEdit }: DashboardProps) {
   const { toast } = useToast();
@@ -89,10 +204,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
     const unsubStatus = window.repoRunner.onStatus((s) => {
       setStatuses(s);
     });
-    return () => {
-      unsubLog();
-      unsubStatus();
-    };
+    return () => { unsubLog(); unsubStatus(); };
   }, []);
 
   useEffect(() => {
@@ -126,24 +238,40 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
     setLogs([]);
   };
 
+  const anyRunning =
+    statuses.frontend === "running" || statuses.frontend === "starting" ||
+    statuses.backend  === "running" || statuses.backend  === "starting";
+  const bothRunning =
+    statuses.frontend === "running" && statuses.backend === "running";
+  const bothStopped =
+    statuses.frontend === "stopped" && statuses.backend === "stopped";
+
   const getStatusDisplay = (status: string) => {
+    const base = "inline-flex items-center gap-1.5 px-2.5 py-[5px] rounded-full leading-none text-[11px] font-medium";
     switch (status) {
       case "running":
         return (
           <span
-            className="inline-flex items-center gap-1.5 px-2.5 py-[5px] rounded-full leading-none text-xs font-medium
-              bg-[#1EFF5A]/[0.12] text-[#1EFF5A] border border-[#1EFF5A]/30
-              shadow-[0_0_10px_rgba(30,255,90,0.15)]"
+            className={base}
+            style={{
+              background: "rgba(204,34,34,0.12)",
+              color: "#e03030",
+              border: "1px solid rgba(204,34,34,0.32)",
+              boxShadow: "0 0 10px rgba(204,34,34,0.15)",
+            }}
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-[#1EFF5A] animate-pulse flex-none shadow-[0_0_4px_rgba(30,255,90,0.8)]" />
+            <span
+              className="w-1.5 h-1.5 rounded-full flex-none animate-pulse"
+              style={{ background: "#e03030", boxShadow: "0 0 4px rgba(224,48,48,0.9)" }}
+            />
             Running
           </span>
         );
       case "starting":
         return (
           <span
-            className="inline-flex items-center gap-1.5 px-2.5 py-[5px] rounded-full leading-none text-xs font-medium"
-            style={{ background: "rgba(255,159,28,0.12)", color: "#ff9f1c", border: "1px solid rgba(255,159,28,0.45)" }}
+            className={base}
+            style={{ background: "rgba(255,159,28,0.10)", color: "#ff9f1c", border: "1px solid rgba(255,159,28,0.38)" }}
           >
             <Loader2 className="w-3 h-3 animate-spin flex-none" />
             Starting
@@ -152,8 +280,8 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
       case "stopping":
         return (
           <span
-            className="inline-flex items-center gap-1.5 px-2.5 py-[5px] rounded-full leading-none text-xs font-medium"
-            style={{ background: "rgba(255,159,28,0.09)", color: "#ff9f1c", border: "1px solid rgba(255,159,28,0.35)" }}
+            className={base}
+            style={{ background: "rgba(255,159,28,0.07)", color: "#d48818", border: "1px solid rgba(255,159,28,0.28)" }}
           >
             <Loader2 className="w-3 h-3 animate-spin flex-none" />
             Stopping
@@ -162,21 +290,25 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
       case "failed":
         return (
           <span
-            className="inline-flex items-center gap-1.5 px-2.5 py-[5px] rounded-full leading-none text-xs font-medium
-              bg-[#c94b57]/[0.12] text-[#e05e6a] border border-[#c94b57]/25
-              shadow-[0_0_8px_rgba(201,75,87,0.1)]"
+            className={base}
+            style={{
+              background: "rgba(224,48,48,0.14)",
+              color: "#f04848",
+              border: "1px solid rgba(224,48,48,0.35)",
+              boxShadow: "0 0 8px rgba(224,48,48,0.12)",
+            }}
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-[#c94b57] flex-none" />
+            <span className="w-1.5 h-1.5 rounded-full flex-none" style={{ background: "#e03030" }} />
             Failed
           </span>
         );
       case "unknown":
         return (
           <span
-            className="inline-flex items-center gap-1.5 px-2.5 py-[5px] rounded-full leading-none text-xs font-medium
-              bg-[#7FA18B]/[0.08] text-[#7FA18B]/70 border border-[#7FA18B]/15"
+            className={base}
+            style={{ background: "#111", color: "#4a4845", border: "1px solid #1e1e1e" }}
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-[#7FA18B]/50 flex-none" />
+            <span className="w-1.5 h-1.5 rounded-full flex-none" style={{ background: "#333" }} />
             Unknown
           </span>
         );
@@ -184,10 +316,10 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
       default:
         return (
           <span
-            className="inline-flex items-center gap-1.5 px-2.5 py-[5px] rounded-full leading-none text-xs font-medium
-              bg-[#080e0b] text-[#3a5243] border border-[#122019]"
+            className={base}
+            style={{ background: "#080808", color: "#2e2c2a", border: "1px solid #141414" }}
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-[#1e3429] flex-none" />
+            <span className="w-1.5 h-1.5 rounded-full flex-none" style={{ background: "#1a1a1a" }} />
             Stopped
           </span>
         );
@@ -196,23 +328,28 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
 
   const getLogSourceColor = (source: string) => {
     switch (source) {
-      case "git":      return "text-cyan-400/75";
-      case "install":  return "text-[#ff9f1c]";
-      case "frontend": return "text-[#1EFF5A]/85";
-      case "backend":  return "text-blue-400/75";
+      case "git":      return "#4a9878";
+      case "install":  return "#ff9f1c";
+      case "frontend": return "#cc4444";
+      case "backend":  return "#5080a8";
       case "system":
-      default:         return "text-[#4a6655]";
+      default:         return "#3a3836";
     }
   };
 
-  const bothStopped =
-    statuses.frontend === "stopped" && statuses.backend === "stopped";
+  const DIV = "w-px h-4 flex-none hidden sm:block";
+  const DIV_STYLE = { background: "#1e1e1e" };
 
   return (
-    <div className="h-screen flex flex-col bg-background text-foreground animate-in fade-in duration-300">
+    <div className="h-screen flex flex-col bg-background text-foreground animate-in fade-in duration-300 relative overflow-hidden">
 
-      {/* Header */}
-      <header className="h-[60px] flex-none border-b border-[#173126] bg-[#080e0b] flex items-center px-5 gap-4">
+      <AmbientBackground anyRunning={anyRunning} bothRunning={bothRunning} />
+
+      {/* ── Header ── */}
+      <header
+        className="h-[56px] flex-none flex items-center px-5 gap-4 relative"
+        style={{ borderBottom: "1px solid #161616", background: "rgba(7,7,7,0.92)" }}
+      >
         {/* Brand */}
         <div className="flex items-center gap-2.5 flex-none">
           <RepoRunnerLogo />
@@ -223,7 +360,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
               fontSize: "13.5px",
               fontWeight: 700,
               letterSpacing: "0.04em",
-              background: "linear-gradient(158deg, #9de8b8 0%, #2cb865 45%, #1a6040 100%)",
+              background: "linear-gradient(158deg, #e8a8a8 0%, #d12b2b 42%, #6a0a0a 100%)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
               backgroundClip: "text",
@@ -233,50 +370,55 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
           </span>
         </div>
 
-        {/* Divider */}
-        <div className="w-px h-5 bg-[#173126] flex-none" />
+        <div className={DIV} style={DIV_STYLE} />
 
         {/* Project identity */}
         <div className="flex flex-col justify-center min-w-0 flex-1">
           <span
-            className="text-[14.5px] text-[#B8FFCA] leading-tight truncate"
-            style={{ fontWeight: 600, fontFamily: "'IBM Plex Sans', sans-serif" }}
+            className="text-[14px] leading-tight truncate"
+            style={{ fontWeight: 600, color: "#dedad5" }}
           >
             {project.name}
           </span>
           <span
-            className="text-[11px] leading-tight truncate mt-[3px] text-[#3a5a48]"
-            style={{ fontFamily: "'JetBrains Mono', monospace" }}
+            className="text-[11px] leading-tight truncate mt-[3px]"
+            style={{ ...MONO, color: "#383432" }}
             title={project.repoPath}
           >
             {project.repoPath}
           </span>
         </div>
 
-        {/* Edit Setup */}
         <Button
           variant="ghost"
           size="sm"
           onClick={onEdit}
-          className="flex-none h-8 px-3 gap-1.5 text-[12px] font-medium text-[#4a6655] hover:text-[#7FA18B] hover:bg-[#0f1a14]"
+          className="flex-none h-8 px-3 gap-1.5 text-[12px] font-medium"
+          style={{ color: "#4a4845", background: "transparent" }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = "#9a9896"; e.currentTarget.style.background = "#111"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = "#4a4845"; e.currentTarget.style.background = "transparent"; }}
         >
           <Settings2 className="w-3.5 h-3.5" />
           Edit Setup
         </Button>
       </header>
 
-      {/* Main Content */}
-      <div className="flex-none overflow-y-auto w-full">
+      {/* ── Main content ── */}
+      <div className="flex-none w-full relative">
         <div className="max-w-5xl mx-auto px-5 py-5 space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
             {/* Quick Actions */}
             <Card
-              className="lg:col-span-2 rounded-xl border border-[#173126] bg-[#0a1510]"
-              style={{ boxShadow: "0 4px 16px rgba(0,0,0,0.5), 0 0 0 1px rgba(30,255,90,0.04)" }}
+              className="lg:col-span-2 rounded-xl"
+              style={{
+                background: "rgba(10,10,10,0.85)",
+                border: "1px solid #1a1a1a",
+                boxShadow: "0 4px 20px rgba(0,0,0,0.7), 0 0 0 1px rgba(204,34,34,0.03)",
+              }}
             >
-              <CardHeader className="px-5 pt-4 pb-3 border-b border-[#173126]/70">
-                <CardTitle className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-[#3d6050]">
+              <CardHeader className="px-5 pt-4 pb-3" style={{ borderBottom: "1px solid #161616" }}>
+                <CardTitle style={{ ...LABEL, color: "#3a3836" }}>
                   Quick Actions
                 </CardTitle>
               </CardHeader>
@@ -297,7 +439,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                     variant="outline"
                   />
 
-                  <div className="w-px h-5 bg-[#173126] mx-0.5 hidden sm:block" />
+                  <div className={DIV} style={DIV_STYLE} />
 
                   <CommandButton
                     label="Start Frontend"
@@ -316,7 +458,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                     variant="default"
                   />
 
-                  <div className="w-px h-5 bg-[#173126] mx-0.5 hidden sm:block" />
+                  <div className={DIV} style={DIV_STYLE} />
 
                   <CommandButton
                     label="Stop Services"
@@ -327,7 +469,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                     variant="destructive"
                   />
 
-                  <div className="w-px h-5 bg-[#173126] mx-0.5 hidden sm:block" />
+                  <div className={DIV} style={DIV_STYLE} />
 
                   <CommandButton
                     label="Restart All"
@@ -349,37 +491,41 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
 
             {/* Services */}
             <Card
-              className="rounded-xl border border-[#173126] bg-[#0a1510]"
-              style={{ boxShadow: "0 4px 16px rgba(0,0,0,0.5), 0 0 0 1px rgba(30,255,90,0.04)" }}
+              className="rounded-xl"
+              style={{
+                background: "rgba(10,10,10,0.85)",
+                border: "1px solid #1a1a1a",
+                boxShadow: "0 4px 20px rgba(0,0,0,0.7), 0 0 0 1px rgba(204,34,34,0.03)",
+              }}
             >
-              <CardHeader className="px-5 pt-4 pb-3 border-b border-[#173126]/70">
-                <CardTitle className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-[#3d6050]">
+              <CardHeader className="px-5 pt-4 pb-3" style={{ borderBottom: "1px solid #161616" }}>
+                <CardTitle style={{ ...LABEL, color: "#3a3836" }}>
                   Services
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-5 flex flex-col gap-5">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-[12px] font-semibold text-[#7FA18B] leading-none tracking-wide">
+                    <p className="text-[12px] font-medium leading-none" style={{ color: "#7a7572" }}>
                       Frontend
                     </p>
                     {project.frontendPort && (
-                      <p className="text-[11px] font-mono text-[#3d6050] mt-1.5 leading-none">
-                        port {project.frontendPort}
+                      <p className="text-[11px] leading-none mt-2" style={{ ...MONO, color: "#383432" }}>
+                        :{project.frontendPort}
                       </p>
                     )}
                   </div>
                   {getStatusDisplay(statuses.frontend)}
                 </div>
-                <Separator className="bg-[#173126]/50" />
+                <Separator style={{ background: "#161616" }} />
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-[12px] font-semibold text-[#7FA18B] leading-none tracking-wide">
+                    <p className="text-[12px] font-medium leading-none" style={{ color: "#7a7572" }}>
                       Backend
                     </p>
                     {project.backendPort && (
-                      <p className="text-[11px] font-mono text-[#3d6050] mt-1.5 leading-none">
-                        port {project.backendPort}
+                      <p className="text-[11px] leading-none mt-2" style={{ ...MONO, color: "#383432" }}>
+                        :{project.backendPort}
                       </p>
                     )}
                   </div>
@@ -392,15 +538,32 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
         </div>
       </div>
 
-      {/* Logs Panel */}
-      <section className="flex-1 min-h-0 flex flex-col border-t border-[#173126]">
+      {/* ── Logs Panel ── */}
+      <section
+        className="flex-1 min-h-0 flex flex-col relative"
+        style={{ borderTop: "1px solid #161616" }}
+      >
         {/* Log toolbar */}
-        <div className="flex-none h-[42px] flex items-center justify-between px-5 border-b border-[#173126]/50 bg-[#080e0b]">
+        <div
+          className="flex-none h-[40px] flex items-center justify-between px-5"
+          style={{ borderBottom: "1px solid #111", background: "rgba(6,6,6,0.92)" }}
+        >
           <div className="flex items-center gap-2.5">
-            <span className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-[#3d6050]">
+            <span style={{ ...LABEL, color: "#363432" }}>
               App Logs
             </span>
-            <span className="text-[10px] bg-[#0f1a14] border border-[#173126]/60 px-1.5 py-0.5 rounded text-[#3d6050] tabular-nums leading-none">
+            <span
+              className="tabular-nums leading-none"
+              style={{
+                ...MONO,
+                fontSize: "10px",
+                color: "#363432",
+                background: "#0c0c0c",
+                border: "1px solid #181818",
+                padding: "2px 5px",
+                borderRadius: "3px",
+              }}
+            >
               {logs.length}
             </span>
           </div>
@@ -409,7 +572,10 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
               variant="ghost"
               size="sm"
               onClick={handleCopyLogs}
-              className="h-7 px-2.5 gap-1.5 text-[11px] text-[#3d6050] hover:text-[#7FA18B] hover:bg-[#0f1a14]"
+              className="h-7 px-2.5 gap-1.5 text-[11px]"
+              style={{ color: "#363432" }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = "#7a7572"; e.currentTarget.style.background = "#0f0f0f"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = "#363432"; e.currentTarget.style.background = "transparent"; }}
             >
               <Copy className="w-3 h-3" />
               Copy
@@ -418,7 +584,10 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
               variant="ghost"
               size="sm"
               onClick={handleClearLogs}
-              className="h-7 px-2.5 gap-1.5 text-[11px] text-[#3d6050] hover:text-[#7FA18B] hover:bg-[#0f1a14]"
+              className="h-7 px-2.5 gap-1.5 text-[11px]"
+              style={{ color: "#363432" }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = "#7a7572"; e.currentTarget.style.background = "#0f0f0f"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = "#363432"; e.currentTarget.style.background = "transparent"; }}
             >
               <Trash2 className="w-3 h-3" />
               Clear
@@ -429,12 +598,13 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
         {/* Log output */}
         <div
           ref={scrollRef}
-          className="flex-1 overflow-y-auto px-3 py-3 bg-[#040805] font-mono text-[12px] leading-relaxed"
+          className="flex-1 overflow-y-auto py-2"
+          style={{ background: "#050505", ...MONO, fontSize: "12px", lineHeight: "1.7" }}
         >
           {logs.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center gap-1.5 select-none">
-              <span className="text-[13px] text-[#3a6048] italic">No logs yet.</span>
-              <span className="text-[11px] text-[#2a4a38] italic">
+              <span className="italic" style={{ fontSize: "13px", color: "#363432" }}>No logs yet.</span>
+              <span className="italic" style={{ fontSize: "11px", color: "#262422" }}>
                 Run Pull, Install, or Start a service to see output here.
               </span>
             </div>
@@ -443,9 +613,14 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
               {logs.map((log) => (
                 <div
                   key={log.id}
-                  className="flex gap-3 hover:bg-[#1EFF5A]/[0.025] px-2 py-[3px] rounded transition-colors"
+                  className="flex gap-3 px-3 py-[3px] rounded transition-colors"
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.background = "rgba(204,34,34,0.03)"; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.background = "transparent"; }}
                 >
-                  <span className="flex-none select-none text-[#253d2e] w-[56px] text-right">
+                  <span
+                    className="flex-none select-none w-[56px] text-right"
+                    style={{ color: "#282624" }}
+                  >
                     {new Date(log.timestamp).toLocaleTimeString([], {
                       hour12: false,
                       hour: "2-digit",
@@ -454,11 +629,12 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                     })}
                   </span>
                   <span
-                    className={`flex-none w-[72px] font-semibold uppercase text-[10.5px] tracking-wide ${getLogSourceColor(log.source)}`}
+                    className="flex-none w-[76px] font-medium uppercase text-[10px] tracking-wider pt-[1px]"
+                    style={{ color: getLogSourceColor(log.source) }}
                   >
                     [{log.source}]
                   </span>
-                  <span className="text-[#7FA18B] whitespace-pre-wrap break-all">
+                  <span className="whitespace-pre-wrap break-all" style={{ color: "#706e6c" }}>
                     {log.text}
                   </span>
                 </div>

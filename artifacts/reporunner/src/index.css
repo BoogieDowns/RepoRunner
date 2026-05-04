@@ -70,84 +70,82 @@
 :root {
   color-scheme: dark;
 
-  /* ─── RepoRunner dark-green theme ─────────────────────────────────────── */
-  /* Raw palette (for reference):
-     bg:           #040805  → hsl(158 38% 2.5%)
-     surface:      #0b120f  → hsl(155 28% 5.7%)
-     card:         #0f1713  → hsl(155 25% 7.5%)
-     border:       #173126  → hsl(153 37% 14%)
-     border-hi:    #1f4132  → hsl(153 36% 18%)
-     accent:       #1EFF5A  → hsl(142 100% 56%)
-     accent-soft:  #27d96b  → hsl(143 73% 50%)
-     text:         #B8FFCA  → hsl(140 100% 87%)
-     text-sec:     #7FA18B  → hsl(148 14% 57%)
-     text-muted:   #5D7465  → hsl(148 11% 40%)
-     danger:       #c94b57  → hsl(354 55% 54%)
+  /* ─── RepoRunner dark-red signal theme ─────────────────────────────────── */
+  /* Palette:
+     bg:           #090909  → hsl(0 0% 3.5%)
+     surface:      #0e0e0e  → hsl(0 0% 5.5%)
+     card:         #0e0e0e  → hsl(0 0% 5.5%)
+     border:       #1a1a1a  → hsl(0 0% 10%)
+     accent-red:   #cc2222  → hsl(0 72% 46%)
+     text:         #dedad5  → hsl(20 6% 87%)
+     text-sec:     #9a9896  → hsl(20 2% 59%)
+     text-muted:   #6a6864  → hsl(20 2% 41%)
+     danger-red:   #e03030  → hsl(0 75% 52%)
   */
 
   --opaque-button-border-intensity: 8;
-  --elevate-1: rgba(30, 255, 90, 0.03);
-  --elevate-2: rgba(30, 255, 90, 0.06);
+  --elevate-1: rgba(204, 34, 34, 0.025);
+  --elevate-2: rgba(204, 34, 34, 0.045);
 
   /* Core */
-  --background:          158 38% 2.5%;   /* #040805 */
-  --foreground:          140 100% 87%;   /* #B8FFCA — pale mint */
+  --background:          0 0% 3.5%;     /* #090909 */
+  --foreground:          20 6% 87%;     /* #dedad5 */
 
   /* Card / Panel surfaces */
-  --card:                155 25% 7.5%;   /* #0f1713 */
-  --card-foreground:     140 100% 87%;
-  --card-border:         153 37% 14%;    /* #173126 */
+  --card:                0 0% 5.5%;     /* #0e0e0e */
+  --card-foreground:     20 5% 85%;     /* #d8d4cf */
+  --card-border:         0 0% 10%;      /* #1a1a1a */
 
   /* Borders */
-  --border:              153 37% 14%;    /* #173126 */
+  --border:              0 0% 10%;      /* #1a1a1a */
 
   /* Popover */
-  --popover:             155 25% 7.5%;
-  --popover-foreground:  140 100% 87%;
-  --popover-border:      153 37% 14%;
+  --popover:             0 0% 5.5%;
+  --popover-foreground:  20 6% 87%;
+  --popover-border:      0 0% 10%;
 
-  /* Primary — neon green accent */
-  --primary:             142 100% 56%;   /* #1EFF5A */
-  --primary-foreground:  158 38% 4%;     /* very dark for text on bright green */
+  /* Primary — red accent */
+  --primary:             0 72% 46%;     /* #cc2222 */
+  --primary-foreground:  0 0% 96%;      /* #f5f5f5 */
 
-  /* Secondary — elevated dark surface */
-  --secondary:           155 28% 10%;    /* between card and border */
-  --secondary-foreground: 148 14% 57%;   /* #7FA18B */
+  /* Secondary — neutral dark */
+  --secondary:           0 0% 7.5%;    /* #131313 */
+  --secondary-foreground: 20 3% 62%;   /* #9e9b99 */
 
   /* Muted */
-  --muted:               155 25% 6%;
-  --muted-foreground:    148 11% 40%;    /* #5D7465 */
+  --muted:               0 0% 6%;      /* #0f0f0f */
+  --muted-foreground:    20 2% 41%;    /* #6a6864 */
 
-  /* Accent (same as secondary for neutral hover) */
-  --accent:              155 28% 12%;
-  --accent-foreground:   140 100% 87%;
+  /* Accent (dark hover surface) */
+  --accent:              0 0% 8%;      /* #141414 */
+  --accent-foreground:   20 6% 87%;
 
-  /* Danger */
-  --destructive:         354 55% 54%;    /* #c94b57 */
+  /* Destructive — brighter red */
+  --destructive:         0 75% 52%;    /* #e03030 */
   --destructive-foreground: 0 0% 100%;
 
   /* Input */
-  --input:               155 28% 9%;     /* slightly lighter than card */
+  --input:               0 0% 10%;
 
   /* Focus ring */
-  --ring:                142 100% 56%;
+  --ring:                0 72% 46%;    /* red */
 
   /* Charts */
-  --chart-1: 142 100% 56%;
-  --chart-2: 143 73% 50%;
-  --chart-3: 30 80% 55%;
-  --chart-4: 280 65% 60%;
-  --chart-5: 340 75% 55%;
+  --chart-1: 0 72% 46%;
+  --chart-2: 20 80% 55%;
+  --chart-3: 200 65% 55%;
+  --chart-4: 280 50% 60%;
+  --chart-5: 340 60% 55%;
 
   /* Sidebar */
-  --sidebar:                    155 25% 7.5%;
-  --sidebar-foreground:         140 100% 87%;
-  --sidebar-border:             153 37% 14%;
-  --sidebar-primary:            142 100% 56%;
-  --sidebar-primary-foreground: 158 38% 4%;
-  --sidebar-accent:             155 28% 12%;
-  --sidebar-accent-foreground:  140 100% 87%;
-  --sidebar-ring:               142 100% 56%;
+  --sidebar:                    0 0% 5.5%;
+  --sidebar-foreground:         20 6% 87%;
+  --sidebar-border:             0 0% 10%;
+  --sidebar-primary:            0 72% 46%;
+  --sidebar-primary-foreground: 0 0% 96%;
+  --sidebar-accent:             0 0% 8%;
+  --sidebar-accent-foreground:  20 6% 87%;
+  --sidebar-ring:               0 72% 46%;
 
   /* Fonts */
   --app-font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
@@ -155,15 +153,15 @@
   --app-font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
   --radius: .5rem;
 
-  /* Shadows — green-tinted */
-  --shadow-2xs: 0px 1px 3px 0px rgba(0,0,0,0.7);
-  --shadow-xs:  0px 1px 3px 0px rgba(0,0,0,0.7);
-  --shadow-sm:  0px 2px 4px 0px rgba(0,0,0,0.7), 0 0 0 1px rgba(30,255,90,0.04);
-  --shadow:     0px 2px 4px 0px rgba(0,0,0,0.7), 0 0 0 1px rgba(30,255,90,0.04);
-  --shadow-md:  0px 4px 8px 0px rgba(0,0,0,0.7), 0 0 0 1px rgba(30,255,90,0.05);
-  --shadow-lg:  0px 6px 12px 0px rgba(0,0,0,0.8), 0 0 0 1px rgba(30,255,90,0.06);
-  --shadow-xl:  0px 10px 20px 0px rgba(0,0,0,0.8), 0 0 0 1px rgba(30,255,90,0.06);
-  --shadow-2xl: 0px 10px 20px 0px rgba(0,0,0,0.8);
+  /* Shadows — dark, slight red rim */
+  --shadow-2xs: 0px 1px 3px 0px rgba(0,0,0,0.8);
+  --shadow-xs:  0px 1px 3px 0px rgba(0,0,0,0.8);
+  --shadow-sm:  0px 2px 4px 0px rgba(0,0,0,0.8), 0 0 0 1px rgba(204,34,34,0.03);
+  --shadow:     0px 2px 4px 0px rgba(0,0,0,0.8), 0 0 0 1px rgba(204,34,34,0.03);
+  --shadow-md:  0px 4px 8px 0px rgba(0,0,0,0.8), 0 0 0 1px rgba(204,34,34,0.04);
+  --shadow-lg:  0px 6px 12px 0px rgba(0,0,0,0.9), 0 0 0 1px rgba(204,34,34,0.04);
+  --shadow-xl:  0px 10px 20px 0px rgba(0,0,0,0.9), 0 0 0 1px rgba(204,34,34,0.05);
+  --shadow-2xl: 0px 10px 20px 0px rgba(0,0,0,0.9);
   --tracking-normal: 0em;
   --spacing: 0.25rem;
 
@@ -188,6 +186,11 @@
   body {
     @apply font-sans antialiased bg-background text-foreground;
   }
+}
+
+@keyframes rr-fall {
+  0%   { transform: translateY(0); }
+  100% { transform: translateY(130vh); }
 }
 
 @layer utilities {
