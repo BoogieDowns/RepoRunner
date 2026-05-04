@@ -1,4 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Orbitron:wght@700;800&display=swap');
+
+/* HS LunaObscura — SIL Open Font License, Headspace Agency */
+@font-face {
+  font-family: 'HS LunaObscura';
+  src: url('./assets/fonts/HS_LunaObscura.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 @import "tailwindcss";
 @import "tw-animate-css";
 @plugin "@tailwindcss/typography";

@@ -247,7 +247,7 @@ function RepoRunnerLogo() {
       viewBox="0 0 30 30"
       fill="none"
       aria-hidden="true"
-      style={{ filter: "drop-shadow(0 0 5px rgba(200,30,30,0.30))", flexShrink: 0 }}
+      style={{ filter: "drop-shadow(0 0 6px rgba(200,30,30,0.38))", flexShrink: 0 }}
     >
       <defs>
         <linearGradient id="rr-badge" x1="0" y1="0" x2="0" y2="1">
@@ -255,41 +255,50 @@ function RepoRunnerLogo() {
           <stop offset="100%" stopColor="#0b0505" />
         </linearGradient>
         <linearGradient id="rr-border-g" x1="0" y1="0" x2="0" y2="30" gradientUnits="userSpaceOnUse">
-          <stop offset="0%"   stopColor="rgba(200,50,50,0.55)" />
-          <stop offset="100%" stopColor="rgba(80,10,10,0.20)" />
+          <stop offset="0%"   stopColor="rgba(220,60,60,0.65)" />
+          <stop offset="100%" stopColor="rgba(80,10,10,0.18)" />
         </linearGradient>
-        <linearGradient id="rr-mark-g" x1="0" y1="7" x2="0" y2="23" gradientUnits="userSpaceOnUse">
-          <stop offset="0%"   stopColor="#ffb0b0" />
-          <stop offset="40%"  stopColor="#e03030" />
-          <stop offset="100%" stopColor="#7a1010" />
+        <linearGradient id="rr-mark-g" x1="0" y1="6" x2="0" y2="24" gradientUnits="userSpaceOnUse">
+          <stop offset="0%"   stopColor="#ffb8b8" />
+          <stop offset="35%"  stopColor="#e03030" />
+          <stop offset="100%" stopColor="#6a0e0e" />
         </linearGradient>
       </defs>
 
       {/* Badge face */}
-      <rect width="30" height="30" rx="7" fill="url(#rr-badge)" />
+      <rect width="30" height="30" rx="6" fill="url(#rr-badge)" />
       {/* Badge border */}
-      <rect width="30" height="30" rx="7" fill="none" stroke="url(#rr-border-g)" strokeWidth="1" />
+      <rect width="30" height="30" rx="6" fill="none" stroke="url(#rr-border-g)" strokeWidth="1" />
       {/* Top sheen */}
-      <rect x="1.5" y="1.5" width="27" height="7" rx="5.5" fill="rgba(255,255,255,0.025)" />
+      <rect x="1.5" y="1.5" width="27" height="6" rx="4.5" fill="rgba(255,255,255,0.03)" />
 
       {/*
-        Double-R monogram: two mirrored Rs sharing one center vertical bar.
-        Left R  — bowl curves left,  leg goes down-left.
-        Right R — bowl curves right, leg goes down-right.
-        Center vertical bar shared by both.
+        Back-to-back R monogram — geometric, LunaObscura-inspired.
+        Each R: vertical stem + rectangular bowl (with corner arcs) + diagonal leg.
+        Left R is mirrored. Both share the center spine at x=15.
       */}
       <path
         d={[
-          /* shared center bar */        "M 15 7.5 L 15 22",
-          /* right bowl */               "M 15 7.5 Q 22 7.5 22 11.2 Q 22 14.8 15 14.8",
-          /* right leg  */               "M 15 14.8 L 22 22",
-          /* left bowl  */               "M 15 7.5 Q 8 7.5 8 11.2 Q 8 14.8 15 14.8",
-          /* left leg   */               "M 15 14.8 L 8 22",
+          /* ── center spine ── */
+          "M 15 6.5 L 15 23.5",
+
+          /* ── right R ── */
+          /* bowl top: right from spine to corner */
+          "M 15 6.5 L 20.5 6.5 Q 22.5 6.5 22.5 8.5 L 22.5 12.5 Q 22.5 14.5 20.5 14.5 L 15 14.5",
+          /* leg: from bowl-junction diagonal to bottom-right */
+          "M 17.8 14.5 L 22.5 23.5",
+
+          /* ── left R (mirrored) ── */
+          /* bowl top */
+          "M 15 6.5 L 9.5 6.5 Q 7.5 6.5 7.5 8.5 L 7.5 12.5 Q 7.5 14.5 9.5 14.5 L 15 14.5",
+          /* leg */
+          "M 12.2 14.5 L 7.5 23.5",
         ].join(" ")}
         stroke="url(#rr-mark-g)"
-        strokeWidth="1.9"
+        strokeWidth="1.65"
         strokeLinecap="round"
         strokeLinejoin="round"
+        fill="none"
       />
     </svg>
   );
@@ -479,12 +488,12 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
           <span
             className="select-none leading-none"
             style={{
-              fontFamily: "'Orbitron', 'Plus Jakarta Sans', sans-serif",
-              fontSize: "11px",
-              fontWeight: 800,
-              letterSpacing: "0.08em",
+              fontFamily: "'HS LunaObscura', 'Orbitron', 'Plus Jakarta Sans', sans-serif",
+              fontSize: "13px",
+              fontWeight: "normal",
+              letterSpacing: "0.14em",
               textTransform: "uppercase",
-              background: "linear-gradient(160deg, #e0dcd8 0%, #a8a4a0 55%, #d4d0cc 100%)",
+              background: "linear-gradient(160deg, #e4e0dc 0%, #a8a4a0 50%, #ccc8c4 100%)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
               backgroundClip: "text",

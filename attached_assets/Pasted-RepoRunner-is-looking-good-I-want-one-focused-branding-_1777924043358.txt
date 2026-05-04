@@ -1,0 +1,150 @@
+RepoRunner is looking good. I want one focused branding refinement using this reference site:
+
+https://lunaobscura.headspace.ru/
+
+Use the reference only for the **top-left RepoRunner logo/wordmark treatment**.
+
+Do **not** redesign the app.
+Do **not** change layout.
+Do **not** change product flow.
+Do **not** change functionality.
+Do **not** change process management, IPC, setup behavior, logs behavior, meteor behavior, cards, buttons, or status pills.
+
+This is a **branding/header typography pass only**.
+
+## Goal
+
+Make the top-left RepoRunner branding feel more like the LunaObscura reference:
+
+* geometric sci-fi
+* industrial
+* premium
+* dark lunar console
+* sharp but readable
+* understated
+* technical
+
+The current app UI should remain intact. Only improve the top-left brand mark and wordmark.
+
+## Reference qualities to capture
+
+From the LunaObscura reference, capture:
+
+* wide geometric sci-fi letterforms
+* crisp uppercase wordmark feel
+* dark lunar/technical mood
+* red accent used sparingly
+* clean industrial spacing
+* compact header-bar feeling
+
+Do **not** copy the website layout.
+Do **not** add new landing sections.
+Do **not** add the big Luna-style hero treatment.
+Do **not** alter the dashboard.
+
+## 1. Wordmark font
+
+Update the top-left `RepoRunner` wordmark to use a LunaObscura-style font treatment.
+
+If possible, use the actual LunaObscura font if it can be included safely and locally in the project.
+
+If adding the font:
+
+* place the font file in an appropriate local assets/fonts folder
+* define it with `@font-face`
+* use it only for the RepoRunner wordmark and perhaps tiny brand/system labels if appropriate
+* do not use it for body text or logs
+* keep licensing attribution in README or a comment if appropriate
+
+If the actual font is not available locally, use the closest available fallback:
+
+* wide geometric
+* futuristic
+* uppercase
+* readable at small size
+
+The wordmark should read as:
+
+```text
+REPORUNNER
+```
+
+or visually similar.
+
+Important:
+
+* keep it readable
+* do not make it too large
+* do not crowd the project name
+* do not change the header structure
+
+## 2. Logo mark: back-to-back R monogram
+
+Refine the logo icon into a better double-R / back-to-back-R monogram.
+
+Requirements:
+
+* two stylized R forms
+* mirrored or back-to-back
+* compact
+* readable at small header size
+* geometric
+* fits the LunaObscura-inspired sci-fi style
+* feels like a real app mark, not placeholder text
+
+Keep the logo inside the current small icon container.
+
+Use:
+
+* dark background
+* red accent
+* subtle glow
+* crisp linework
+
+Avoid:
+
+* sports team logo look
+* cartoon look
+* overly complex symbol
+* generic terminal icon
+* changing the icon size too much
+
+## 3. Header integration
+
+Make the logo + wordmark feel better integrated with the current header.
+
+Lightly refine:
+
+* logo spacing
+* wordmark spacing
+* divider spacing
+* vertical alignment
+* color balance
+* glow restraint
+
+Do not move the project name area around significantly.
+
+## 4. Preserve the rest of the app
+
+Do not change:
+
+* dashboard layout
+* quick actions
+* services card
+* logs panel
+* setup modal
+* meteor animation
+* button styling
+* status pill styling
+* colors outside branding unless absolutely necessary for header integration
+
+## Acceptance criteria
+
+After this change:
+
+1. Top-left RepoRunner wordmark feels closer to the LunaObscura sci-fi font style.
+2. Logo mark is a cleaner back-to-back-R monogram.
+3. Branding looks more intentional and less placeholder.
+4. Header still fits cleanly at normal app width.
+5. Project name and repo path remain readable.
+6. No dashboard, setup, logs, meteor, or functionality changes are made.
