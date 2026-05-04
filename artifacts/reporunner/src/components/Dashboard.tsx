@@ -41,6 +41,34 @@ const EXTRA_LINES = [
 ];
 
 function AmbientBackground({ anyRunning, bothRunning }: { anyRunning: boolean; bothRunning: boolean }) {
+  /*
+   * Meteor lifecycle management:
+   *   ON  → meteorsLive=true  immediately, negative delays = already mid-fall on first frame
+   *   OFF → grace period (> longest cycle: 7.4s) lets every meteor complete its natural descent
+   *          and return to top:-32vh (invisible) before we kill the animation
+   */
+  const [meteorsLive, setMeteorsLive] = useState(anyRunning);
+  const stopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const wasLiveRef   = useRef(anyRunning);
+
+  useEffect(() => {
+    if (anyRunning) {
+      if (stopTimerRef.current) { clearTimeout(stopTimerRef.current); stopTimerRef.current = null; }
+      setMeteorsLive(true);
+      wasLiveRef.current = true;
+    } else {
+      if (wasLiveRef.current) {
+        // Give every meteor time to finish its current fall and loop back above-viewport
+        stopTimerRef.current = setTimeout(() => {
+          setMeteorsLive(false);
+          wasLiveRef.current = false;
+          stopTimerRef.current = null;
+        }, 8600); // safely above the longest dur (7.4s)
+      }
+    }
+    return () => { if (stopTimerRef.current) clearTimeout(stopTimerRef.current); };
+  }, [anyRunning]);
+
   const lines = bothRunning ? [...LINE_CONFIGS, ...EXTRA_LINES] : LINE_CONFIGS;
 
   const moonBorder = anyRunning
@@ -114,8 +142,14 @@ function AmbientBackground({ anyRunning, bothRunning }: { anyRunning: boolean; b
       {/* Falling red lines — meteor streak: bright head + trailing tail */}
       {lines.map((line, i) => {
         const op = line.op;
-        const anim = anyRunning
-          ? `rr-fall ${line.dur}s ${line.delay}s infinite linear`
+        /*
+         * Negative delay = meteor is already mid-fall the moment the animation starts.
+         * e.g. delay:-3.1s on a 7.4s cycle → starts 3.1s into the fall (42% down).
+         * Meteors are naturally invisible above the viewport (top:-32vh, overflow:hidden)
+         * so no opacity tricks needed — they're only seen while within the container.
+         */
+        const anim = meteorsLive
+          ? `rr-fall ${line.dur}s -${line.delay}s infinite linear`
           : "none";
         return (
           <div
@@ -128,8 +162,6 @@ function AmbientBackground({ anyRunning, bothRunning }: { anyRunning: boolean; b
               height: `${line.h}vh`,
               transform: "translateX(-50%)",
               animation: anim,
-              opacity: anyRunning ? 1 : 0,
-              transition: "opacity 1.8s ease",
             }}
           >
             {/* Tail — 1px, fades in from top, brightens toward the head */}
