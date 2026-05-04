@@ -63,6 +63,9 @@ function AmbientBackground({ anyRunning, bothRunning }: { anyRunning: boolean; b
         overflow: "hidden",
         pointerEvents: "none",
         zIndex: 0,
+        /* Vertical dissolve — full intensity top→mid, fades into terminal zone */
+        WebkitMaskImage: "linear-gradient(to bottom, black 0%, black 46%, rgba(0,0,0,0.55) 65%, rgba(0,0,0,0.18) 84%, rgba(0,0,0,0.06) 100%)",
+        maskImage:        "linear-gradient(to bottom, black 0%, black 46%, rgba(0,0,0,0.55) 65%, rgba(0,0,0,0.18) 84%, rgba(0,0,0,0.06) 100%)",
       }}
     >
       {/* Film grain */}
@@ -605,7 +608,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
         {/* Log toolbar */}
         <div
           className="flex-none h-[40px] flex items-center justify-between px-5"
-          style={{ borderBottom: "1px solid #111", background: "rgba(6,6,6,0.92)" }}
+          style={{ borderBottom: "1px solid #111", background: "rgba(6,6,6,0.84)" }}
         >
           <div className="flex items-center gap-2.5">
             <span style={{ ...LABEL, color: "#363432" }}>
@@ -658,7 +661,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
         <div
           ref={scrollRef}
           className="flex-1 overflow-y-auto py-2"
-          style={{ background: "#050505", ...MONO, fontSize: "12px", lineHeight: "1.7" }}
+          style={{ background: "rgba(5,5,5,0.78)", ...MONO, fontSize: "12px", lineHeight: "1.7" }}
         >
           {logs.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center gap-1.5 select-none">

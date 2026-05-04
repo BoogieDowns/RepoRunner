@@ -1,0 +1,124 @@
+RepoRunner’s black/red redesign is looking good, but the meteor streak effect is still not behaving correctly.
+
+## Problem
+
+The red meteor streaks are not really coming down into the lower logs / terminal section properly.
+
+Right now they mostly live in the upper dashboard area and feel like they stop too early or get clipped before they meaningfully pass into the lower part of the page.
+
+I want the streaks to feel like they pass down through more of the interface and then gradually dissolve into the terminal/logs region.
+
+## Important constraints
+
+Do **not** redesign the app.
+Do **not** change layout structure.
+Do **not** change functionality.
+Do **not** change product flow.
+Do **not** change quick actions, services, logs behavior, setup behavior, or process logic.
+
+This is a **targeted atmospheric/background effect fix only**.
+
+---
+
+## What to fix
+
+### 1. Make the meteor streaks belong to the full app background, not just the top section
+
+The falling meteor/signal streak layer should be treated as a **full-page background effect** behind the interface, not a visual effect that only belongs to the top content section.
+
+Please ensure:
+
+* the meteor streak layer spans the full main app area vertically
+* it sits behind both the top dashboard section and the lower logs/terminal section
+* it is not clipped to just the upper section
+
+If needed:
+
+* move the streak effect/background layer higher in the DOM so it is attached to the app shell/root layout
+* ensure it renders behind the main content as one continuous ambient layer
+
+### 2. Prevent clipping
+
+Check whether the streaks are being cut off by container rules such as:
+
+* `overflow: hidden`
+* section-specific clipping
+* masks that end too early
+* z-index issues
+
+Please fix that so the streaks can visually continue farther down the page.
+
+### 3. Extend the streaks farther downward
+
+The meteor streaks should continue farther into the lower half of the interface.
+
+They do **not** need to reach the very bottom in a strong way, but they should clearly descend past the dashboard area and into the upper part of the logs/terminal area.
+
+### 4. Make the fade longer and softer
+
+The fade-out should be more gradual.
+
+Instead of ending abruptly around the dashboard/log split, I want the streaks to:
+
+* continue lower
+* fade more slowly
+* feel like they dissolve into the terminal/logs region
+
+Think:
+
+* the meteor/signal streak enters the lower console zone
+* its tail becomes fainter and more diffuse
+* it quietly disappears into the darker terminal area
+
+### 5. Keep the logs readable
+
+Important:
+
+* the streaks should remain behind the logs
+* the logs must still be readable
+* do not let the effect interfere with timestamps, labels, or text contrast
+
+So:
+
+* keep the streaks subtle in the lower section
+* use opacity/fade carefully
+* make the effect atmospheric, not distracting
+
+### 6. Preserve the meteor character
+
+Keep the current meteor-style behavior:
+
+* bright head
+* trailing tail
+* downward travel
+* subtle red signal feel
+
+Do not revert back to simple fading vertical lines.
+
+---
+
+## Suggested implementation direction
+
+Use best judgment, but a good solution would likely involve:
+
+* having a single full-height atmospheric background layer at the app-shell/root level
+* placing the meteor streaks inside that shared background layer
+* keeping content panels above it
+* using a vertical gradient / mask so the streaks remain stronger in the upper-mid area and softer in the lower terminal area
+* allowing the streaks to continue visually behind the logs region before fading out
+
+If the current effect is tied to a top section container, please decouple it from that section.
+
+---
+
+## Acceptance criteria
+
+After this fix:
+
+1. The meteor streaks visually continue farther down the page.
+2. They are no longer confined mainly to the top dashboard area.
+3. They pass into the upper portion of the logs/terminal region.
+4. Their fade-out is longer and softer.
+5. The effect still feels subtle and atmospheric.
+6. The logs remain readable.
+7. No layout or functionality changes are introduced.
