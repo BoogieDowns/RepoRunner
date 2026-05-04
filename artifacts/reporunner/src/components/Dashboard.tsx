@@ -39,7 +39,7 @@ function MeteorLine({ id, left, dur, h, op, onDone }: MeteorDef & { onDone: (id:
     <div
       style={{
         position: "absolute",
-        top: "-32vh",
+        top: "-70vh",
         left: `${left}%`,
         width: "3px",
         height: `${h}vh`,

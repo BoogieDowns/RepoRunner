@@ -190,7 +190,7 @@
 
 @keyframes rr-fall {
   0%   { transform: translateY(0); }
-  100% { transform: translateY(130vh); }
+  100% { transform: translateY(175vh); }
 }
 
 @keyframes rr-scrim-in {
