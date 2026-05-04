@@ -1,0 +1,161 @@
+We are redesigning Repo Runner using a new visual reference.
+
+Repo Runner is a developer workflow app that lets users paste a GitHub repo URL, analyze the project, detect what it needs to run, and launch a browser preview without manually using terminals or local setup.
+
+Use the provided screenshot as the main visual mood reference.
+
+The reference has:
+- near-black textured/grainy background
+- sparse futuristic interface
+- thin top navigation/status bar
+- small uppercase monospace labels
+- muted grey body text
+- sharp red accent text
+- thin vertical red signal beams
+- huge negative space
+- atmospheric “classified lunar control panel / orbital terminal” feeling
+
+Translate that into Repo Runner as a usable app UI.
+
+Do not copy the screenshot directly. Do not use lunar/moon/font/download wording. Instead, adapt the mood into a product interface for launching GitHub repos.
+
+Target vibe:
+“classified repo launch console”
+“dark orbital control panel”
+“terminal mission system for waking up a codebase”
+
+Core design requirements:
+
+1. Global visual style
+- Use a near-black background with subtle noise/grain texture.
+- Avoid bright gradients and colourful SaaS styling.
+- Use thin borders, low-contrast panels, and sparse layout.
+- Main accent should be red or red-orange, used for active signals, warnings, scan beams, and primary action emphasis.
+- Secondary text should be muted grey.
+- Important command labels should be uppercase and monospace.
+- Use generous negative space.
+- Keep the UI atmospheric but still readable and practical.
+
+2. Top system bar
+Create a thin top command/status bar similar in spirit to the reference:
+- Left: REPO RUNNER
+- Nearby small label: [PRIVATE PREVIEW] or [DEV CONSOLE]
+- Center or right: ANALYZE REPO / RUN PREVIEW / VIEW LOGS
+- Far right: SYSTEM ID / STATUS / small circular run indicator
+
+Make it feel like an operating console, not a marketing nav bar.
+
+3. Landing / empty state
+Create a large sparse hero screen.
+
+Suggested headline:
+“WAKE A REPO WITHOUT TOUCHING LOCAL SETUP”
+
+Suggested subtext:
+“Paste a GitHub repository. Repo Runner scans the stack, maps the missing requirements, and boots a browser preview.”
+
+Primary interaction:
+- A wide repo URL input styled like a command field.
+- Button: ANALYZE REPO
+- Small helper text: “GitHub URL · branch · runtime detection · env scan”
+
+Use a subtle red scan line or signal point as the visual focus.
+
+4. Repo scan sequence
+When analyzing a repo, show a staged scan sequence:
+- CLONING REPOSITORY
+- READING PACKAGE FILES
+- DETECTING FRAMEWORK
+- IDENTIFYING START COMMAND
+- SCANNING ENVIRONMENT VARIABLES
+- BUILDING RUN PLAN
+
+Make this feel like a system boot / mission scan.
+Use monospace text, small uppercase labels, thin dividers, and red active states.
+
+5. Analysis result screen
+Create a “RUN PLAN” interface with sparse panels:
+- PROJECT DETECTED
+- FRAMEWORK
+- PACKAGE MANAGER
+- INSTALL COMMAND
+- START COMMAND
+- REQUIRED SERVICES
+- ENVIRONMENT VARIABLES
+- READINESS STATUS
+
+Use status tags:
+- READY
+- MISSING INPUT
+- WARNING
+- BLOCKED
+- RUNNING
+
+6. Missing requirements state
+This should feel helpful, not like an error wall.
+
+Show:
+“RUN BLOCKED: REQUIREMENTS MISSING”
+
+Then checklist rows:
+- DATABASE_URL required
+- OPENAI_API_KEY required
+- Redis service not detected
+- Dockerfile found / not found
+- Start command uncertain
+
+Each row should have a compact action:
+- ADD VALUE
+- CONNECT SERVICE
+- CONFIRM COMMAND
+- IGNORE FOR NOW
+
+7. Running preview state
+Create a dramatic but clean running state:
+- Status: PREVIEW ONLINE
+- Preview URL
+- Branch
+- Runtime
+- Port
+- Uptime
+- Buttons: OPEN PREVIEW / RESTART / STOP
+
+Use a red signal beam, pulse point, or thin active line to represent the running preview.
+
+8. Logs panel
+Logs should look like a classified console:
+- black terminal panel
+- tiny monospace text
+- timestamp
+- level
+- message
+- red highlights for errors
+- amber/dim red for warnings
+- muted grey for normal logs
+
+The logs should be readable. Do not make the entire app a noisy terminal.
+
+9. Texture and effects
+Add subtle atmosphere:
+- grain/noise overlay
+- faint scanlines
+- tiny red glow points
+- thin vertical signal lines
+- soft vignette
+- subtle hover states
+- active pulse animation
+
+Keep it restrained. No cyberpunk neon, no rainbow gradients, no game HUD clutter.
+
+10. Usability guardrails
+The UI can be atmospheric, but it must stay usable.
+Do not hide core actions.
+Do not make text too tiny everywhere.
+Do not overuse red to the point that everything feels like an error.
+Use red as signal/command energy, not only danger.
+
+11. Implementation constraints
+Focus on frontend UI, layout, styling, and reusable components.
+Do not change backend logic unless required.
+Avoid creating duplicate styling systems.
+Reuse existing components where possible, but update the visual language consistently.
