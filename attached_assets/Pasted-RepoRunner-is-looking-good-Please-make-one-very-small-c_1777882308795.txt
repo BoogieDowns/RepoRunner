@@ -1,0 +1,87 @@
+RepoRunner is looking good. Please make one very small color correction only.
+
+Do **not** redesign the UI.
+Do **not** change layout.
+Do **not** change functionality.
+Do **not** change meteor behavior.
+Do **not** change logs behavior except the `[INSTALL]` label color.
+Do **not** change status logic.
+
+## Problem
+
+The current transitional/install color still looks too much like the original bright orange/yellow.
+
+I want it to be closer to a muted **molten amber / burnt gold** tone: paler, more premium, less saturated, less bright-orange.
+
+## Required color
+
+Please use this exact color direction for transitional/install styling:
+
+```css
+--transition: #d99a25;
+--transition-bg: rgba(217, 154, 37, 0.10);
+--transition-border: rgba(217, 154, 37, 0.42);
+--transition-glow: rgba(217, 154, 37, 0.16);
+```
+
+If there are existing orange/yellow install/starting/stopping variables, replace them with this `#d99a25` family.
+
+## Apply only to
+
+### 1. `[INSTALL]` log source labels
+
+The `[INSTALL]` label in the logs/terminal section should use:
+
+```css
+#d99a25
+```
+
+It should look like muted amber/burnt gold, not bright orange or yellow.
+
+### 2. Starting / Stopping status pills
+
+Any service status pill showing:
+
+```text
+Starting
+Stopping
+```
+
+should use the same muted amber/burnt gold treatment.
+
+Apply it to:
+
+* pill text
+* border
+* dot/accent if present
+* subtle background tint
+* subtle glow if present
+
+## Preserve everything else
+
+Do not change:
+
+* Running pill color
+* Stopped pill color
+* Failed pill color
+* Unknown pill color
+* Frontend log label color
+* Backend log label color
+* System log label color
+* Git log label color
+* button styling
+* meteor styling
+* card styling
+* modal styling
+* layout
+* functionality
+
+## Acceptance criteria
+
+After this change:
+
+1. `[INSTALL]` labels look muted amber/burnt gold, not bright orange/yellow.
+2. `Starting` pills use the same muted amber/burnt gold.
+3. `Stopping` pills use the same muted amber/burnt gold.
+4. The color is visibly closer to `#d99a25`.
+5. No other styling or functionality changes are made.
