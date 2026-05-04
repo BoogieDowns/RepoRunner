@@ -22,22 +22,22 @@ import { Separator } from "@/components/ui/separator";
 /* ─── Ambient Background ──────────────────────────────────────────────────── */
 
 const LINE_CONFIGS = [
-  { left: 7,  delay: 0.0, dur: 5.2, h: 22, op: 0.50 },
-  { left: 15, delay: 3.1, dur: 7.4, h: 16, op: 0.30 },
-  { left: 23, delay: 1.4, dur: 6.0, h: 26, op: 0.58 },
-  { left: 34, delay: 4.8, dur: 5.7, h: 18, op: 0.40 },
-  { left: 44, delay: 2.2, dur: 6.8, h: 30, op: 0.55 },
-  { left: 53, delay: 0.6, dur: 5.4, h: 20, op: 0.35 },
-  { left: 62, delay: 3.9, dur: 7.1, h: 24, op: 0.62 },
-  { left: 71, delay: 1.8, dur: 5.9, h: 19, op: 0.38 },
-  { left: 80, delay: 5.2, dur: 6.3, h: 27, op: 0.48 },
-  { left: 88, delay: 2.7, dur: 4.8, h: 21, op: 0.42 },
+  { left: 7,  delay: 0.0, dur: 5.2, h: 44, op: 0.50 },
+  { left: 15, delay: 3.1, dur: 7.4, h: 32, op: 0.30 },
+  { left: 23, delay: 1.4, dur: 6.0, h: 52, op: 0.58 },
+  { left: 34, delay: 4.8, dur: 5.7, h: 36, op: 0.40 },
+  { left: 44, delay: 2.2, dur: 6.8, h: 60, op: 0.55 },
+  { left: 53, delay: 0.6, dur: 5.4, h: 38, op: 0.35 },
+  { left: 62, delay: 3.9, dur: 7.1, h: 48, op: 0.62 },
+  { left: 71, delay: 1.8, dur: 5.9, h: 35, op: 0.38 },
+  { left: 80, delay: 5.2, dur: 6.3, h: 54, op: 0.48 },
+  { left: 88, delay: 2.7, dur: 4.8, h: 40, op: 0.42 },
 ];
 
 const EXTRA_LINES = [
-  { left: 19, delay: 1.1, dur: 6.6, h: 23, op: 0.52 },
-  { left: 40, delay: 3.5, dur: 5.2, h: 17, op: 0.36 },
-  { left: 76, delay: 0.9, dur: 6.9, h: 28, op: 0.60 },
+  { left: 19, delay: 1.1, dur: 6.6, h: 46, op: 0.52 },
+  { left: 40, delay: 3.5, dur: 5.2, h: 34, op: 0.36 },
+  { left: 76, delay: 0.9, dur: 6.9, h: 56, op: 0.60 },
 ];
 
 function AmbientBackground({ anyRunning, bothRunning }: { anyRunning: boolean; bothRunning: boolean }) {
@@ -139,9 +139,10 @@ function AmbientBackground({ anyRunning, bothRunning }: { anyRunning: boolean; b
                 height: "100%",
                 background: `linear-gradient(to bottom,
                   transparent 0%,
-                  rgba(140,10,10,${op * 0.07}) 18%,
-                  rgba(180,22,22,${op * 0.28}) 52%,
-                  rgba(208,38,38,${op * 0.65}) 80%,
+                  rgba(140,10,10,${op * 0.03}) 10%,
+                  rgba(158,14,14,${op * 0.12}) 32%,
+                  rgba(188,24,24,${op * 0.34}) 58%,
+                  rgba(210,38,38,${op * 0.64}) 80%,
                   rgba(224,45,45,${op * 0.88}) 100%
                 )`,
               }}

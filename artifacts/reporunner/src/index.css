@@ -193,6 +193,24 @@
   100% { transform: translateY(130vh); }
 }
 
+@keyframes rr-scrim-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes rr-scrim-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+@keyframes rr-modal-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes rr-modal-out {
+  0%   { opacity: 1;   transform: scale(1); }
+  40%  { opacity: 0.6; transform: scale(1.022); }
+  100% { opacity: 0;   transform: scale(0.96); }
+}
+
 @layer utilities {
   input[type="search"]::-webkit-search-cancel-button {
     @apply hidden;

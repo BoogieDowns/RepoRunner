@@ -45,9 +45,11 @@ const inputClassName =
 export function SetupScreen({
   onSave,
   onClose,
+  overlay = false,
 }: {
   onSave: (profile: ProjectProfile) => void;
   onClose?: () => void;
+  overlay?: boolean;
 }) {
   const [isSelecting, setIsSelecting] = useState(false);
 
@@ -89,23 +91,25 @@ export function SetupScreen({
 
   return (
     <div
-      className="flex min-h-screen items-center justify-center p-4 sm:p-8 animate-in fade-in duration-300"
-      style={{ background: "#070707" }}
+      className={overlay ? undefined : "flex min-h-screen items-center justify-center p-4 sm:p-8 animate-in fade-in duration-300"}
+      style={overlay ? undefined : { background: "#070707" }}
     >
-      {/* Subtle grain */}
-      <div
-        aria-hidden="true"
-        style={{
-          position: "fixed",
-          inset: 0,
-          backgroundImage: `url('data:image/svg+xml,<svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100%25" height="100%25" filter="url(%23n)"/></svg>')`,
-          backgroundSize: "200px 200px",
-          opacity: 0.045,
-          mixBlendMode: "overlay",
-          pointerEvents: "none",
-          zIndex: 0,
-        }}
-      />
+      {/* Subtle grain — only in full-screen (non-overlay) mode */}
+      {!overlay && (
+        <div
+          aria-hidden="true"
+          style={{
+            position: "fixed",
+            inset: 0,
+            backgroundImage: `url('data:image/svg+xml,<svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100%25" height="100%25" filter="url(%23n)"/></svg>')`,
+            backgroundSize: "200px 200px",
+            opacity: 0.045,
+            mixBlendMode: "overlay",
+            pointerEvents: "none",
+            zIndex: 0,
+          }}
+        />
+      )}
 
       <Card
         className="w-full max-w-2xl rounded-xl relative"

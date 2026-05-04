@@ -1,0 +1,153 @@
+RepoRunner’s black/red UI redesign is looking very good. I want two focused UI refinements only.
+
+Do **not** redesign the app.
+Do **not** change layout structure.
+Do **not** change functionality.
+Do **not** change product flow.
+Do **not** change process management, logs behavior, or setup fields.
+
+This is a **small visual/interaction refinement pass only**.
+
+---
+
+## Change 1: Extend and soften the fade of the falling red meteors
+
+The falling red meteor/signal streaks are looking good.
+
+However, I want them to feel like they travel a bit further downward and fade more gradually as they transition from the header/main dashboard area into the terminal/logs section.
+
+### Desired effect
+
+Right now they already fade somewhat, but I want:
+
+* the streaks to continue a bit farther down the page
+* the fade-out zone to be longer and softer
+* the transition into the logs/terminal section to feel more gradual
+* the streaks to visually “bleed” downward a little more before disappearing
+
+### Visual direction
+
+Each meteor should still have:
+
+* a brighter head
+* a trailing tail
+* clear downward motion
+
+But as it approaches the lower part of the screen:
+
+* the tail should extend/fade more
+* the streak should dissolve more gradually
+* it should feel like the signal is disappearing into the terminal area rather than just cutting off
+
+### Important constraints
+
+* keep it subtle
+* do not make the streaks distracting
+* do not make them too bright
+* do not flood the screen with too many streaks
+* do not let them interfere with readability of logs or buttons
+
+This is just a refinement of the current effect.
+
+---
+
+## Change 2: Improve the Edit Setup modal overlay and motion
+
+When I click **Edit Setup** in the top-right, I want the setup box/modal to feel more like a real overlay.
+
+### Desired overlay behavior
+
+When the setup modal opens:
+
+* keep the main page visible in the background
+* darken the background slightly with an overlay/scrim
+* preserve visibility of the page behind it
+* make it feel like the setup panel is floating above the app
+
+The background should not disappear.
+It should still be visible, just dimmed a bit.
+
+### Desired visual treatment
+
+Please add a subtle overlay behind the modal, something like:
+
+* semi-transparent black/dark charcoal layer
+* enough dimming to create focus
+* not so dark that the page completely disappears
+
+This should feel polished and intentional.
+
+### Desired modal motion
+
+When opening:
+
+* a subtle entrance animation is good
+* something like a gentle scale/fade-in is fine
+* keep it restrained and premium
+
+When closing:
+
+* I want it to feel like it slightly “pops” like a bubble, but only very subtly
+
+Interpret that as:
+
+* a tiny scale change
+* a quick soft ease
+* slightly playful but still polished
+* not cartoonish
+* not exaggerated
+
+A good close effect might be:
+
+* very slight scale down/up feel
+* quick fade
+* soft easing
+* almost like a tiny bubble release
+
+Keep this subtle.
+
+### Important constraints
+
+* do not turn this into a dramatic animation
+* do not make it slow
+* do not make it distracting
+* do not change the modal’s fields or behavior
+* do not auto-save
+* keep the existing close-X and save behavior intact
+
+---
+
+## Scope reminders
+
+Do not change:
+
+* current dashboard structure
+* quick actions
+* services card
+* logs behavior
+* setup fields
+* setup save behavior
+* close X behavior
+* status logic
+* product flow
+
+This pass is only about:
+
+1. meteor fade refinement
+2. modal overlay + subtle motion refinement
+
+---
+
+## Acceptance criteria
+
+After this change:
+
+1. The falling red meteors extend a bit farther down the page.
+2. Their fade into the logs/terminal section is longer and softer.
+3. The effect remains subtle and atmospheric.
+4. Opening Edit Setup shows the page still visible behind the modal.
+5. The background behind the modal is slightly darkened.
+6. The modal feels like a floating overlay.
+7. Opening/closing the modal has a subtle polished motion.
+8. Closing the modal has a very slight bubble/pop feel.
+9. No functionality or layout is changed.
