@@ -1,0 +1,115 @@
+RepoRunner’s new black/red UI direction is working well. I want one targeted visual refinement to the falling red line effect.
+
+Do **not** redesign the UI.
+Do **not** change layout.
+Do **not** change functionality.
+Do **not** change product flow.
+Do **not** change logs, controls, cards, or setup behavior.
+
+This is a **small visual effect refinement only**.
+
+## Requested change
+
+The vertical red lines in the background currently feel like simple fading lines.
+
+I want them to behave more like the reference image — more like **descending signal meteors**.
+
+## Desired effect
+
+Each falling red line should feel like:
+
+* a **defined bright head / leading point**
+* a **slightly larger or brighter tip at the front**
+* a **thin trailing tail behind it**
+* a **clear sense of downward motion**
+* less like a line fading in/out
+* more like a streak cutting downward through the dark background
+
+Think:
+
+* meteor streak
+* signal beam streak
+* falling tracer
+* descending sci-fi telemetry streak
+
+## Visual behavior guidance
+
+Please refine the effect so that each line has:
+
+### 1. A visible leading head
+
+The front of the streak should have a brighter red “head” or brighter concentrated point.
+
+This should be the clearest visual part of the falling streak.
+
+### 2. A trailing tail
+
+Behind the head, there should be a tail that tapers and fades out.
+
+The tail should:
+
+* be thinner than the head
+* feel like motion blur or trailing light
+* look like it is following the head downward
+
+### 3. More directional motion
+
+The animation should communicate that the streak is moving downward through space, not just appearing and disappearing.
+
+The streak should feel like it is traveling, not pulsing.
+
+### 4. Keep it subtle
+
+Important:
+
+* do not make the effect too bright
+* do not make it look like a game effect
+* do not flood the screen with too many lines
+* do not make it distracting
+
+It should remain atmospheric and elegant.
+
+## Styling direction
+
+Use the current RepoRunner black/red theme.
+
+The streaks should still be:
+
+* thin
+* refined
+* cinematic
+* understated
+
+A good direction is:
+
+* bright red head
+* dimmer red tail
+* soft fade toward the end of the tail
+* smooth downward movement
+
+## Scope
+
+Only refine the falling red line effect.
+
+Do not change:
+
+* header
+* buttons
+* cards
+* services styling
+* logs styling
+* layout
+* status logic
+* setup modal
+* app behavior
+
+## Acceptance criteria
+
+After this change:
+
+1. The falling red lines no longer feel like simple fading lines.
+2. Each line reads more like a meteor/signal streak.
+3. Each streak has a visible brighter head and a trailing tail.
+4. The motion feels more directional and intentional.
+5. The effect remains subtle and atmospheric.
+6. No other parts of the UI are changed.

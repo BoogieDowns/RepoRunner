@@ -108,24 +108,64 @@ function AmbientBackground({ anyRunning, bothRunning }: { anyRunning: boolean; b
         }}
       />
 
-      {/* Falling red lines */}
-      {lines.map((line, i) => (
-        <div
-          key={i}
-          style={{
-            position: "absolute",
-            top: "-30vh",
-            left: `${line.left}%`,
-            width: "1px",
-            height: `${line.h}vh`,
-            background: `linear-gradient(to bottom, transparent, rgba(204,34,34,${anyRunning ? line.op : 0}), rgba(204,34,34,${anyRunning ? line.op * 0.4 : 0}), transparent)`,
-            animation: anyRunning
-              ? `rr-fall ${line.dur}s ${line.delay}s infinite linear`
-              : "none",
-            transition: "background 1.8s ease",
-          }}
-        />
-      ))}
+      {/* Falling red lines — meteor streak: bright head + trailing tail */}
+      {lines.map((line, i) => {
+        const op = line.op;
+        const anim = anyRunning
+          ? `rr-fall ${line.dur}s ${line.delay}s infinite linear`
+          : "none";
+        return (
+          <div
+            key={i}
+            style={{
+              position: "absolute",
+              top: "-32vh",
+              left: `${line.left}%`,
+              width: "3px",
+              height: `${line.h}vh`,
+              transform: "translateX(-50%)",
+              animation: anim,
+              opacity: anyRunning ? 1 : 0,
+              transition: "opacity 1.8s ease",
+            }}
+          >
+            {/* Tail — 1px, fades in from top, brightens toward the head */}
+            <div
+              style={{
+                position: "absolute",
+                top: 0,
+                left: "1px",
+                width: "1px",
+                height: "100%",
+                background: `linear-gradient(to bottom,
+                  transparent 0%,
+                  rgba(140,10,10,${op * 0.07}) 18%,
+                  rgba(180,22,22,${op * 0.28}) 52%,
+                  rgba(208,38,38,${op * 0.65}) 80%,
+                  rgba(224,45,45,${op * 0.88}) 100%
+                )`,
+              }}
+            />
+            {/* Head — 3px wide, bright leading point with glow */}
+            <div
+              style={{
+                position: "absolute",
+                bottom: 0,
+                left: "0px",
+                width: "3px",
+                height: "11px",
+                background: `linear-gradient(to bottom,
+                  rgba(210,40,40,${op * 0.80}),
+                  rgba(255,82,82,${op * 0.97}),
+                  rgba(255,115,115,${op * 0.50})
+                )`,
+                boxShadow: `0 0 5px 1px rgba(255,72,72,${op * 0.30})`,
+                borderRadius: "1px 1px 2px 2px",
+              }}
+            />
+          </div>
+        );
+      })}
     </div>
   );
 }
