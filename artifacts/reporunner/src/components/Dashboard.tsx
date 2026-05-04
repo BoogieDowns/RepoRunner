@@ -247,7 +247,7 @@ function RepoRunnerLogo() {
       viewBox="0 0 32 32"
       fill="none"
       aria-hidden="true"
-      style={{ filter: "drop-shadow(0 0 7px rgba(204,30,30,0.45))", flexShrink: 0 }}
+      style={{ filter: "drop-shadow(0 0 7px rgba(204,30,30,0.48))", flexShrink: 0 }}
     >
       <defs>
         <linearGradient id="rr-badge" x1="0" y1="0" x2="0" y2="1">
@@ -260,9 +260,9 @@ function RepoRunnerLogo() {
           <stop offset="100%" stopColor="rgba(60,8,8,0.15)" />
         </linearGradient>
         <linearGradient id="rr-mark-g" x1="0" y1="6" x2="0" y2="27" gradientUnits="userSpaceOnUse">
-          <stop offset="0%"   stopColor="#ffa8a8" />
-          <stop offset="28%"  stopColor="#e03030" />
-          <stop offset="100%" stopColor="#5c0c0c" />
+          <stop offset="0%"   stopColor="#ffaaaa" />
+          <stop offset="30%"  stopColor="#e03030" />
+          <stop offset="100%" stopColor="#5a0c0c" />
         </linearGradient>
       </defs>
 
@@ -273,27 +273,22 @@ function RepoRunnerLogo() {
       <rect x="1.5" y="1.5" width="29" height="5.5" rx="5" fill="rgba(255,255,255,0.032)" />
 
       {/*
-        Back-to-back R monogram.
-        Square caps + miter joins → crisp industrial geometry.
-        Two Rs share the center spine at x=16.
-        Each bowl: horizontal top + vertical outer edge + horizontal return.
-        Leg: diagonal from inner bowl edge to corner.
+        R Я monogram — each letter has its own outer stem.
+        Left R:  stem on the left  (x=6),  bowl opens rightward, leg angles to center-bottom.
+        Right Я: stem on the right (x=26), bowl opens leftward,  leg angles to center-bottom.
+        Both legs converge at (16, 26) — forming one unified diamond silhouette.
       */}
       <path
         d={[
-          /* ── center spine ── */
-          "M 16 6.5 L 16 25.5",
+          /* ── Left R ── */
+          /* stem */      "M 6 6.5 L 6 25.5",
+          /* bowl */      "M 6 6.5 L 12.5 6.5 Q 15 6.5 15 9.5 L 15 14.5 Q 15 17 12.5 17 L 6 17",
+          /* leg */       "M 10.5 17 L 16 26",
 
-          /* ── right R: bowl ── */
-          /* top → outer → bottom → back to spine */
-          "M 16 6.5 L 21.5 6.5 Q 24 6.5 24 9.5 L 24 14 Q 24 16.5 21.5 16.5 L 16 16.5",
-          /* ── right R: leg ── */
-          "M 19.5 16.5 L 24.5 25.5",
-
-          /* ── left R: bowl (mirrored) ── */
-          "M 16 6.5 L 10.5 6.5 Q 8 6.5 8 9.5 L 8 14 Q 8 16.5 10.5 16.5 L 16 16.5",
-          /* ── left R: leg ── */
-          "M 12.5 16.5 L 7.5 25.5",
+          /* ── Right Я (mirrored) ── */
+          /* stem */      "M 26 6.5 L 26 25.5",
+          /* bowl */      "M 26 6.5 L 19.5 6.5 Q 17 6.5 17 9.5 L 17 14.5 Q 17 17 19.5 17 L 26 17",
+          /* leg */       "M 21.5 17 L 16 26",
         ].join(" ")}
         stroke="url(#rr-mark-g)"
         strokeWidth="2.2"

@@ -1,0 +1,106 @@
+RepoRunner’s wordmark is now better, but the logo mark still has not meaningfully changed.
+
+Please do one focused logo replacement only.
+
+Do **not** change the wordmark font.
+Do **not** change the header layout.
+Do **not** change dashboard, buttons, services, logs, setup modal, meteor effects, IPC, functionality, or product flow.
+
+This is only about replacing the small top-left logo icon.
+
+## Problem
+
+The current logo still looks like the old placeholder mark.
+
+It has not changed enough and still feels too generic.
+
+Please do **not** just tweak the current SVG.
+Please replace the logo mark concept with a new custom symbol.
+
+## Desired logo concept
+
+Create a compact **mirrored double-R monogram** that feels like a real app icon.
+
+The concept should be:
+
+```text
+two capital R shapes, back-to-back, mirrored around a shared center spine
+```
+
+Think of it as:
+
+```text
+R | Я
+```
+
+but stylized into one clean geometric symbol.
+
+## Specific construction guidance
+
+The new mark should have:
+
+* a shared central vertical spine
+* a left-facing R structure on one side
+* a mirrored right-facing R structure on the other side
+* two upper rounded/angled bowls or partial bowls
+* two lower diagonal legs that angle outward/downward
+* clean geometric linework
+* strong symmetry
+* a compact silhouette
+
+It should feel more like a monogram/icon, not like a letter typed twice.
+
+## Visual style
+
+Make it fit the current black/red sci-fi UI:
+
+* red linework
+* dark icon container
+* subtle red glow
+* crisp geometric shape
+* slightly lunar-industrial / sci-fi
+* readable at small header size
+
+Use a slightly thicker stroke than the current logo if needed so it does not feel weak.
+
+## Important sizing fix
+
+The symbol should fill the icon container better.
+
+Please make sure:
+
+* the monogram is optically centered
+* the mark is not too small
+* padding is even
+* line weight is visible
+* it balances visually with the REPORUNNER wordmark
+
+## Avoid
+
+Do not make it:
+
+* a simple typed “R”
+* the same current logo with minor edits
+* too thin
+* too complex
+* medieval/fantasy
+* sports-team-like
+* cartoonish
+* generic terminal icon
+
+## Implementation instruction
+
+Find the current logo component/SVG in the header and replace the SVG/markup with a new custom SVG monogram.
+
+Do not just alter CSS around the old logo.
+
+## Acceptance criteria
+
+After this change:
+
+1. The top-left logo is clearly different from the previous placeholder.
+2. It reads as a mirrored double-R / back-to-back-R monogram.
+3. It fills the icon container better.
+4. It feels sharper, more iconic, and more intentional.
+5. It fits the current black/red sci-fi aesthetic.
+6. No other UI or functionality changes are made.
