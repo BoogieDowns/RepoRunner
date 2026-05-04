@@ -1,5 +1,4 @@
 import { LucideIcon, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface CommandButtonProps {
@@ -19,39 +18,30 @@ export function CommandButton({
   variant = "default",
   loading = false,
 }: CommandButtonProps) {
+  const glassClass =
+    variant === "destructive"
+      ? "btn-glass-danger"
+      : variant === "default"
+      ? "btn-glass-primary"
+      : "btn-glass-secondary";
+
   return (
-    <Button
-      variant={variant}
-      size="sm"
+    <button
       onClick={onClick}
       disabled={disabled || loading}
       data-testid={`button-${label.toLowerCase().replace(/\s+/g, "-")}`}
       className={cn(
-        "flex items-center gap-2 h-9 px-3.5 font-medium text-[13px] rounded-lg transition-all duration-150",
-        "disabled:opacity-25 disabled:cursor-not-allowed disabled:pointer-events-none disabled:shadow-none",
+        "btn-glass",
+        glassClass,
         "hover:-translate-y-px active:translate-y-0 active:scale-[0.99]",
-        variant === "default" && [
-          "!bg-[#0f0808] !border !border-[#cc2222]/35 !text-[#d93030]",
-          "hover:!bg-[#150a0a] hover:!border-[#cc2222]/60 hover:!text-[#e03030]",
-          "shadow-[0_0_10px_rgba(204,34,34,0.12)]",
-          "hover:shadow-[0_0_16px_rgba(204,34,34,0.22)]",
-        ],
-        variant === "destructive" && [
-          "shadow-[0_0_14px_rgba(204,34,34,0.28)]",
-          "hover:shadow-[0_0_22px_rgba(204,34,34,0.40)]",
-        ],
-        variant === "outline" && [
-          "!border-[#1e1e1e] !text-[#6a6864] !bg-transparent",
-          "hover:!bg-[#111] hover:!text-[#9a9896] hover:!border-[#2a2828]",
-        ],
       )}
     >
       {loading ? (
-        <Loader2 className="h-4 w-4 animate-spin" />
+        <Loader2 className="h-4 w-4 animate-spin flex-none" />
       ) : (
-        <Icon className="h-4 w-4" strokeWidth={1.5} />
+        <Icon className="h-4 w-4 flex-none" strokeWidth={1.5} />
       )}
       <span>{label}</span>
-    </Button>
+    </button>
   );
 }

@@ -1,0 +1,244 @@
+RepoRunner is looking good. Please do one focused visual styling pass for the **action buttons only**.
+
+Do **not** redesign the app.
+Do **not** change layout.
+Do **not** change functionality.
+Do **not** change product flow.
+Do **not** change process management, IPC, setup behavior, logs behavior, or meteor behavior.
+
+This is only about restyling the main action buttons with a more premium **glass-like** appearance.
+
+## Goal
+
+Give the main action buttons a **hyper-realistic glass effect look**, while still fitting the current black/red sci-fi RepoRunner theme.
+
+The buttons I mean are the main dashboard action buttons such as:
+
+* Pull Latest
+* Install
+* Start Frontend
+* Start Backend
+* Stop Services
+* Restart All
+* Open Preview
+
+If there are other matching action buttons in the same dashboard action group, style them consistently too.
+
+## Important design direction
+
+I want the buttons to feel like:
+
+* dark smoked glass
+* premium
+* tactile
+* slightly reflective
+* realistic
+* layered
+* high-end UI
+
+But they must still fit the current app style:
+
+* black/red console aesthetic
+* dark, cinematic interface
+* not playful
+* not pastel
+* not iOS-white glassmorphism
+* not overly transparent
+* not bulky or toy-like
+
+Think:
+
+> **dark sci-fi control panel buttons made of smoked glass**
+
+Not:
+
+> bright frosted acrylic app buttons
+
+## Glass effect requirements
+
+Please create a realistic glass effect using a combination of:
+
+### 1. Semi-transparent surface
+
+Buttons should have a dark translucent/glass body.
+
+Suggested direction:
+
+* deep charcoal / black glass base
+* some transparency
+* subtle background bleed if appropriate
+* still enough contrast for readability
+
+### 2. Subtle specular highlight
+
+Add a soft highlight near the top portion of the button to simulate reflected light.
+
+Examples:
+
+* faint glossy streak
+* top-edge sheen
+* gentle light band
+
+Keep it subtle and premium.
+
+### 3. Inner shadow / inner border
+
+Use a subtle inner highlight and/or inner shadow so the button feels like a glass surface with depth.
+
+Examples:
+
+* faint inner top border
+* faint inner edge highlight
+* subtle inset shadow
+* polished rim effect
+
+### 4. Outer depth / shadow
+
+Add a restrained outer shadow so the button feels lifted slightly off the surface.
+
+This should not be huge or blurry.
+Just enough to feel dimensional.
+
+### 5. Slight tinting by button type
+
+Use the current button hierarchy, but expressed through the glass treatment.
+
+For example:
+
+#### Primary positive buttons
+
+* Start Frontend
+* Start Backend
+
+These can have a subtle red-tinted or slightly energized glass treatment, still dark overall.
+
+#### Secondary buttons
+
+* Pull Latest
+* Install
+* Restart All
+* Open Preview
+
+These can use a more neutral smoked-glass treatment with subtle red accents.
+
+#### Danger button
+
+* Stop Services
+
+This should still feel distinct and more severe, but also glass-like.
+A darker red-tinted glass treatment is fine.
+
+## Interaction states
+
+Please make sure the glass buttons feel good in interaction:
+
+### Default
+
+* polished dark glass
+* readable label
+* subtle highlight
+
+### Hover
+
+* slightly stronger reflection/highlight
+* slightly brighter border or red tint
+* maybe a tiny lift
+
+### Active / pressed
+
+* slightly reduced highlight
+* a subtle pressed-in feel
+* maybe slightly darker body
+* still realistic
+
+### Disabled
+
+* more muted
+* less reflective
+* clearly inactive
+* still visually consistent
+
+## Text and icon readability
+
+This is important.
+
+The glass effect must not make the buttons harder to use.
+
+Please ensure:
+
+* button labels remain easy to read
+* icons remain visible if present
+* contrast stays strong enough
+* button hierarchy is still clear
+
+## Shape and size
+
+Keep the current button layout and approximate sizing.
+
+Do not:
+
+* make the buttons huge
+* radically round them
+* change the action grid layout
+* change button labels
+
+If anything, refine the corners only slightly if it helps the glass effect.
+
+## Implementation guidance
+
+Use CSS only if possible.
+
+A good implementation might combine:
+
+* layered gradients
+* subtle backdrop/filter effects if appropriate
+* inset and outer shadows
+* pseudo-elements for highlight/reflection
+
+For example, you may use:
+
+* `::before` for a top reflective sheen
+* `::after` for subtle inner glow or gloss
+* layered `box-shadow`
+* subtle translucent backgrounds
+* restrained `backdrop-filter` if it works in the current environment
+
+But keep performance reasonable and the result tasteful.
+
+## Important constraints
+
+Do not change:
+
+* button labels
+* button order
+* action functionality
+* dashboard structure
+* services card
+* logs panel
+* setup modal
+* meteor effect
+* color logic for status pills
+* log label colors
+* layout
+
+Do not add:
+
+* animations that distract
+* liquid/globby morph effects
+* huge glows
+* excessive blur
+* white glass aesthetic
+
+## Acceptance criteria
+
+After this change:
+
+1. The main action buttons have a noticeably more premium glass-like appearance.
+2. The effect feels like dark smoked glass, not bright generic glassmorphism.
+3. Buttons remain readable and usable.
+4. Button hierarchy is still clear.
+5. Hover/pressed/disabled states still work well.
+6. The new button styling fits the current black/red RepoRunner aesthetic.
+7. No layout or functionality changes are made.
+
+Please keep this classy and restrained. If a choice feels too flashy, simplify it.
