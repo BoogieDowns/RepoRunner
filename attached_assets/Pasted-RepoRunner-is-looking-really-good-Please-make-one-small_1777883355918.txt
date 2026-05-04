@@ -1,0 +1,108 @@
+RepoRunner is looking really good. Please make one small color styling refinement only.
+
+Do **not** redesign the UI.
+Do **not** change layout.
+Do **not** change functionality.
+Do **not** change process management, logs behavior, setup behavior, IPC, product flow, or meteor behavior.
+
+## Requested change
+
+Change the color used for:
+
+1. **`[INSTALL]` log source labels**
+2. **Starting / Stopping status pills**
+
+I no longer want these to use orange / amber / bronze.
+
+I want them to use a **soft peach** tone instead:
+
+* light opaque peach
+* muted
+* tasteful
+* soft against the black/red UI
+* not pink
+* not orange-yellow
+* not bronze
+
+## Color direction
+
+Please use a peach color in this family:
+
+```css
+--transition: #f2b8a0;
+--transition-bg: rgba(242, 184, 160, 0.12);
+--transition-border: rgba(242, 184, 160, 0.42);
+--transition-glow: rgba(242, 184, 160, 0.16);
+```
+
+If needed, slightly tune within that same family, but keep it clearly in the **soft peach** direction.
+
+## Apply only to
+
+### 1. `[INSTALL]` log source labels
+
+The `[INSTALL]` source label in the terminal/logs section should use the new peach color.
+
+Only change the source label color.
+Do not change the log message text.
+
+### 2. Starting / Stopping status pills
+
+Any service status pill showing:
+
+```text
+Starting
+Stopping
+```
+
+should use the same soft peach treatment.
+
+Apply the peach color to:
+
+* pill text
+* border
+* dot/accent if present
+* subtle background tint
+* subtle glow if present
+
+## Important implementation check
+
+Please search for any hardcoded older transition colors still being used for these elements, including old orange / amber / bronze values.
+
+Replace them for:
+
+* `[INSTALL]`
+* `Starting`
+* `Stopping`
+
+Do not leave old transition colors behind.
+
+## Preserve everything else
+
+Do not change:
+
+* Running pill color
+* Stopped pill color
+* Failed pill color
+* Unknown pill color
+* Frontend log label color
+* Backend log label color
+* System log label color
+* Git log label color
+* button styling
+* meteor styling
+* card styling
+* modal styling
+* layout
+* functionality
+
+## Acceptance criteria
+
+After this change:
+
+1. `[INSTALL]` labels use a soft peach color.
+2. `Starting` pills use the same soft peach color.
+3. `Stopping` pills use the same soft peach color.
+4. The color no longer reads as orange/yellow/bronze.
+5. It feels like a light opaque peach against the black/red UI.
+6. No other styling or functionality changes are made.
