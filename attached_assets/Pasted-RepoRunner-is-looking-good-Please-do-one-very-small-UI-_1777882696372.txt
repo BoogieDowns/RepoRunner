@@ -1,0 +1,109 @@
+RepoRunner is looking good. Please do one very small UI polish change only.
+
+Do **not** redesign the app.
+Do **not** change layout.
+Do **not** change functionality.
+Do **not** change process management, logs behavior, setup behavior, IPC, product flow, or meteor behavior.
+
+This is only about styling the scrollbar so it matches the app.
+
+## Requested change
+
+Please restyle the scrollbar so it visually fits RepoRunner’s current black/red UI theme.
+
+## Goal
+
+The scrollbar on the far right should no longer look like the default browser/system scrollbar.
+
+It should feel integrated with the rest of the app:
+
+* dark
+* subtle
+* refined
+* slightly red-accented
+* consistent with the black/red console aesthetic
+
+## Styling direction
+
+### Scrollbar track
+
+Use a very dark track, close to the app background.
+
+Suggested direction:
+
+* near-black
+* subtle inset feel
+* low visual noise
+
+Example color direction:
+
+```css id="v0d5r6"
+track: #080808 or #0b0b0b
+```
+
+### Scrollbar thumb
+
+Use a muted dark thumb that is still visible against the track.
+
+Suggested direction:
+
+* charcoal / gunmetal / deep grey
+* slightly rounded
+* subtle border if helpful
+
+Example color direction:
+
+```css id="r4tbsh"
+thumb: #1b1b1b or #202020
+```
+
+### Hover / active state
+
+On hover or drag, the thumb can shift slightly toward the app accent family.
+
+This should be subtle:
+
+* muted dark red / bronze-red / red-tinted charcoal
+* not bright red
+* not flashy
+
+Example color direction:
+
+```css id="m8z7gf"
+thumb-hover: #342020
+thumb-active: #4a2323
+```
+
+## Behavior / scope
+
+Apply this to the app’s visible scrollbars, especially the main logs area scrollbar on the far right.
+
+Use the appropriate CSS for the current app/browser environment, e.g.:
+
+* `::-webkit-scrollbar`
+* `::-webkit-scrollbar-thumb`
+* `::-webkit-scrollbar-track`
+
+If helpful, also add Firefox-compatible scrollbar styling.
+
+## Important constraints
+
+Do not:
+
+* make the scrollbar thick or chunky
+* make it overly bright
+* make it glow strongly
+* change content layout
+* affect scrolling behavior
+* change any other component styling unless needed for scrollbar integration only
+
+## Acceptance criteria
+
+After this change:
+
+1. The scrollbar visually matches the black/red RepoRunner theme.
+2. The track is dark and subtle.
+3. The thumb is visible but understated.
+4. Hover/active state has a tasteful red-tinted accent.
+5. Scrolling behavior remains unchanged.
+6. No other UI or functionality changes are made.

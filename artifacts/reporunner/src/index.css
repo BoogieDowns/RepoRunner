@@ -272,3 +272,34 @@
     inset: -1px;
   }
 }
+
+/* ─── Themed scrollbars ──────────────────────────────────────────────────── */
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #1e1e1e #090909;
+}
+
+/* Chromium / Safari */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #090909;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e1e1e;
+  border-radius: 3px;
+  border: 1px solid #141414;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #342020;
+}
+::-webkit-scrollbar-thumb:active {
+  background: #4a2323;
+}
+::-webkit-scrollbar-corner {
+  background: #090909;
+}
