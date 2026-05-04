@@ -112,7 +112,7 @@ export function SetupScreen({
       )}
 
       <Card
-        className="w-full max-w-2xl rounded-xl relative"
+        className="w-full max-w-3xl rounded-xl relative"
         style={{
           background: "#0a0a0a",
           border: overlay ? "1px solid #242020" : "1px solid #1a1a1a",
@@ -155,11 +155,12 @@ export function SetupScreen({
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="px-8 pb-8 sm:px-10 sm:pb-10 pt-7">
+        <CardContent className="px-8 pb-8 sm:px-10 sm:pb-10 pt-6">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {/* Row 1: Project Name | Repo Folder */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <FormField
                   control={form.control}
                   name="name"
@@ -195,7 +196,7 @@ export function SetupScreen({
                             placeholder="/path/to/project"
                             readOnly
                             {...field}
-                            className={`flex-1 text-sm ${inputClassName}`}
+                            className={`flex-1 min-w-0 text-sm ${inputClassName}`}
                             style={{ ...inputStyle, ...MONO }}
                           />
                         </FormControl>
@@ -204,7 +205,7 @@ export function SetupScreen({
                           variant="secondary"
                           onClick={handleSelectFolder}
                           disabled={isSelecting}
-                          className="flex-none"
+                          className="flex-none whitespace-nowrap"
                           style={{
                             background: "#0c0c0c",
                             border: "1px solid #1c1c1c",
@@ -221,27 +222,20 @@ export function SetupScreen({
                             e.currentTarget.style.borderColor = "#1c1c1c";
                           }}
                         >
-                          <Folder className="h-4 w-4 mr-2" />
+                          <Folder className="h-4 w-4 mr-2 flex-none" />
                           Choose Folder
                         </Button>
                       </div>
-                      <FormDescription className="text-xs" style={{ color: "#383432" }}>
-                        The folder where your project lives locally.
-                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              {/* Row 2: Install | Frontend | Backend commands */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                 {(["installCommand", "frontendCommand", "backendCommand"] as const).map((fieldName, i) => {
                   const labels = ["Install Command", "Frontend Command", "Backend Command"];
-                  const descs = [
-                    "Runs once to install dependencies.",
-                    "Starts your frontend dev server.",
-                    "Starts your backend server.",
-                  ];
                   return (
                     <FormField
                       key={fieldName}
@@ -259,9 +253,6 @@ export function SetupScreen({
                               style={{ ...inputStyle, ...MONO }}
                             />
                           </FormControl>
-                          <FormDescription className="text-xs" style={{ color: "#383432" }}>
-                            {descs[i]}
-                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -270,7 +261,11 @@ export function SetupScreen({
                 })}
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              {/* Row 3: Preview URL (wide) | Frontend Port | Backend Port */}
+              <div
+                className="grid grid-cols-1 gap-5"
+                style={{ gridTemplateColumns: "minmax(0,2fr) minmax(0,1fr) minmax(0,1fr)" }}
+              >
                 <FormField
                   control={form.control}
                   name="previewUrl"
@@ -286,9 +281,6 @@ export function SetupScreen({
                           style={{ ...inputStyle, ...MONO }}
                         />
                       </FormControl>
-                      <FormDescription className="text-xs" style={{ color: "#383432" }}>
-                        Opens when you click Open Preview.
-                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}

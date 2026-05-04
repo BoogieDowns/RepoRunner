@@ -1,0 +1,113 @@
+RepoRunner is looking good. Please do one focused UI cleanup pass for the **Setup RepoRunner modal only**.
+
+Do **not** change dashboard layout.
+Do **not** change the meteor/background effect.
+Do **not** change app functionality.
+Do **not** change process management, IPC, logs, or service behavior.
+
+This is only about cleaning up the setup modal form layout.
+
+## Problem
+
+The setup modal currently feels a bit cramped and noisy.
+
+Specific issues:
+
+* the **Preview URL** input is too small
+* the **Local Repository Folder** input is too small
+* the small helper text under each field adds clutter and probably is not needed
+
+## Requested changes
+
+### 1. Remove most helper text under fields
+
+Please remove the small descriptive helper text under the form fields.
+
+Remove helper text like:
+
+* “The folder where your project lives locally.”
+* “Runs once to install dependencies.”
+* “Starts your frontend dev server.”
+* “Starts your backend server.”
+* “Opens when you click Open Preview.”
+
+Keep the form cleaner and more compact.
+
+Only keep validation or error text if a required field is missing.
+
+### 2. Give long fields more room
+
+The following fields need more horizontal space:
+
+* Local Repository Folder
+* Preview URL
+
+Please adjust the form grid so these fields are wider and easier to read.
+
+Suggested layout:
+
+```text
+Project Name                  Local Repository Folder + Choose Folder
+Install Command               Frontend Command              Backend Command
+Preview URL                   Frontend Port                 Backend Port
+```
+
+But make sure:
+
+* Local Repository Folder has enough width
+* Preview URL has enough width
+* the Choose Folder button does not crush the folder path input
+* the layout still fits nicely inside the modal
+
+If needed, make the setup modal slightly wider, but do not make it huge.
+
+### 3. Improve field spacing after helper text removal
+
+After removing helper text, tighten the vertical rhythm slightly.
+
+The modal should feel:
+
+* cleaner
+* less cluttered
+* easier to scan
+* more professional
+
+Do not make it cramped.
+
+### 4. Preserve required labels
+
+Keep all existing field labels:
+
+* Project Name
+* Local Repository Folder
+* Install Command
+* Frontend Command
+* Backend Command
+* Preview URL
+* Frontend Port
+* Backend Port
+
+Do not rename fields.
+
+### 5. Preserve modal behavior
+
+Do not change:
+
+* Save Configuration behavior
+* close X behavior
+* overlay behavior
+* opening/closing animation
+* validation behavior
+* folder picker behavior
+
+## Acceptance criteria
+
+After this change:
+
+1. The setup modal looks cleaner and less cluttered.
+2. Helper text under fields is removed, except validation/error text if needed.
+3. Local Repository Folder input has more usable space.
+4. Preview URL input has more usable space.
+5. Choose Folder button no longer makes the folder path field feel squeezed.
+6. Save Configuration and close X still work exactly as before.
+7. No dashboard or app functionality changes are made.
