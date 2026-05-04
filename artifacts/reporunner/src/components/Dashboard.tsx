@@ -93,9 +93,14 @@ function MeteorLine({ id, left, dur, h, op, onDone }: MeteorDef & { onDone: (id:
 
 function AmbientBackground({ anyRunning, bothRunning }: { anyRunning: boolean; bothRunning: boolean }) {
   const [meteors, setMeteors]   = useState<MeteorDef[]>([]);
-  const spawnerRef    = useRef<ReturnType<typeof setInterval> | null>(null);
-  const idRef         = useRef(0);
-  const wasRunningRef = useRef(false);
+  const spawnerRef     = useRef<ReturnType<typeof setInterval> | null>(null);
+  const idRef          = useRef(0);
+  const wasRunningRef  = useRef(false);
+  /* Refs so the visibilitychange handler always reads the current prop values */
+  const anyRunningRef  = useRef(anyRunning);
+  const bothRunningRef = useRef(bothRunning);
+  anyRunningRef.current  = anyRunning;
+  bothRunningRef.current = bothRunning;
 
   /* Stable callback: removes one meteor by id after its animation ends */
   const removeMeteor = useCallback((id: number) => {
@@ -136,6 +141,26 @@ function AmbientBackground({ anyRunning, bothRunning }: { anyRunning: boolean; b
 
     return () => { if (spawnerRef.current) { clearInterval(spawnerRef.current); spawnerRef.current = null; } };
   }, [anyRunning, bothRunning, spawnMeteor]);
+
+  /* Pause spawning while the tab/window is hidden; restart cleanly on return.
+   * Clearing the interval on hide means no timer debt accumulates, so there
+   * is no burst of catch-up meteors when the user switches back. */
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.hidden) {
+        /* Tab hidden — kill spawner so no timers pile up in the background */
+        if (spawnerRef.current) { clearInterval(spawnerRef.current); spawnerRef.current = null; }
+      } else {
+        /* Tab visible again — restart fresh only if services are still running */
+        if (anyRunningRef.current && !spawnerRef.current) {
+          const interval = bothRunningRef.current ? 1600 : 2600;
+          spawnerRef.current = setInterval(spawnMeteor, interval);
+        }
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [spawnMeteor]);
 
   const moonBorder = anyRunning
     ? bothRunning ? "rgba(175,25,25,0.20)" : "rgba(155,20,20,0.13)"

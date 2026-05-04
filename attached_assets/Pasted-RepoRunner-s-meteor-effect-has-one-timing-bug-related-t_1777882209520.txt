@@ -1,0 +1,98 @@
+RepoRunner’s meteor effect has one timing bug related to window focus/visibility.
+
+Do **not** redesign the UI.
+Do **not** change layout.
+Do **not** change app functionality.
+Do **not** change process management, logs behavior, setup behavior, IPC, product flow, or service logic.
+Do **not** change the meteor visual style.
+
+This is only about fixing the meteor animation timing when the app/window is not active.
+
+## Problem
+
+If I click away from RepoRunner/Replit and use ChatGPT or another window for a while, then click back into RepoRunner, it looks like all the meteors that would have fallen while I was away suddenly drop at once.
+
+This creates a burst/catch-up effect that looks wrong.
+
+## Desired behavior
+
+When the app/window is not visible or not focused:
+
+* do not queue up missed meteor spawns
+* do not let delayed timers create a burst later
+* do not “catch up” on meteors when focus returns
+
+When the app/window becomes visible/focused again:
+
+* resume spawning meteors normally
+* start fresh from the current time
+* meteors should enter naturally from above the viewport
+* no sudden burst of accumulated meteors
+
+## Required fix
+
+### 1. Pause meteor spawning while document is hidden
+
+Use the browser visibility API or equivalent:
+
+```ts
+document.visibilityState
+visibilitychange
+```
+
+When the document is hidden:
+
+* pause/suspend meteor spawning
+* clear or ignore pending spawn timers/intervals
+* do not accumulate missed spawn events
+
+When the document becomes visible:
+
+* resume normal spawning
+* reset the spawn scheduler timing
+* do not replay missed spawns
+
+### 2. Avoid catch-up logic
+
+If the animation uses elapsed time or delta time, clamp or reset large deltas.
+
+For example:
+
+* if time since last frame is huge because the tab/window was inactive, do not spawn multiple meteors to compensate
+* reset `lastSpawnTime` to `performance.now()` when visibility returns
+
+### 3. Existing meteors
+
+When the app becomes hidden:
+
+* it is okay if existing CSS animations are paused/throttled by the browser
+* but when the app becomes visible again, they should not cause a burst of new meteors
+
+Most important:
+
+* stop spawning while hidden
+* resume cleanly when visible
+
+### 4. Preserve current lifecycle behavior
+
+Keep the current working behavior:
+
+* when services are running, meteors spawn normally
+* when Stop Services is clicked, new meteors stop spawning
+* existing meteors finish falling and fade out
+* meteors spawn from above the viewport
+* meteors do not spawn mid-screen
+
+Do not regress any of that.
+
+## Acceptance criteria
+
+After this fix:
+
+1. Click away from RepoRunner for 30–60 seconds.
+2. Click back into RepoRunner.
+3. No burst of accumulated meteors appears.
+4. Meteor spawning resumes normally from that moment.
+5. New meteors still enter from above the viewport.
+6. Stop Services still stops new meteors while allowing existing ones to finish.
+7. No UI or functionality changes are introduced.
