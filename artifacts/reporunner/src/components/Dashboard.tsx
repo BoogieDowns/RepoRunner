@@ -377,18 +377,33 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
 
   const getStatusDisplay = (status: string) => {
     /*
-      Plastic indicator module — text lives INSIDE the lens surface.
-      All states share the same rectangular form; only color/glow differs.
-      Texture: repeating horizontal ribs at 3px pitch over a radial illumination gradient.
-      Top specular: linear fade from a bright edge to nothing at ~30% height.
+      Two-element structure:
+        housing  — stable bezel/frame with outer shadow, never animates
+        lens     — inner face; running state has pulsing glow via .rr-indicator-running
+
+      Lens layers (back → front):
+        1. radial gradient  — internal illumination from a centered light source
+        2. angled specular  — upper-left reflection off the plastic face surface
+        3. horizontal ribs  — fine 2.5px-pitch grooves molded into the lens face
     */
-    const module: React.CSSProperties = {
+
+    /* Housing: identical bezel for every state */
+    const housing: React.CSSProperties = {
+      display: "inline-flex",
+      flexShrink: 0,
+      borderRadius: "5px",
+      padding: "1.5px",
+    };
+
+    /* Lens: text lives here, over the textured plastic face */
+    const lens: React.CSSProperties = {
       display: "inline-flex",
       alignItems: "center",
       justifyContent: "center",
       gap: "5px",
-      padding: "4px 10px",
-      borderRadius: "4px",
+      padding: "4px 9px",
+      borderRadius: "3px",
+      fontFamily: "'JetBrains Mono', monospace",
       fontSize: "10px",
       fontWeight: 600,
       letterSpacing: "0.11em",
@@ -396,132 +411,161 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
       lineHeight: 1,
       whiteSpace: "nowrap",
       userSelect: "none",
-      flexShrink: 0,
     };
 
-    /* Fine horizontal ribs — same opacity/pitch for all states */
-    const ribs = (dark: number) =>
-      `repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,${dark}) 2px, rgba(0,0,0,${dark}) 3px)`;
+    /* Fine horizontal lens ribs at 2.5px pitch */
+    const ribs = (a: number) =>
+      `repeating-linear-gradient(0deg, transparent 0px, transparent 1.5px, rgba(0,0,0,${a}) 1.5px, rgba(0,0,0,${a}) 2.5px)`;
+
+    /* Angled specular — upper-left catch, fades quickly */
+    const specular = (r: number, g: number, b: number, peak: number) =>
+      `linear-gradient(148deg, rgba(${r},${g},${b},${peak}) 0%, rgba(${r},${g},${b},${peak * 0.38}) 18%, transparent 36%)`;
 
     switch (status) {
       case "running":
         return (
-          <span
-            className="rr-indicator-running"
-            style={{
-              ...module,
-              background: [
-                ribs(0.20),
-                "linear-gradient(180deg, rgba(255,210,210,0.24) 0%, transparent 32%)",
-                "radial-gradient(ellipse at 50% 40%, rgba(255,165,165,0.72) 0%, rgba(218,36,36,0.88) 30%, rgba(155,12,12,0.90) 66%, rgba(60,3,3,0.96) 100%)",
-              ].join(", "),
-              border: "1px solid rgba(210,38,38,0.65)",
-              color: "#ffcece",
-              textShadow: "0 0 7px rgba(255,100,100,0.80)",
-            }}
-          >
-            Running
+          <span style={{
+            ...housing,
+            background: "linear-gradient(180deg, #200c0c 0%, #080303 100%)",
+            border: "1px solid rgba(55,12,12,0.92)",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.82), 0 1px 2px rgba(0,0,0,0.60), inset 0 1px 0 rgba(255,120,120,0.04)",
+          }}>
+            <span
+              className="rr-indicator-running"
+              style={{
+                ...lens,
+                background: [
+                  ribs(0.24),
+                  specular(255, 225, 220, 0.30),
+                  "radial-gradient(ellipse at 50% 62%, rgba(255,145,130,0.82) 0%, rgba(212,30,30,0.92) 26%, rgba(148,10,10,0.94) 60%, rgba(48,2,2,0.98) 100%)",
+                ].join(", "),
+                color: "rgba(255,212,208,0.94)",
+                textShadow: "0 0 8px rgba(255,100,90,0.72)",
+              }}
+            >
+              Running
+            </span>
           </span>
         );
 
       case "starting":
         return (
-          <span
-            style={{
-              ...module,
+          <span style={{
+            ...housing,
+            background: "linear-gradient(180deg, #1c1008 0%, #080503 100%)",
+            border: "1px solid rgba(50,30,12,0.88)",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.82), 0 1px 2px rgba(0,0,0,0.60)",
+          }}>
+            <span style={{
+              ...lens,
               background: [
-                ribs(0.22),
-                "linear-gradient(180deg, rgba(242,184,160,0.18) 0%, transparent 36%)",
-                "radial-gradient(ellipse at 50% 40%, rgba(175,95,60,0.65) 0%, rgba(110,45,20,0.84) 44%, rgba(50,16,6,0.92) 100%)",
+                ribs(0.26),
+                specular(242, 184, 160, 0.22),
+                "radial-gradient(ellipse at 50% 62%, rgba(175,95,58,0.70) 0%, rgba(108,44,18,0.86) 42%, rgba(48,15,5,0.94) 100%)",
               ].join(", "),
-              border: "1px solid rgba(242,184,160,0.32)",
-              boxShadow: "0 0 7px rgba(242,184,160,0.14), inset 0 1px 0 rgba(242,184,160,0.18), inset 0 -1px 0 rgba(0,0,0,0.42)",
-              color: "#f2b8a0",
-              textShadow: "0 0 6px rgba(242,184,160,0.55)",
-            }}
-          >
-            <Loader2 className="w-[9px] h-[9px] animate-spin flex-none" />
-            Starting
+              color: "rgba(242,184,160,0.92)",
+              textShadow: "0 0 7px rgba(242,184,160,0.52)",
+              boxShadow: "0 0 6px rgba(242,184,160,0.12)",
+            }}>
+              <Loader2 className="w-[9px] h-[9px] animate-spin flex-none" />
+              Starting
+            </span>
           </span>
         );
 
       case "stopping":
         return (
-          <span
-            style={{
-              ...module,
+          <span style={{
+            ...housing,
+            background: "linear-gradient(180deg, #180e07 0%, #070402 100%)",
+            border: "1px solid rgba(45,26,10,0.82)",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.82), 0 1px 2px rgba(0,0,0,0.60)",
+          }}>
+            <span style={{
+              ...lens,
               background: [
-                ribs(0.24),
-                "linear-gradient(180deg, rgba(200,150,126,0.14) 0%, transparent 36%)",
-                "radial-gradient(ellipse at 50% 40%, rgba(145,78,50,0.58) 0%, rgba(90,38,18,0.80) 48%, rgba(40,14,6,0.92) 100%)",
+                ribs(0.28),
+                specular(200, 150, 118, 0.16),
+                "radial-gradient(ellipse at 50% 62%, rgba(145,76,46,0.58) 0%, rgba(88,36,14,0.80) 46%, rgba(36,12,4,0.94) 100%)",
               ].join(", "),
-              border: "1px solid rgba(200,150,126,0.24)",
-              boxShadow: "0 0 5px rgba(200,150,126,0.10), inset 0 1px 0 rgba(200,150,126,0.12), inset 0 -1px 0 rgba(0,0,0,0.44)",
-              color: "#c8967e",
-              textShadow: "0 0 5px rgba(200,150,126,0.40)",
-            }}
-          >
-            <Loader2 className="w-[9px] h-[9px] animate-spin flex-none" />
-            Stopping
+              color: "rgba(200,150,118,0.86)",
+              textShadow: "0 0 6px rgba(200,150,118,0.40)",
+              boxShadow: "0 0 4px rgba(200,150,118,0.08)",
+            }}>
+              <Loader2 className="w-[9px] h-[9px] animate-spin flex-none" />
+              Stopping
+            </span>
           </span>
         );
 
       case "failed":
         return (
-          <span
-            style={{
-              ...module,
+          <span style={{
+            ...housing,
+            background: "linear-gradient(180deg, #200c0c 0%, #080303 100%)",
+            border: "1px solid rgba(55,12,12,0.92)",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.82), 0 1px 2px rgba(0,0,0,0.60), 0 0 8px rgba(224,48,48,0.14)",
+          }}>
+            <span style={{
+              ...lens,
               background: [
-                ribs(0.20),
-                "linear-gradient(180deg, rgba(255,180,180,0.20) 0%, transparent 32%)",
-                "radial-gradient(ellipse at 50% 40%, rgba(255,120,120,0.70) 0%, rgba(224,44,44,0.86) 30%, rgba(155,16,16,0.88) 64%, rgba(60,4,4,0.95) 100%)",
+                ribs(0.22),
+                specular(255, 200, 195, 0.26),
+                "radial-gradient(ellipse at 50% 62%, rgba(255,115,110,0.76) 0%, rgba(220,40,40,0.90) 28%, rgba(152,14,14,0.92) 62%, rgba(50,2,2,0.98) 100%)",
               ].join(", "),
-              border: "1px solid rgba(224,48,48,0.55)",
-              boxShadow: "0 0 8px rgba(224,48,48,0.36), inset 0 1px 0 rgba(255,180,180,0.18), inset 0 -1px 0 rgba(0,0,0,0.42)",
-              color: "#ffaaaa",
-              textShadow: "0 0 6px rgba(255,100,100,0.70)",
-            }}
-          >
-            Failed
+              color: "rgba(255,205,200,0.92)",
+              textShadow: "0 0 7px rgba(255,100,90,0.65)",
+              boxShadow: "0 0 6px rgba(224,48,48,0.30)",
+            }}>
+              Failed
+            </span>
           </span>
         );
 
       case "unknown":
         return (
-          <span
-            style={{
-              ...module,
+          <span style={{
+            ...housing,
+            background: "linear-gradient(180deg, #121212 0%, #060606 100%)",
+            border: "1px solid rgba(35,35,35,0.90)",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.82), 0 1px 2px rgba(0,0,0,0.60)",
+          }}>
+            <span style={{
+              ...lens,
               background: [
-                ribs(0.34),
-                "linear-gradient(180deg, rgba(60,60,60,0.12) 0%, transparent 38%)",
-                "radial-gradient(ellipse at 50% 40%, rgba(38,38,38,0.78) 0%, rgba(18,18,18,0.90) 55%, rgba(7,7,7,0.96) 100%)",
+                ribs(0.36),
+                "linear-gradient(148deg, rgba(70,70,70,0.10) 0%, transparent 35%)",
+                "radial-gradient(ellipse at 50% 62%, rgba(36,36,36,0.76) 0%, rgba(16,16,16,0.90) 55%, rgba(6,6,6,0.97) 100%)",
               ].join(", "),
-              border: "1px solid #222",
-              boxShadow: "inset 0 1px 0 rgba(60,60,60,0.10), inset 0 -1px 0 rgba(0,0,0,0.56)",
-              color: "#4a4845",
-            }}
-          >
-            Unknown
+              color: "rgba(75,72,70,0.88)",
+              boxShadow: "inset 0 1px 0 rgba(60,60,60,0.08), inset 0 -1px 0 rgba(0,0,0,0.50)",
+            }}>
+              Unknown
+            </span>
           </span>
         );
 
       case "stopped":
       default:
         return (
-          <span
-            style={{
-              ...module,
+          <span style={{
+            ...housing,
+            background: "linear-gradient(180deg, #160808 0%, #060202 100%)",
+            border: "1px solid rgba(45,10,10,0.90)",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.82), 0 1px 2px rgba(0,0,0,0.60)",
+          }}>
+            <span style={{
+              ...lens,
               background: [
-                ribs(0.34),
-                "linear-gradient(180deg, rgba(70,18,18,0.14) 0%, transparent 38%)",
-                "radial-gradient(ellipse at 50% 40%, rgba(46,10,10,0.76) 0%, rgba(18,4,4,0.88) 55%, rgba(6,1,1,0.96) 100%)",
+                ribs(0.36),
+                "linear-gradient(148deg, rgba(70,20,20,0.10) 0%, transparent 35%)",
+                "radial-gradient(ellipse at 50% 62%, rgba(44,8,8,0.74) 0%, rgba(16,4,4,0.88) 55%, rgba(5,1,1,0.97) 100%)",
               ].join(", "),
-              border: "1px solid rgba(62,14,14,0.42)",
-              boxShadow: "inset 0 1px 0 rgba(70,20,20,0.10), inset 0 -1px 0 rgba(0,0,0,0.56)",
-              color: "#3c3a38",
-            }}
-          >
-            Stopped
+              color: "rgba(62,44,44,0.85)",
+              boxShadow: "inset 0 1px 0 rgba(70,20,20,0.08), inset 0 -1px 0 rgba(0,0,0,0.52)",
+            }}>
+              Stopped
+            </span>
           </span>
         );
     }

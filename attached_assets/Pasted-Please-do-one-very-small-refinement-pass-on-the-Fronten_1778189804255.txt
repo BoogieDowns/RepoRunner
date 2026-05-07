@@ -1,0 +1,190 @@
+Please do one **very small refinement pass** on the **Frontend / Backend status lights** only.
+
+Do **not** redesign the UI.
+Do **not** change layout.
+Do **not** change functionality.
+Do **not** change buttons, logs, modal, meteors, branding, service logic, IPC, or product flow.
+
+This is only about making the current **status lights look more realistic**.
+
+## Goal
+
+Keep the current idea:
+
+* rectangular / square-ish indicator light
+* status text inside the light
+* red illuminated treatment for `Running`
+* darker unlit version for `Stopped`
+
+But make the light feel **more like a real physical plastic indicator module**.
+
+Right now it still reads a bit too flat / too digital.
+
+## What to improve
+
+### 1. Make the light feel like real translucent plastic
+
+The status light should look like:
+
+* a small old-school plastic indicator module
+* translucent red lens material
+* slightly smoked acrylic / polycarbonate feel
+* realistic face depth
+* subtle inner shadow and internal glow
+* not just a flat red rectangle
+
+Add a more convincing sense of:
+
+* plastic thickness
+* lens face
+* shallow depth
+* subtle edge bevel
+* front surface reflection
+
+## 2. Add lens detail / ribbing
+
+The face of the light should have visible **fine horizontal lens lines / grooves / ribs**.
+
+Think of the texture you see on real:
+
+* old indicator lights
+* warning lamps
+* industrial control panel lights
+* small appliance LEDs behind plastic covers
+
+These lines should be:
+
+* subtle but visible
+* realistic
+* built into the lens surface
+* not decorative stripes
+* not too sharp or high-contrast
+
+## 3. Improve the highlight/reflection
+
+Add a more believable specular highlight:
+
+* faint glossy highlight near the upper edge or upper-left
+* slight reflected sheen across the surface
+* subtle not flashy
+* should help it feel like real plastic catching light
+
+Do **not** make it look wet, glassy, or overly glossy.
+It should stay plastic, not chrome.
+
+## 4. Improve the housing / frame
+
+The light should feel like a small physical module, not just a glowing shape.
+
+Please give it a slightly more believable structure via:
+
+* a darker outer edge or bezel
+* slight inset / framed look
+* gentle shadow around the light body
+* subtle separation from the card background
+
+The frame should remain restrained and premium.
+
+## 5. Keep the text readable and integrated
+
+Keep the status text **inside** the light:
+
+* `RUNNING`
+* `STARTING`
+* `STOPPING`
+* `STOPPED`
+
+The text should feel printed/overlaid on the illuminated module.
+
+Please keep it:
+
+* crisp
+* readable
+* centered
+* visually integrated with the lens
+
+Do not let the text get lost in the glow or texture.
+
+## 6. Running state should feel lit, not neon
+
+For `Running`:
+
+* keep the red illumination
+* keep the gentle pulse
+* keep the glow
+
+But shift the feeling toward:
+
+* physical illuminated plastic
+* warm internal light source
+* industrial warning lamp
+
+Not:
+
+* sci-fi neon bar
+* LED sign
+* laser strip
+
+## 7. Stopped state should feel like the same module, just unlit
+
+For `Stopped`:
+
+* same structure
+* same lens texture
+* same rectangular form
+
+But:
+
+* much darker
+* very low or no glow
+* smoked red / near-black lens look
+* still readable
+
+So it feels like the same real object in an off state.
+
+## Important restraint
+
+Do not make it:
+
+* bigger
+* louder
+* brighter overall
+* overly glossy
+* toy-like
+* arcade-like
+* cyberpunk neon
+* flat UI again
+
+The target is:
+
+* realistic
+* tactile
+* industrial
+* premium
+* subtle
+* believable
+
+## Preserve everything else
+
+Do not change:
+
+* status wording
+* layout
+* button shapes
+* service rows
+* logs
+* modal
+* app flow
+* other UI styling
+
+## Acceptance criteria
+
+After this change:
+
+1. The status lights feel more like real plastic indicator modules.
+2. The lens surface has believable ribbing / fine horizontal lines.
+3. The lights have more depth and material realism.
+4. Running feels internally illuminated, not flat or neon.
+5. Stopped feels like the same module in an unlit state.
+6. The text remains inside the light and readable.
+7. No unrelated UI or functionality changes are made.
