@@ -1,0 +1,121 @@
+RepoRunner is looking good. Please do one **small UI styling pass** only.
+
+Do **not** redesign the app.
+Do **not** change layout structure.
+Do **not** change functionality.
+Do **not** change service logic, process management, IPC, setup behavior, logs behavior, or meteor behavior.
+
+This is only about:
+
+1. replacing the two **service status pills** with a more distinctive **old plastic indicator light** style
+2. making the **action buttons** slightly squarer / sharper at the corners
+
+## 1. Replace the service status pills with old plastic indicator lights
+
+In the **Services** card, the current status pills for Frontend and Backend should be replaced with a status treatment that feels like an **old industrial plastic indicator light**.
+
+### Desired look
+
+Use the current red sci-fi / dark console aesthetic, but make the indicator feel more like:
+
+* an old plastic warning light
+* slightly square / rectangular rather than pill-shaped
+* a translucent plastic lens
+* subtle horizontal or vertical ribbed lines in the lens
+* slightly aged industrial styling
+* a contained glow, not a big modern neon blob
+
+### Important design direction
+
+The reference has a round red light, but for RepoRunner I want the in-app version to be:
+
+* **square or squarish**
+* compact
+* a little retro-industrial
+* visibly “plastic”
+* with **fine lens lines / grooves / striations**
+* still elegant and consistent with the app
+
+### Running state
+
+When status is `Running`, the indicator should look “lit”:
+
+* red illuminated lens
+* soft inner glow
+* subtle outer glow
+* visible ribbed plastic texture
+* the current pulse can remain, but adapt it to this new indicator style
+
+### Stopped state
+
+When status is `Stopped`, it should look unlit:
+
+* dark red / smoked lens
+* little to no glow
+* same structure and shape
+* still clearly visible as an indicator module
+
+### Keep the text
+
+Keep the `Running` / `Stopped` label next to or inside the status treatment, whichever looks best, but preserve readability.
+
+Do not make these generic pills anymore.
+
+## 2. Sharpen the action buttons
+
+The action buttons in Quick Actions should keep their current glassy premium look, but I want them to feel a bit more technical and less rounded.
+
+Please reduce the corner radius so they are:
+
+* more square
+* sharper
+* more precise
+* still refined
+* still comfortable to click
+
+Do **not** make them fully hard-edged rectangles.
+Just make them noticeably less rounded than now.
+
+Apply this to:
+
+* Pull Latest
+* Install
+* Start Frontend
+* Start Backend
+* Stop Services
+* Restart All
+* Open Preview
+
+## 3. Preserve everything else
+
+Keep:
+
+* current black/red visual system
+* current card layout
+* current button materials / glass feel
+* current meteor background
+* current logs panel
+* current modal behavior
+* current running pulse behavior, adapted if needed for the new indicator design
+
+Do not change:
+
+* wording
+* spacing of the main layout unless needed for fit
+* service logic
+* button functionality
+* logs functionality
+* setup modal
+* branding/header
+
+## Acceptance criteria
+
+After this change:
+
+1. Frontend and Backend no longer use generic status pills.
+2. Their statuses look like compact old-plastic square indicator lights.
+3. The Running state looks lit in red with subtle texture/lines.
+4. The Stopped state looks unlit but still visible.
+5. Action buttons have slightly sharper, squarer corners.
+6. The app still feels cohesive and premium.
+7. No functionality or layout behavior is changed.

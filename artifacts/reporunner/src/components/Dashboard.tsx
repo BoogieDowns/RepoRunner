@@ -376,80 +376,95 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
     statuses.frontend === "stopped" && statuses.backend === "stopped";
 
   const getStatusDisplay = (status: string) => {
-    const base = "inline-flex items-center gap-1.5 px-2.5 py-[5px] rounded-full leading-none text-[11px] font-medium";
+    /* Shared indicator lens style — base of every plastic light */
+    const lensBase: React.CSSProperties = {
+      display: "inline-block",
+      flexShrink: 0,
+      width: "13px",
+      height: "13px",
+      borderRadius: "3px",
+    };
+    /* Horizontal rib texture overlay — same for all states */
+    const ribs = "repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.22) 2px, rgba(0,0,0,0.22) 3px)";
+    const textBase: React.CSSProperties = { fontSize: "11px", fontWeight: 500, lineHeight: 1 };
+
     switch (status) {
       case "running":
         return (
-          <span
-            className={`${base} rr-running-pulse`}
-            style={{
-              background: "rgba(204,34,34,0.12)",
-              color: "#e03030",
-              border: "1px solid rgba(204,34,34,0.32)",
-            }}
-          >
+          <div className="flex items-center gap-2">
             <span
-              className="w-1.5 h-1.5 rounded-full flex-none"
-              style={{ background: "#e03030", boxShadow: "0 0 4px rgba(224,48,48,0.9)" }}
+              className="rr-indicator-running"
+              style={{
+                ...lensBase,
+                background: `${ribs}, radial-gradient(ellipse at 38% 30%, rgba(255,175,175,0.96) 0%, rgba(228,42,42,0.93) 24%, rgba(178,16,16,0.87) 60%, rgba(72,4,4,0.95) 100%)`,
+                border: "1px solid rgba(215,40,40,0.65)",
+              }}
             />
-            Running
-          </span>
+            <span style={{ ...textBase, color: "#e03030" }}>Running</span>
+          </div>
         );
       case "starting":
         return (
-          <span
-            className={base}
-            style={{ background: "rgba(242,184,160,0.10)", color: "#f2b8a0", border: "1px solid rgba(242,184,160,0.38)" }}
-          >
-            <Loader2 className="w-3 h-3 animate-spin flex-none" />
-            Starting
-          </span>
+          <div className="flex items-center gap-2">
+            <Loader2
+              className="animate-spin"
+              style={{ width: "13px", height: "13px", flexShrink: 0, color: "#f2b8a0" }}
+            />
+            <span style={{ ...textBase, color: "#f2b8a0" }}>Starting</span>
+          </div>
         );
       case "stopping":
         return (
-          <span
-            className={base}
-            style={{ background: "rgba(242,184,160,0.07)", color: "#c8967e", border: "1px solid rgba(242,184,160,0.24)" }}
-          >
-            <Loader2 className="w-3 h-3 animate-spin flex-none" />
-            Stopping
-          </span>
+          <div className="flex items-center gap-2">
+            <Loader2
+              className="animate-spin"
+              style={{ width: "13px", height: "13px", flexShrink: 0, color: "#c8967e" }}
+            />
+            <span style={{ ...textBase, color: "#c8967e" }}>Stopping</span>
+          </div>
         );
       case "failed":
         return (
-          <span
-            className={base}
-            style={{
-              background: "rgba(224,48,48,0.14)",
-              color: "#f04848",
-              border: "1px solid rgba(224,48,48,0.35)",
-              boxShadow: "0 0 8px rgba(224,48,48,0.12)",
-            }}
-          >
-            <span className="w-1.5 h-1.5 rounded-full flex-none" style={{ background: "#e03030" }} />
-            Failed
-          </span>
+          <div className="flex items-center gap-2">
+            <span
+              style={{
+                ...lensBase,
+                background: `${ribs}, radial-gradient(ellipse at 38% 30%, rgba(255,110,110,0.88) 0%, rgba(224,48,48,0.84) 28%, rgba(158,18,18,0.82) 64%, rgba(72,5,5,0.92) 100%)`,
+                border: "1px solid rgba(224,48,48,0.52)",
+                boxShadow: "0 0 7px rgba(224,48,48,0.34), inset 0 1px 0 rgba(255,180,180,0.18), inset 0 -1px 0 rgba(0,0,0,0.40)",
+              }}
+            />
+            <span style={{ ...textBase, color: "#f04848" }}>Failed</span>
+          </div>
         );
       case "unknown":
         return (
-          <span
-            className={base}
-            style={{ background: "#111", color: "#4a4845", border: "1px solid #1e1e1e" }}
-          >
-            <span className="w-1.5 h-1.5 rounded-full flex-none" style={{ background: "#333" }} />
-            Unknown
-          </span>
+          <div className="flex items-center gap-2">
+            <span
+              style={{
+                ...lensBase,
+                background: `repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.32) 2px, rgba(0,0,0,0.32) 3px), radial-gradient(ellipse at 38% 30%, rgba(38,38,38,0.80) 0%, rgba(18,18,18,0.90) 55%, rgba(7,7,7,0.95) 100%)`,
+                border: "1px solid #222",
+                boxShadow: "inset 0 1px 0 rgba(60,60,60,0.10), inset 0 -1px 0 rgba(0,0,0,0.55)",
+              }}
+            />
+            <span style={{ ...textBase, color: "#4a4845" }}>Unknown</span>
+          </div>
         );
       case "stopped":
       default:
         return (
-          <span
-            className={base}
-            style={{ background: "#080808", color: "#3c3a38", border: "1px solid #141414" }}
-          >
-            <span className="w-1.5 h-1.5 rounded-full flex-none" style={{ background: "#282624" }} />
-            Stopped
-          </span>
+          <div className="flex items-center gap-2">
+            <span
+              style={{
+                ...lensBase,
+                background: `repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.32) 2px, rgba(0,0,0,0.32) 3px), radial-gradient(ellipse at 38% 30%, rgba(48,10,10,0.78) 0%, rgba(20,5,5,0.88) 52%, rgba(7,2,2,0.95) 100%)`,
+                border: "1px solid rgba(65,16,16,0.42)",
+                boxShadow: "inset 0 1px 0 rgba(70,22,22,0.10), inset 0 -1px 0 rgba(0,0,0,0.55)",
+              }}
+            />
+            <span style={{ ...textBase, color: "#3c3a38" }}>Stopped</span>
+          </div>
         );
     }
   };

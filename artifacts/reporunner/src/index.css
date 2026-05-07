@@ -216,6 +216,28 @@
   animation: rr-running-pulse 2.8s ease-in-out infinite;
 }
 
+/* Plastic indicator light — running state pulse */
+@keyframes rr-indicator-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 5px  rgba(204, 34, 34, 0.48),
+      0 0 2px  rgba(204, 34, 34, 0.32),
+      inset 0  1px 0 rgba(255, 200, 200, 0.22),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.42);
+  }
+  50% {
+    box-shadow:
+      0 0 16px rgba(204, 34, 34, 0.80),
+      0 0 6px  rgba(204, 34, 34, 0.58),
+      inset 0  1px 0 rgba(255, 200, 200, 0.30),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.42);
+  }
+}
+
+.rr-indicator-running {
+  animation: rr-indicator-pulse 2.8s ease-in-out infinite;
+}
+
 @keyframes rr-fall {
   0%   { transform: translateY(0); }
   100% { transform: translateY(175vh); }
@@ -356,7 +378,7 @@ input[type="number"] {
   font-weight: 500;
   font-family: inherit;
   letter-spacing: 0.015em;
-  border-radius: 0.5rem;
+  border-radius: 0.3rem;
   cursor: pointer;
   white-space: nowrap;
   user-select: none;
