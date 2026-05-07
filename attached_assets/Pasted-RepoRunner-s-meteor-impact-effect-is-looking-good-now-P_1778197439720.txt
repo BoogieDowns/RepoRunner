@@ -1,0 +1,110 @@
+RepoRunner’s meteor impact effect is looking good now. Please do one **small refinement pass only** on the divider-line impact ripple.
+
+Do **not** redesign the UI.
+Do **not** change layout.
+Do **not** change functionality.
+Do **not** change meteor spawn rate, fall speed, lifecycle, pixel fragments, buttons, logs, cards, setup modal, IPC, or product flow.
+
+This is only about refining the **red pulse/ripple that appears on the horizontal divider line when meteors hit it**.
+
+## Current issue
+
+The impact pulse is visible now, which is good.
+
+But two small things need improvement:
+
+1. The far ends of the red pulse look too hard / abrupt.
+2. The actual ripple/disturbance in the divider line still feels too subtle.
+
+---
+
+## 1. Soften the pulse ends
+
+When the red pulse spreads out from the meteor impact point, the ends of the pulse should fade out more smoothly.
+
+Right now the pulse edges look a little too hard.
+
+Please make the pulse ends softer by using something like:
+
+* horizontal gradient fade
+* mask fade
+* softer opacity falloff
+* blurred edge treatment
+* smoother clip/reveal edge
+
+The pulse should feel like energy dissipating along the line, not like a hard rectangular bar.
+
+### Desired look
+
+The pulse should have:
+
+* strongest red near the impact point
+* softer red as it spreads outward
+* very soft fade at the far left/right ends
+* no hard cutoff
+
+---
+
+## 2. Make the divider-line ripple more prominent
+
+The red pulse is visible, but the actual **ripple in the line** still needs to feel stronger.
+
+When a meteor hits the divider, it should feel like the line itself reacts.
+
+Please increase the ripple effect so it is more noticeable.
+
+Good options:
+
+* slightly brighter red glow along the divider at impact
+* a small vertical shimmer/distortion around the impact point
+* a brief thicker red flare on the line
+* a short wave-like pulse expanding left/right
+* a subtle line displacement illusion if easy
+* a brighter central impact spark that quickly fades
+
+It should feel like the horizontal line got “energized” by the meteor hit.
+
+### Desired intensity
+
+Make it clearly noticeable, around **30–50% stronger** than it is now.
+
+But keep it tasteful.
+
+Do not make it:
+
+* cartoonish
+* huge
+* messy
+* distracting
+* game-like
+
+---
+
+## 3. Preserve the good parts
+
+Keep:
+
+* current meteor behavior
+* current pixelation effect
+* current impact timing
+* current layered meteor depth
+* current UI layout
+* current dark black/red aesthetic
+
+Do not change the pixel fragments in this pass.
+
+Do not change the meteor spawn/fall tuning.
+
+---
+
+## Acceptance criteria
+
+After this refinement:
+
+1. The red impact pulse has softer faded ends.
+2. The pulse no longer looks like a hard-edged bar.
+3. The horizontal divider line reacts more visibly when hit.
+4. The ripple/impact feels stronger and more intentional.
+5. The effect remains cinematic and restrained.
+6. Pixelation and meteor lifecycle behavior remain unchanged.
+7. No unrelated UI or functionality changes are made.

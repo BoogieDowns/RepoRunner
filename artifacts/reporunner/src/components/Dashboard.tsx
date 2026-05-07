@@ -339,33 +339,59 @@ function AmbientBackground({
         <MeteorLine key={m.id} {...m} onDone={removeMeteor} />
       ))}
 
-      {/* Divider impact ripples — horizontal pulse expanding from impact point */}
-      {ripples.map(r => (
+      {/* Divider impact ripples — horizontal pulse + center flare per impact */}
+      {ripples.flatMap(r => [
+        /* Wide spreading bar — soft cosine-like fade toward ends */
         <div
-          key={r.id}
+          key={`rbar-${r.id}`}
           style={{
             position:        "absolute",
             top:             `${r.dividerY - 1}px`,
             left:            `${r.left}%`,
-            width:           "420px",
+            width:           "460px",
             height:          "3px",
             transform:       "translateX(-50%)",
             background:      `linear-gradient(90deg,
               transparent 0%,
-              rgba(200,38,38,${r.op * 0.70}) 18%,
-              rgba(240,60,60,${r.op * 1.00}) 50%,
-              rgba(200,38,38,${r.op * 0.70}) 82%,
+              rgba(200,38,38,${r.op * 0.06}) 4%,
+              rgba(210,42,42,${r.op * 0.42}) 18%,
+              rgba(232,56,56,${r.op * 0.88}) 38%,
+              rgba(248,68,68,${r.op * 1.00}) 50%,
+              rgba(232,56,56,${r.op * 0.88}) 62%,
+              rgba(210,42,42,${r.op * 0.42}) 82%,
+              rgba(200,38,38,${r.op * 0.06}) 96%,
               transparent 100%
             )`,
-            boxShadow:       `0 0 10px 3px rgba(210,44,44,${r.op * 0.55})`,
+            boxShadow:       `0 0 12px 4px rgba(210,44,44,${r.op * 0.60})`,
             pointerEvents:   "none",
             animationName:       "rr-ripple-pulse",
-            animationDuration:   "0.90s",
+            animationDuration:   "0.95s",
             animationTimingFunction: "ease-out",
             animationFillMode:   "forwards",
           }}
-        />
-      ))}
+        />,
+        /* Center impact flare — bright hot spark at the contact point */
+        <div
+          key={`rflare-${r.id}`}
+          style={{
+            position:        "absolute",
+            top:             `${r.dividerY - 4}px`,
+            left:            `${r.left}%`,
+            width:           "28px",
+            height:          "9px",
+            transform:       "translateX(-50%)",
+            background:      `rgba(255,88,88,${r.op * 0.92})`,
+            borderRadius:    "2px",
+            filter:          `blur(3px)`,
+            boxShadow:       `0 0 14px 5px rgba(230,55,55,${r.op * 0.78})`,
+            pointerEvents:   "none",
+            animationName:       "rr-ripple-pulse",
+            animationDuration:   "0.58s",
+            animationTimingFunction: "ease-out",
+            animationFillMode:   "forwards",
+          }}
+        />,
+      ])}
 
       {/* Pixel fragments — digital dissolve effect as meteors enter terminal zone */}
       {fragments.map(f => (
