@@ -1,0 +1,107 @@
+RepoRunner is looking good. Please do one **focused visual styling pass** on the **action buttons only**.
+
+Do **not** redesign the app.
+Do **not** change layout.
+Do **not** change functionality.
+Do **not** change logs, engine lights, meteors, setup modal, service logic, IPC, or product flow.
+
+This is only about making the **main action buttons** feel more like **glossy glass / premium iPhone-style glass buttons**.
+
+## Target buttons
+
+Apply this only to the main action buttons in the Quick Actions area:
+
+* Pull Latest
+* Install
+* Start Frontend
+* Start Backend
+* Stop Engine
+* Restart All
+* Open Preview
+
+## Design direction
+
+I want these buttons to feel more like:
+
+* glossy glass
+* premium
+* reflective
+* polished
+* slightly translucent
+* high-end
+* tactile
+
+Think:
+
+* iPhone-style glass surfaces
+* realistic shine
+* specular highlight
+* subtle internal reflections
+* layered depth
+
+But keep it within the RepoRunner aesthetic:
+
+* dark
+* black / charcoal base
+* red-accented cyberpunk console feel
+* not bright white
+* not frosted pastel glass
+* not soft consumer-app glass
+
+## Requested visual treatment
+
+Please enhance the buttons with a stronger **glass-material look** using best judgment.
+
+### Add / strengthen:
+
+* a more noticeable glossy top highlight
+* subtle reflective sheen across the upper portion
+* slight translucent depth
+* inner highlight along the top edge
+* a cleaner glassy surface finish
+* subtle inner shadow / inner contour for depth
+* refined outer shadow so the button feels like a physical polished object
+* faint light-catching edge detail
+
+### Keep it restrained:
+
+* do not overdo it
+* do not make them look wet, toy-like, or overly neon
+* do not turn them into chrome
+* do not make them too bright against the dark UI
+
+## State handling
+
+Preserve the existing semantic color logic:
+
+* neutral buttons stay neutral / smoky glass
+* red-accent buttons stay red-accented glass
+* disabled buttons remain clearly disabled
+
+But all button variants should share the same improved glass-material language.
+
+## Important constraints
+
+Do not change:
+
+* button labels
+* button order
+* icons
+* button size
+* spacing
+* click behavior
+* disabled logic
+* hover/click behavior unless needed to support the glass effect
+* surrounding cards/layout
+
+If hover/active states are refined, keep them subtle and premium.
+
+## Acceptance criteria
+
+After this change:
+
+1. The action buttons look more like polished glass buttons.
+2. They have a clear glossy shine / reflective highlight.
+3. They feel more premium and tactile.
+4. The look still fits RepoRunner’s dark red sci-fi UI.
+5. Functionality and layout remain unchanged.
