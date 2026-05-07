@@ -677,11 +677,14 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
       >
         {/* Log toolbar */}
         <div
-          className="flex-none h-[40px] flex items-center justify-between px-5"
-          style={{ borderBottom: "1px solid #111", background: "rgba(6,6,6,0.84)" }}
+          className="flex-none h-[38px] flex items-center justify-between px-5"
+          style={{
+            borderBottom: "1px solid #131313",
+            background: "linear-gradient(180deg, rgba(8,8,8,0.92) 0%, rgba(5,5,5,0.88) 100%)",
+          }}
         >
           <div className="flex items-center gap-2.5">
-            <span style={{ ...LABEL, color: "#363432" }}>
+            <span style={{ ...LABEL, color: "#4e4c4a" }}>
               App Logs
             </span>
             <span
@@ -689,25 +692,25 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
               style={{
                 ...MONO,
                 fontSize: "10px",
-                color: "#363432",
-                background: "#0c0c0c",
-                border: "1px solid #181818",
-                padding: "2px 5px",
+                color: "#4a4846",
+                background: "#0d0d0d",
+                border: "1px solid #202020",
+                padding: "2px 6px",
                 borderRadius: "3px",
               }}
             >
               {logs.length}
             </span>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5">
             <Button
               variant="ghost"
               size="sm"
               onClick={handleCopyLogs}
-              className="h-7 px-2.5 gap-1.5 text-[11px]"
-              style={{ color: "#363432" }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = "#7a7572"; e.currentTarget.style.background = "#0f0f0f"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = "#363432"; e.currentTarget.style.background = "transparent"; }}
+              className="h-6 px-2.5 gap-1.5 text-[11px] rounded"
+              style={{ color: "#4a4846" }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = "#9a9896"; e.currentTarget.style.background = "#111"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = "#4a4846"; e.currentTarget.style.background = "transparent"; }}
             >
               <Copy className="w-3 h-3" />
               Copy
@@ -716,10 +719,10 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
               variant="ghost"
               size="sm"
               onClick={handleClearLogs}
-              className="h-7 px-2.5 gap-1.5 text-[11px]"
-              style={{ color: "#363432" }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = "#7a7572"; e.currentTarget.style.background = "#0f0f0f"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = "#363432"; e.currentTarget.style.background = "transparent"; }}
+              className="h-6 px-2.5 gap-1.5 text-[11px] rounded"
+              style={{ color: "#4a4846" }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = "#9a9896"; e.currentTarget.style.background = "#111"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = "#4a4846"; e.currentTarget.style.background = "transparent"; }}
             >
               <Trash2 className="w-3 h-3" />
               Clear
@@ -731,12 +734,12 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
         <div
           ref={scrollRef}
           className="flex-1 overflow-y-auto py-2"
-          style={{ background: "rgba(5,5,5,0.78)", ...MONO, fontSize: "12px", lineHeight: "1.7" }}
+          style={{ background: "rgba(5,5,5,0.80)", ...MONO, fontSize: "12px", lineHeight: "1.75" }}
         >
           {logs.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center gap-1.5 select-none">
-              <span className="italic" style={{ fontSize: "13px", color: "#363432" }}>No logs yet.</span>
-              <span className="italic" style={{ fontSize: "11px", color: "#2e2c2a" }}>
+            <div className="h-full flex flex-col items-center justify-center gap-2 select-none">
+              <span style={{ fontSize: "12px", color: "#484644", letterSpacing: "0.02em" }}>No logs yet</span>
+              <span style={{ fontSize: "11px", color: "#383634", letterSpacing: "0.01em" }}>
                 Run Pull, Install, or Start a service to see output here.
               </span>
             </div>
@@ -745,13 +748,13 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
               {logs.map((log) => (
                 <div
                   key={log.id}
-                  className="flex gap-3 px-3 py-[3px] rounded transition-colors"
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.background = "rgba(204,34,34,0.03)"; }}
+                  className="flex gap-3 px-4 py-[4px] transition-colors"
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.background = "rgba(204,34,34,0.025)"; }}
                   onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.background = "transparent"; }}
                 >
                   <span
-                    className="flex-none select-none w-[56px] text-right"
-                    style={{ color: "#3a3836" }}
+                    className="flex-none select-none tabular-nums w-[58px] text-right shrink-0"
+                    style={{ color: "#525050" }}
                   >
                     {new Date(log.timestamp).toLocaleTimeString([], {
                       hour12: false,
@@ -761,12 +764,12 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                     })}
                   </span>
                   <span
-                    className="flex-none w-[76px] font-medium uppercase text-[10px] tracking-wider pt-[1px]"
+                    className="flex-none shrink-0 w-[72px] font-medium uppercase text-[10px] tracking-wider pt-[2px]"
                     style={{ color: getLogSourceColor(log.source) }}
                   >
                     [{log.source}]
                   </span>
-                  <span className="whitespace-pre-wrap break-all" style={{ color: "#706e6c" }}>
+                  <span className="whitespace-pre-wrap break-all min-w-0" style={{ color: "#7e7c7a" }}>
                     {log.text}
                   </span>
                 </div>

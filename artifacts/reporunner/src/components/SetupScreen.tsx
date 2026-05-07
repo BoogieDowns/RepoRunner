@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -33,14 +32,21 @@ type SetupFormValues = z.infer<typeof setupSchema>;
 const MONO: React.CSSProperties = { fontFamily: "'JetBrains Mono', monospace" };
 
 const inputStyle: React.CSSProperties = {
-  background: "#070707",
-  border: "1px solid #1c1c1c",
+  background: "#060606",
+  border: "1px solid #1e1e1e",
   color: "#dedad5",
+  height: "36px",
 };
 
 const inputClassName =
-  "focus-visible:ring-[#cc2222]/20 focus-visible:border-[#cc2222]/30 " +
-  "focus-visible:shadow-[0_0_8px_rgba(204,34,34,0.08)] transition-shadow placeholder:text-[#282422]";
+  "focus-visible:ring-[#cc2222]/20 focus-visible:border-[#cc2222]/40 " +
+  "focus-visible:shadow-[0_0_10px_rgba(204,34,34,0.10)] transition-shadow placeholder:text-[#303030]";
+
+const labelStyle: React.CSSProperties = {
+  color: "#7a7876",
+  fontSize: "11px",
+  letterSpacing: "0.04em",
+};
 
 export function SetupScreen({
   onSave,
@@ -112,45 +118,63 @@ export function SetupScreen({
       )}
 
       <Card
-        className="w-full max-w-3xl rounded-xl relative"
+        className="w-full max-w-3xl rounded-xl relative overflow-hidden"
         style={{
           background: "#0a0a0a",
-          border: overlay ? "1px solid #242020" : "1px solid #1a1a1a",
+          border: overlay ? "1px solid #242020" : "1px solid #1e1e1e",
           boxShadow: overlay
             ? "0 24px 80px rgba(0,0,0,0.9), 0 0 0 1px rgba(204,34,34,0.10), 0 0 40px rgba(204,34,34,0.06)"
             : "0 8px 40px rgba(0,0,0,0.8), 0 0 0 1px rgba(204,34,34,0.04), 0 0 60px rgba(204,34,34,0.03)",
           zIndex: 1,
         }}
       >
-        <CardHeader className="space-y-1.5 pb-6 pt-8 px-8 sm:px-10 relative" style={{ borderBottom: "1px solid #141414" }}>
+        {/* Red top accent hairline */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            height: "1px",
+            background: "linear-gradient(90deg, transparent 0%, rgba(204,34,34,0.55) 30%, rgba(204,34,34,0.70) 50%, rgba(204,34,34,0.55) 70%, transparent 100%)",
+            zIndex: 2,
+          }}
+        />
+
+        <CardHeader className="space-y-1 pb-5 pt-7 px-8 sm:px-10 relative" style={{ borderBottom: "1px solid #161616" }}>
           {onClose && (
             <button
               type="button"
               onClick={onClose}
               aria-label="Close setup"
-              className="absolute top-5 right-5 flex items-center justify-center w-7 h-7 rounded-md transition-colors"
-              style={{ color: "#3a3836", background: "transparent", border: "1px solid transparent" }}
+              className="absolute top-5 right-5 flex items-center justify-center w-8 h-8 rounded-md transition-all duration-150"
+              style={{
+                color: "#4a4846",
+                background: "transparent",
+                border: "1px solid #1c1c1c",
+              }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.color = "#cc2222";
                 e.currentTarget.style.background = "rgba(204,34,34,0.08)";
-                e.currentTarget.style.border = "1px solid rgba(204,34,34,0.2)";
+                e.currentTarget.style.borderColor = "rgba(204,34,34,0.28)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.color = "#3a3836";
+                e.currentTarget.style.color = "#4a4846";
                 e.currentTarget.style.background = "transparent";
-                e.currentTarget.style.border = "1px solid transparent";
+                e.currentTarget.style.borderColor = "#1c1c1c";
               }}
             >
-              <X className="w-4 h-4" />
+              <X className="w-3.5 h-3.5" />
             </button>
           )}
           <CardTitle
-            className="text-2xl font-bold tracking-tight"
-            style={{ color: "#dedad5" }}
+            className="text-xl font-semibold tracking-tight"
+            style={{ color: "#dedad5", letterSpacing: "-0.01em" }}
           >
             Setup RepoRunner
           </CardTitle>
-          <CardDescription className="text-sm" style={{ color: "#4a4845" }}>
+          <CardDescription className="text-xs" style={{ color: "#525050" }}>
             Save your local app setup once. Run it with buttons after that.
           </CardDescription>
         </CardHeader>
@@ -165,8 +189,8 @@ export function SetupScreen({
                   control={form.control}
                   name="name"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm font-medium" style={{ color: "#6a6864" }}>
+                    <FormItem className="space-y-1.5">
+                      <FormLabel className="font-medium" style={labelStyle}>
                         Project Name
                       </FormLabel>
                       <FormControl>
@@ -186,8 +210,8 @@ export function SetupScreen({
                   control={form.control}
                   name="repoPath"
                   render={({ field }) => (
-                    <FormItem className="flex flex-col justify-end">
-                      <FormLabel className="text-sm font-medium" style={{ color: "#6a6864" }}>
+                    <FormItem className="flex flex-col justify-end space-y-1.5">
+                      <FormLabel className="font-medium" style={labelStyle}>
                         Local Repository Folder
                       </FormLabel>
                       <div className="flex gap-2">
@@ -197,7 +221,7 @@ export function SetupScreen({
                             readOnly
                             {...field}
                             className={`flex-1 min-w-0 text-sm ${inputClassName}`}
-                            style={{ ...inputStyle, ...MONO }}
+                            style={{ ...inputStyle, ...MONO, fontSize: "12px" }}
                           />
                         </FormControl>
                         <Button
@@ -205,25 +229,25 @@ export function SetupScreen({
                           variant="secondary"
                           onClick={handleSelectFolder}
                           disabled={isSelecting}
-                          className="flex-none whitespace-nowrap"
+                          className="flex-none whitespace-nowrap h-[36px] px-3 text-xs"
                           style={{
-                            background: "#0c0c0c",
-                            border: "1px solid #1c1c1c",
+                            background: "#0d0d0d",
+                            border: "1px solid #1e1e1e",
                             color: "#6a6864",
                           }}
                           onMouseEnter={(e) => {
-                            e.currentTarget.style.background = "#111";
+                            e.currentTarget.style.background = "#141414";
                             e.currentTarget.style.color = "#9a9896";
-                            e.currentTarget.style.borderColor = "#282828";
+                            e.currentTarget.style.borderColor = "#2a2a2a";
                           }}
                           onMouseLeave={(e) => {
-                            e.currentTarget.style.background = "#0c0c0c";
+                            e.currentTarget.style.background = "#0d0d0d";
                             e.currentTarget.style.color = "#6a6864";
-                            e.currentTarget.style.borderColor = "#1c1c1c";
+                            e.currentTarget.style.borderColor = "#1e1e1e";
                           }}
                         >
-                          <Folder className="h-4 w-4 mr-2 flex-none" />
-                          Choose Folder
+                          <Folder className="h-3.5 w-3.5 mr-1.5 flex-none" />
+                          Choose
                         </Button>
                       </div>
                       <FormMessage />
@@ -242,15 +266,15 @@ export function SetupScreen({
                       control={form.control}
                       name={fieldName}
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm font-medium" style={{ color: "#6a6864" }}>
+                        <FormItem className="space-y-1.5">
+                          <FormLabel className="font-medium" style={labelStyle}>
                             {labels[i]}
                           </FormLabel>
                           <FormControl>
                             <Input
                               {...field}
-                              className={`text-sm ${inputClassName}`}
-                              style={{ ...inputStyle, ...MONO }}
+                              className={`text-xs ${inputClassName}`}
+                              style={{ ...inputStyle, ...MONO, fontSize: "12px" }}
                             />
                           </FormControl>
                           <FormMessage />
@@ -270,15 +294,15 @@ export function SetupScreen({
                   control={form.control}
                   name="previewUrl"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm font-medium" style={{ color: "#6a6864" }}>
+                    <FormItem className="space-y-1.5">
+                      <FormLabel className="font-medium" style={labelStyle}>
                         Preview URL
                       </FormLabel>
                       <FormControl>
                         <Input
                           {...field}
-                          className={`text-sm ${inputClassName}`}
-                          style={{ ...inputStyle, ...MONO }}
+                          className={`text-xs ${inputClassName}`}
+                          style={{ ...inputStyle, ...MONO, fontSize: "12px" }}
                         />
                       </FormControl>
                       <FormMessage />
@@ -292,18 +316,18 @@ export function SetupScreen({
                     control={form.control}
                     name={fieldName}
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm font-medium" style={{ color: "#6a6864" }}>
+                      <FormItem className="space-y-1.5">
+                        <FormLabel className="font-medium flex items-center gap-1.5" style={labelStyle}>
                           {i === 0 ? "Frontend Port" : "Backend Port"}
-                          <span className="ml-1" style={{ color: "#3a3836", fontSize: "11px" }}>(optional)</span>
+                          <span style={{ color: "#404040", fontSize: "10px", letterSpacing: "0.02em" }}>optional</span>
                         </FormLabel>
                         <FormControl>
                           <Input
                             type="number"
                             {...field}
                             value={field.value || ""}
-                            className={`text-sm ${inputClassName}`}
-                            style={{ ...inputStyle, ...MONO }}
+                            className={`text-xs ${inputClassName}`}
+                            style={{ ...inputStyle, ...MONO, fontSize: "12px" }}
                           />
                         </FormControl>
                         <FormMessage />
@@ -313,29 +337,30 @@ export function SetupScreen({
                 ))}
               </div>
 
-              <div className="pt-6 mt-2" style={{ borderTop: "1px solid #141414" }}>
+              <div className="pt-5 mt-1" style={{ borderTop: "1px solid #161616" }}>
                 <Button
                   type="submit"
                   size="lg"
-                  className="w-full font-semibold"
+                  className="w-full font-semibold tracking-wide text-sm"
                   style={{
-                    background: "#cc2222",
-                    border: "1px solid rgba(224,48,48,0.5)",
+                    background: "linear-gradient(180deg, #d42626 0%, #b81e1e 100%)",
+                    border: "1px solid rgba(220,50,50,0.45)",
                     color: "#f5f5f5",
-                    boxShadow: "0 0 20px rgba(204,34,34,0.25)",
+                    boxShadow: "0 0 18px rgba(204,34,34,0.22), inset 0 1px 0 rgba(255,180,180,0.18)",
+                    height: "40px",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "#d12b2b";
-                    e.currentTarget.style.boxShadow = "0 0 28px rgba(204,34,34,0.38)";
+                    e.currentTarget.style.background = "linear-gradient(180deg, #dc2c2c 0%, #c42020 100%)";
+                    e.currentTarget.style.boxShadow = "0 0 28px rgba(204,34,34,0.36), inset 0 1px 0 rgba(255,180,180,0.22)";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "#cc2222";
-                    e.currentTarget.style.boxShadow = "0 0 20px rgba(204,34,34,0.25)";
+                    e.currentTarget.style.background = "linear-gradient(180deg, #d42626 0%, #b81e1e 100%)";
+                    e.currentTarget.style.boxShadow = "0 0 18px rgba(204,34,34,0.22), inset 0 1px 0 rgba(255,180,180,0.18)";
                   }}
                 >
-                  <Save className="w-4 h-4 mr-2" />
+                  <Save className="w-3.5 h-3.5 mr-2" />
                   Save Configuration
-                  <ArrowRight className="w-4 h-4 ml-2" />
+                  <ArrowRight className="w-3.5 h-3.5 ml-2" />
                 </Button>
               </div>
 

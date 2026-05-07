@@ -1,0 +1,117 @@
+RepoRunner is looking good. Please do one focused UI polish pass on the **setup modal and logs panel only**.
+
+Do **not** redesign the app.
+Do **not** change the logo/wordmark/header branding.
+Do **not** add new assets.
+Do **not** change layout structure.
+Do **not** change functionality.
+Do **not** change product flow.
+Do **not** change process management, IPC, service lifecycle, command execution, setup behavior, or meteor behavior.
+
+This is only about making the setup modal and logs panel feel more polished and production-ready.
+
+## 1. Setup modal polish
+
+Please refine the setup modal visually and ergonomically.
+
+Focus on:
+
+* cleaner input alignment
+* better spacing between rows
+* consistent input heights
+* better URL/path field readability
+* more polished close X
+* Save Configuration button alignment
+* subtle border/edge treatment
+* field label clarity
+* focus state polish
+
+Do not add or remove fields.
+
+Fields must remain:
+
+* Project Name
+* Local Repository Folder
+* Install Command
+* Frontend Command
+* Backend Command
+* Preview URL
+* Frontend Port
+* Backend Port
+
+Keep native number spinners hidden on port fields.
+
+Do not re-add helper text under every field.
+
+Only show validation/error text when needed.
+
+## 2. Logs panel polish
+
+Please refine the logs panel for readability and polish.
+
+Focus on:
+
+* timestamp contrast
+* source label clarity
+* row spacing
+* log line readability
+* current/hover row subtlety if applicable
+* empty state readability
+* Copy/Clear control alignment
+* scrollbar styling consistency
+* making the logs feel integrated with the black/red console aesthetic
+
+Do not add:
+
+* search
+* filters
+* tabs
+* log levels
+* new controls
+
+Keep logs simple.
+
+## 3. Keep current visual identity
+
+Preserve:
+
+* black/red sci-fi console theme
+* subtle grain
+* red meteor background effect
+* smoked-glass buttons
+* red running pulse
+* peach install/starting/stopping color
+* current card layout
+
+## 4. Functional safety
+
+Do not change:
+
+* saving project config
+* loading project config
+* edit setup behavior
+* close X behavior
+* folder picker
+* pull latest
+* install
+* start frontend
+* start backend
+* stop services
+* restart all
+* open preview
+* copy logs
+* clear logs
+
+## Acceptance criteria
+
+After this pass:
+
+1. Setup modal feels cleaner and more balanced.
+2. Inputs are aligned and readable.
+3. Port inputs still have no spinner arrows.
+4. Save Configuration remains clear and polished.
+5. Logs panel is easier to scan.
+6. Source labels and timestamps remain readable.
+7. Empty logs state looks intentional.
+8. No new features are added.
+9. No functionality or product flow changes are made.
