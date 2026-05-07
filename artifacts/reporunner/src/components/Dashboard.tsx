@@ -711,7 +711,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                   <div className={DIV} style={DIV_STYLE} />
 
                   <CommandButton
-                    label="Stop Services"
+                    label="Stop Engine"
                     icon={SquareSquare}
                     onClick={wrapAction("stop", window.repoRunner.stopServices)}
                     disabled={bothStopped}
@@ -750,7 +750,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
             >
               <CardHeader className="px-5 pt-4 pb-3" style={{ borderBottom: "1px solid #161616" }}>
                 <CardTitle style={{ ...LABEL, color: "#3a3836" }}>
-                  Services
+                  Engine
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-5 flex flex-col gap-5">
