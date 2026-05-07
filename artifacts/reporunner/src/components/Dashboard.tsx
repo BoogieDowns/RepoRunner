@@ -22,26 +22,39 @@ import { Separator } from "@/components/ui/separator";
 /* ─── Ambient Background ──────────────────────────────────────────────────── */
 
 interface MeteorDef {
-  id:   number;
-  left: number;  // % from left edge
-  dur:  number;  // fall duration (seconds)
-  h:    number;  // streak height (vh)
-  op:   number;  // base opacity
+  id:    number;
+  left:  number;       // % from left edge
+  dur:   number;       // fall duration (seconds)
+  h:     number;       // streak height (vh)
+  op:    number;       // base opacity
+  layer: 0 | 1 | 2;   // 0 = background, 1 = midground, 2 = foreground
 }
 
 /**
  * A single meteor streak.
- * Spawns at top: -32vh (above viewport), plays one full fall, then calls onDone.
+ * Spawns at top: -70vh (above viewport), plays one full fall, then calls onDone.
  * The parent removes it from state — no orphan elements.
+ *
+ * Layer visual behaviour:
+ *   0 bg  — 1px wide, short head, no glow, slow, dim   → quiet atmospheric depth
+ *   1 mid — 2px wide, standard head, soft glow          → main mid-field layer
+ *   2 fg  — 3px wide, tall head, strong glow, fast       → vivid foreground presence
  */
-function MeteorLine({ id, left, dur, h, op, onDone }: MeteorDef & { onDone: (id: number) => void }) {
+function MeteorLine({ id, left, dur, h, op, layer, onDone }: MeteorDef & { onDone: (id: number) => void }) {
+  const cW      = layer === 0 ? 1 : layer === 1 ? 2 : 3;   // streak container width px
+  const headH   = layer === 0 ? 4 : layer === 1 ? 11 : 18; // head height px
+  const glowPx  = layer === 0 ? 0 : layer === 1 ? 5 : 10;  // glow blur radius
+  const glowSpr = layer === 0 ? 0 : layer === 1 ? 1 : 2;   // glow spread radius
+  const glowMul = layer === 0 ? 0 : layer === 1 ? 0.30 : 0.58; // opacity multiplier
+  const tailOff = cW > 1 ? Math.floor(cW / 2) : 0;         // center 1px tail in container
+
   return (
     <div
       style={{
         position: "absolute",
         top: "-70vh",
         left: `${left}%`,
-        width: "3px",
+        width: `${cW}px`,
         height: `${h}vh`,
         transform: "translateX(-50%)",
         animationName: "rr-fall",
@@ -57,7 +70,7 @@ function MeteorLine({ id, left, dur, h, op, onDone }: MeteorDef & { onDone: (id:
         style={{
           position: "absolute",
           top: 0,
-          left: "1px",
+          left: `${tailOff}px`,
           width: "1px",
           height: "100%",
           background: `linear-gradient(to bottom,
@@ -70,20 +83,22 @@ function MeteorLine({ id, left, dur, h, op, onDone }: MeteorDef & { onDone: (id:
           )`,
         }}
       />
-      {/* Head — bright leading point with glow */}
+      {/* Head — bright leading point, scaled by layer */}
       <div
         style={{
           position: "absolute",
           bottom: 0,
           left: "0px",
-          width: "3px",
-          height: "11px",
+          width: `${cW}px`,
+          height: `${headH}px`,
           background: `linear-gradient(to bottom,
             rgba(210,40,40,${op * 0.80}),
             rgba(255,82,82,${op * 0.97}),
             rgba(255,115,115,${op * 0.50})
           )`,
-          boxShadow: `0 0 5px 1px rgba(255,72,72,${op * 0.30})`,
+          boxShadow: glowMul > 0
+            ? `0 0 ${glowPx}px ${glowSpr}px rgba(255,72,72,${op * glowMul})`
+            : "none",
           borderRadius: "1px 1px 2px 2px",
         }}
       />
@@ -107,15 +122,27 @@ function AmbientBackground({ anyRunning, bothRunning }: { anyRunning: boolean; b
     setMeteors(prev => prev.filter(m => m.id !== id));
   }, []);
 
-  /* Stable callback: creates one new meteor with randomised properties */
+  /* Stable callback: creates one new meteor with randomised properties.
+   * Layer distribution: 35% background, 45% midground, 20% foreground.
+   * Each layer gets its own speed/size/opacity ranges so they read as
+   * genuinely different depth planes rather than uniform random variation. */
   const spawnMeteor = useCallback(() => {
     setMeteors(prev => {
       const id   = ++idRef.current;
-      const left = 5   + Math.random() * 87;    // 5–92 %
-      const dur  = 4.8 + Math.random() * 2.8;  // 4.8–7.6 s
-      const h    = 32  + Math.random() * 26;   // 32–58 vh
-      const op   = 0.28 + Math.random() * 0.36; // 0.28–0.64
-      return [...prev, { id, left, dur, h, op }];
+      const left = 5 + Math.random() * 87;   // 5–92 %
+      const rand = Math.random();
+      const layer: 0 | 1 | 2 = rand < 0.35 ? 0 : rand < 0.80 ? 1 : 2;
+      // bg: slow + short + dim | mid: current | fg: fast + tall + bright
+      const dur = layer === 0 ? 7.0 + Math.random() * 4.2   // 7.0–11.2 s
+                : layer === 2 ? 3.0 + Math.random() * 2.0   // 3.0–5.0 s
+                :               4.8 + Math.random() * 2.8;  // 4.8–7.6 s
+      const h   = layer === 0 ? 14  + Math.random() * 18    // 14–32 vh
+                : layer === 2 ? 46  + Math.random() * 30    // 46–76 vh
+                :               32  + Math.random() * 26;   // 32–58 vh
+      const op  = layer === 0 ? 0.09 + Math.random() * 0.15 // 0.09–0.24
+                : layer === 2 ? 0.54 + Math.random() * 0.30 // 0.54–0.84
+                :               0.28 + Math.random() * 0.34; // 0.28–0.62
+      return [...prev, { id, left, dur, h, op, layer }];
     });
   }, []);
 
@@ -663,11 +690,11 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
               className="lg:col-span-2 rounded-xl"
               style={{
                 background: "rgba(10,10,10,0.85)",
-                border: "1px solid #1a1a1a",
-                boxShadow: "0 4px 20px rgba(0,0,0,0.7), 0 0 0 1px rgba(204,34,34,0.03)",
+                border: "1px solid #1c1c1c",
+                boxShadow: "0 4px 24px rgba(0,0,0,0.74), 0 0 0 1px rgba(204,34,34,0.05), inset 0 1px 0 rgba(204,34,34,0.07)",
               }}
             >
-              <CardHeader className="px-5 pt-4 pb-3" style={{ borderBottom: "1px solid #161616" }}>
+              <CardHeader className="px-5 pt-4 pb-3" style={{ borderBottom: "1px solid #191818" }}>
                 <CardTitle style={{ ...LABEL, color: "#3a3836" }}>
                   Quick Actions
                 </CardTitle>
@@ -744,11 +771,11 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
               className="rounded-xl"
               style={{
                 background: "rgba(10,10,10,0.85)",
-                border: "1px solid #1a1a1a",
-                boxShadow: "0 4px 20px rgba(0,0,0,0.7), 0 0 0 1px rgba(204,34,34,0.03)",
+                border: "1px solid #1c1c1c",
+                boxShadow: "0 4px 24px rgba(0,0,0,0.74), 0 0 0 1px rgba(204,34,34,0.05), inset 0 1px 0 rgba(204,34,34,0.07)",
               }}
             >
-              <CardHeader className="px-5 pt-4 pb-3" style={{ borderBottom: "1px solid #161616" }}>
+              <CardHeader className="px-5 pt-4 pb-3" style={{ borderBottom: "1px solid #191818" }}>
                 <CardTitle style={{ ...LABEL, color: "#3a3836" }}>
                   Engine
                 </CardTitle>
