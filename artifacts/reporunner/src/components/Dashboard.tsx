@@ -153,13 +153,13 @@ function AmbientBackground({ anyRunning, bothRunning }: { anyRunning: boolean; b
     if (anyRunning) {
       /* Initial burst — only on first activation, not on density change */
       if (!wasRunningRef.current) {
-        const count = bothRunning ? 5 : 3;
-        for (let i = 0; i < count; i++) setTimeout(spawnMeteor, i * 380);
+        const count = bothRunning ? 7 : 4;
+        for (let i = 0; i < count; i++) setTimeout(spawnMeteor, i * 300);
       }
       wasRunningRef.current = true;
 
       /* Ongoing stream: sparser for 1 service, slightly denser for 2 */
-      const interval = bothRunning ? 1600 : 2600;
+      const interval = bothRunning ? 1220 : 1980;
       spawnerRef.current = setInterval(spawnMeteor, interval);
     } else {
       wasRunningRef.current = false;
