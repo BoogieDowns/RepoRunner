@@ -701,7 +701,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                   />
                   <CommandButton
                     label="Start Backend"
-                    icon={Server}
+                    icon={Play}
                     onClick={wrapAction("startBack", window.repoRunner.startBackend)}
                     disabled={statuses.backend === "running" || statuses.backend === "starting"}
                     loading={actionLoading["startBack"]}
