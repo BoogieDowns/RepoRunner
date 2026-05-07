@@ -387,11 +387,11 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
         3. horizontal ribs  — fine 2.5px-pitch grooves molded into the lens face
     */
 
-    /* Housing: identical bezel for every state */
+    /* Housing: identical bezel for every state — square-edged industrial module */
     const housing: React.CSSProperties = {
       display: "inline-flex",
       flexShrink: 0,
-      borderRadius: "5px",
+      borderRadius: "3px",
       padding: "1.5px",
     };
 
@@ -402,7 +402,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
       justifyContent: "center",
       gap: "5px",
       padding: "4px 9px",
-      borderRadius: "3px",
+      borderRadius: "1px",
       fontFamily: "'JetBrains Mono', monospace",
       fontSize: "10px",
       fontWeight: 600,
@@ -426,21 +426,22 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
         return (
           <span style={{
             ...housing,
-            background: "linear-gradient(180deg, #200c0c 0%, #080303 100%)",
-            border: "1px solid rgba(55,12,12,0.92)",
-            boxShadow: "0 2px 6px rgba(0,0,0,0.82), 0 1px 2px rgba(0,0,0,0.60), inset 0 1px 0 rgba(255,120,120,0.04)",
+            background: "linear-gradient(180deg, #1e0c0c 0%, #070202 100%)",
+            border: "1px solid rgba(60,14,14,0.95)",
+            boxShadow: "0 2px 7px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,110,110,0.05), inset 0 -1px 0 rgba(0,0,0,0.40)",
           }}>
             <span
               className="rr-indicator-running"
               style={{
                 ...lens,
                 background: [
-                  ribs(0.24),
-                  specular(255, 225, 220, 0.30),
-                  "radial-gradient(ellipse at 50% 62%, rgba(255,145,130,0.82) 0%, rgba(212,30,30,0.92) 26%, rgba(148,10,10,0.94) 60%, rgba(48,2,2,0.98) 100%)",
+                  ribs(0.26),
+                  specular(255, 230, 225, 0.28),
+                  "radial-gradient(ellipse at 50% 58%, rgba(255,155,138,0.86) 0%, rgba(215,32,32,0.92) 24%, rgba(150,10,10,0.94) 58%, rgba(48,2,2,0.98) 100%)",
                 ].join(", "),
-                color: "rgba(255,212,208,0.94)",
-                textShadow: "0 0 8px rgba(255,100,90,0.72)",
+                color: "rgba(255,214,210,0.95)",
+                textShadow: "0 0 8px rgba(255,95,85,0.72)",
+                boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18)",
               }}
             >
               Running
@@ -452,20 +453,20 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
         return (
           <span style={{
             ...housing,
-            background: "linear-gradient(180deg, #1c1008 0%, #080503 100%)",
-            border: "1px solid rgba(50,30,12,0.88)",
-            boxShadow: "0 2px 6px rgba(0,0,0,0.82), 0 1px 2px rgba(0,0,0,0.60)",
+            background: "linear-gradient(180deg, #1a0e07 0%, #070402 100%)",
+            border: "1px solid rgba(52,28,10,0.92)",
+            boxShadow: "0 2px 7px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.65)",
           }}>
             <span style={{
               ...lens,
               background: [
-                ribs(0.26),
+                ribs(0.28),
                 specular(242, 184, 160, 0.22),
-                "radial-gradient(ellipse at 50% 62%, rgba(175,95,58,0.70) 0%, rgba(108,44,18,0.86) 42%, rgba(48,15,5,0.94) 100%)",
+                "radial-gradient(ellipse at 50% 58%, rgba(178,98,60,0.74) 0%, rgba(110,45,18,0.88) 40%, rgba(48,15,5,0.95) 100%)",
               ].join(", "),
               color: "rgba(242,184,160,0.92)",
-              textShadow: "0 0 7px rgba(242,184,160,0.52)",
-              boxShadow: "0 0 6px rgba(242,184,160,0.12)",
+              textShadow: "0 0 7px rgba(242,184,160,0.48)",
+              boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18), 0 0 5px rgba(242,184,160,0.10)",
             }}>
               <Loader2 className="w-[9px] h-[9px] animate-spin flex-none" />
               Starting
@@ -477,20 +478,20 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
         return (
           <span style={{
             ...housing,
-            background: "linear-gradient(180deg, #180e07 0%, #070402 100%)",
-            border: "1px solid rgba(45,26,10,0.82)",
-            boxShadow: "0 2px 6px rgba(0,0,0,0.82), 0 1px 2px rgba(0,0,0,0.60)",
+            background: "linear-gradient(180deg, #160c06 0%, #060402 100%)",
+            border: "1px solid rgba(44,24,8,0.88)",
+            boxShadow: "0 2px 7px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.65)",
           }}>
             <span style={{
               ...lens,
               background: [
-                ribs(0.28),
-                specular(200, 150, 118, 0.16),
-                "radial-gradient(ellipse at 50% 62%, rgba(145,76,46,0.58) 0%, rgba(88,36,14,0.80) 46%, rgba(36,12,4,0.94) 100%)",
+                ribs(0.30),
+                specular(200, 148, 115, 0.15),
+                "radial-gradient(ellipse at 50% 58%, rgba(148,78,48,0.62) 0%, rgba(90,38,14,0.82) 44%, rgba(36,12,4,0.95) 100%)",
               ].join(", "),
-              color: "rgba(200,150,118,0.86)",
-              textShadow: "0 0 6px rgba(200,150,118,0.40)",
-              boxShadow: "0 0 4px rgba(200,150,118,0.08)",
+              color: "rgba(200,150,118,0.84)",
+              textShadow: "0 0 6px rgba(200,148,115,0.36)",
+              boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18)",
             }}>
               <Loader2 className="w-[9px] h-[9px] animate-spin flex-none" />
               Stopping
@@ -502,20 +503,20 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
         return (
           <span style={{
             ...housing,
-            background: "linear-gradient(180deg, #200c0c 0%, #080303 100%)",
-            border: "1px solid rgba(55,12,12,0.92)",
-            boxShadow: "0 2px 6px rgba(0,0,0,0.82), 0 1px 2px rgba(0,0,0,0.60), 0 0 8px rgba(224,48,48,0.14)",
+            background: "linear-gradient(180deg, #1e0c0c 0%, #070202 100%)",
+            border: "1px solid rgba(60,14,14,0.95)",
+            boxShadow: "0 2px 7px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.65), 0 0 8px rgba(224,48,48,0.12)",
           }}>
             <span style={{
               ...lens,
               background: [
-                ribs(0.22),
-                specular(255, 200, 195, 0.26),
-                "radial-gradient(ellipse at 50% 62%, rgba(255,115,110,0.76) 0%, rgba(220,40,40,0.90) 28%, rgba(152,14,14,0.92) 62%, rgba(50,2,2,0.98) 100%)",
+                ribs(0.24),
+                specular(255, 200, 195, 0.24),
+                "radial-gradient(ellipse at 50% 58%, rgba(255,118,112,0.80) 0%, rgba(218,38,38,0.90) 26%, rgba(150,12,12,0.93) 60%, rgba(48,2,2,0.98) 100%)",
               ].join(", "),
-              color: "rgba(255,205,200,0.92)",
-              textShadow: "0 0 7px rgba(255,100,90,0.65)",
-              boxShadow: "0 0 6px rgba(224,48,48,0.30)",
+              color: "rgba(255,208,204,0.93)",
+              textShadow: "0 0 7px rgba(255,95,85,0.62)",
+              boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18), 0 0 5px rgba(224,48,48,0.28)",
             }}>
               Failed
             </span>
@@ -526,19 +527,19 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
         return (
           <span style={{
             ...housing,
-            background: "linear-gradient(180deg, #121212 0%, #060606 100%)",
-            border: "1px solid rgba(35,35,35,0.90)",
-            boxShadow: "0 2px 6px rgba(0,0,0,0.82), 0 1px 2px rgba(0,0,0,0.60)",
+            background: "linear-gradient(180deg, #111111 0%, #060606 100%)",
+            border: "1px solid rgba(34,34,34,0.92)",
+            boxShadow: "0 2px 7px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.65)",
           }}>
             <span style={{
               ...lens,
               background: [
-                ribs(0.36),
-                "linear-gradient(148deg, rgba(70,70,70,0.10) 0%, transparent 35%)",
-                "radial-gradient(ellipse at 50% 62%, rgba(36,36,36,0.76) 0%, rgba(16,16,16,0.90) 55%, rgba(6,6,6,0.97) 100%)",
+                ribs(0.38),
+                "linear-gradient(148deg, rgba(68,68,68,0.10) 0%, transparent 34%)",
+                "radial-gradient(ellipse at 50% 58%, rgba(35,35,35,0.75) 0%, rgba(15,15,15,0.90) 55%, rgba(5,5,5,0.97) 100%)",
               ].join(", "),
-              color: "rgba(75,72,70,0.88)",
-              boxShadow: "inset 0 1px 0 rgba(60,60,60,0.08), inset 0 -1px 0 rgba(0,0,0,0.50)",
+              color: "rgba(74,70,68,0.86)",
+              boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18)",
             }}>
               Unknown
             </span>
@@ -550,19 +551,19 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
         return (
           <span style={{
             ...housing,
-            background: "linear-gradient(180deg, #160808 0%, #060202 100%)",
-            border: "1px solid rgba(45,10,10,0.90)",
-            boxShadow: "0 2px 6px rgba(0,0,0,0.82), 0 1px 2px rgba(0,0,0,0.60)",
+            background: "linear-gradient(180deg, #150808 0%, #060202 100%)",
+            border: "1px solid rgba(48,10,10,0.94)",
+            boxShadow: "0 2px 7px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.65)",
           }}>
             <span style={{
               ...lens,
               background: [
-                ribs(0.36),
-                "linear-gradient(148deg, rgba(70,20,20,0.10) 0%, transparent 35%)",
-                "radial-gradient(ellipse at 50% 62%, rgba(44,8,8,0.74) 0%, rgba(16,4,4,0.88) 55%, rgba(5,1,1,0.97) 100%)",
+                ribs(0.38),
+                "linear-gradient(148deg, rgba(65,18,18,0.10) 0%, transparent 34%)",
+                "radial-gradient(ellipse at 50% 58%, rgba(42,7,7,0.72) 0%, rgba(15,3,3,0.88) 55%, rgba(4,1,1,0.97) 100%)",
               ].join(", "),
-              color: "rgba(62,44,44,0.85)",
-              boxShadow: "inset 0 1px 0 rgba(70,20,20,0.08), inset 0 -1px 0 rgba(0,0,0,0.52)",
+              color: "rgba(60,42,42,0.82)",
+              boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18)",
             }}>
               Stopped
             </span>
