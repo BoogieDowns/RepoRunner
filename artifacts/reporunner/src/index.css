@@ -389,9 +389,10 @@ input[type="number"] {
 }
 
 /*
-  ::before — primary gloss band.
-  Very bright top ~35%, with a hard-ish shoulder so it reads as a distinct
-  reflective face rather than a soft ambient tint.
+  ::before — radial convex gloss highlight.
+  Center placed at 50% -15% (just above the button top) so the arc bows
+  downward into the face — exactly how light reflects off a convex glass lens.
+  Looks nothing like a flat painted band; reads as curved glass material.
 */
 .btn-glass::before {
   content: "";
@@ -399,33 +400,33 @@ input[type="number"] {
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.62) 0%,
-    rgba(255, 255, 255, 0.40) 12%,
-    rgba(255, 255, 255, 0.18) 28%,
-    rgba(255, 255, 255, 0.04) 44%,
-    transparent 54%
+  background: radial-gradient(
+    ellipse 105% 90% at 50% -15%,
+    rgba(255, 255, 255, 0.72) 0%,
+    rgba(255, 255, 255, 0.48) 22%,
+    rgba(255, 255, 255, 0.20) 46%,
+    rgba(255, 255, 255, 0.04) 64%,
+    transparent 76%
   );
   z-index: 0;
   transition: background 0.15s ease;
 }
 .btn-glass:hover:not(:disabled)::before {
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.74) 0%,
-    rgba(255, 255, 255, 0.50) 12%,
-    rgba(255, 255, 255, 0.22) 28%,
-    rgba(255, 255, 255, 0.05) 44%,
-    transparent 54%
+  background: radial-gradient(
+    ellipse 105% 90% at 50% -15%,
+    rgba(255, 255, 255, 0.86) 0%,
+    rgba(255, 255, 255, 0.60) 22%,
+    rgba(255, 255, 255, 0.26) 46%,
+    rgba(255, 255, 255, 0.06) 64%,
+    transparent 76%
   );
 }
 .btn-glass:active:not(:disabled)::before {
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.10) 0%,
-    rgba(255, 255, 255, 0.04) 28%,
-    transparent 42%
+  background: radial-gradient(
+    ellipse 105% 90% at 50% -15%,
+    rgba(255, 255, 255, 0.14) 0%,
+    rgba(255, 255, 255, 0.06) 40%,
+    transparent 62%
   );
 }
 

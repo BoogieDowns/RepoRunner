@@ -1,0 +1,159 @@
+RepoRunner’s action buttons need one more material pass.
+
+Please use the attached glossy button image as a material reference only.
+
+Do not copy the circular shape.
+Do not redesign the layout.
+Do not change functionality.
+Do not change spacing, button labels, icons, process logic, logs, modal, meteors, or overall app structure.
+
+This is only about improving the button surface finish so the action buttons look more like real glossy glass.
+
+Scope
+
+Apply this refinement to the main action buttons in the Quick Actions area:
+
+Pull Latest
+Install
+Start Frontend
+Start Backend
+Stop Engine
+Restart All
+Open Preview
+Important direction
+
+Use the reference image for the surface/material treatment, not the shape.
+
+The buttons should stay:
+
+rectangular
+slightly squared
+consistent with the current RepoRunner layout
+consistent with the black / red visual system
+
+Do not make them circular or bubbly.
+
+Desired material look
+
+Push the buttons further toward a high-gloss glass / acrylic look.
+
+I want them to feel more like:
+
+glossy glass
+polished acrylic
+premium iPhone-style UI material
+visibly reflective
+slightly dimensional
+
+Right now they still feel a bit too matte.
+
+What to improve
+
+Please increase the sense of glossy glass by refining these details:
+
+1. Stronger specular highlight
+
+Add a more visible reflective highlight across the upper portion of each button.
+
+This should feel like a clean light reflection on glass, not a flat white band.
+
+2. Better light-to-dark surface transition
+
+The button face should have clearer tonal separation:
+
+brighter toward the top / highlight zone
+slightly deeper / darker toward the lower half
+
+This helps create a real 3D glossy finish.
+
+3. Sharper glass edge definition
+
+Improve the rim lighting / edge treatment so the buttons feel more like layered glass or acrylic.
+
+A subtle inner edge and faint outer edge highlight is fine.
+
+4. Slightly stronger depth
+
+Increase the feeling that the button has a real face/surface, not just a flat fill.
+
+This can come from:
+
+subtle inset highlight
+soft lower shadow
+gentle internal shading
+slightly more convincing surface curvature
+5. Keep the shine tasteful
+
+Make the buttons noticeably glossier, but still premium.
+
+Do not make them:
+
+cartoonish
+wet-looking
+overly white
+overly bright
+plastic toy-like
+neon
+garish
+
+The look should be:
+
+dark
+premium
+cinematic
+controlled
+high-end
+Color handling
+
+Keep RepoRunner’s current palette.
+
+Neutral / dark buttons
+
+For buttons like:
+
+Pull Latest
+Install
+Restart All
+Open Preview
+
+Keep them dark / smoked / black-glass, but with much better visible gloss and reflection.
+
+Red action buttons
+
+For:
+
+Start Frontend
+Start Backend
+Stop Engine
+
+Keep the red styling, but give them the same richer glossy glass treatment:
+
+brighter upper reflection
+deeper lower red tone
+stronger glass-like dimensionality
+Disabled states
+
+If a button is disabled, it should still match the same material system, just subdued.
+
+It should look like dimmed glass, not flat dead UI.
+
+Suggested implementation direction
+
+Use best judgment, but if helpful, refine with:
+
+layered gradients
+pseudo-element highlight overlays
+subtle inset shadows
+soft specular sheen
+improved border/rim treatment
+faint reflective streak or curved highlight
+Acceptance criteria
+
+After this pass:
+
+The action buttons look noticeably more glossy and glass-like.
+They feel more reflective and dimensional.
+They still remain rectangular / squared.
+They still fit RepoRunner’s dark red / black aesthetic.
+The effect feels premium, not cartoonish.
+No layout or functionality changes are made.
