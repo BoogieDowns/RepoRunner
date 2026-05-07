@@ -239,6 +239,20 @@
   100% { transform: translateY(175vh); }
 }
 
+/* Divider impact: ripple expands symmetrically outward from center, then fades */
+@keyframes rr-ripple-pulse {
+  0%   { clip-path: inset(0 50% 0 50%); opacity: 0; }
+  8%   { opacity: 1; }
+  100% { clip-path: inset(0 0% 0 0%);  opacity: 0; }
+}
+
+/* Digital fragment: tiny square drifts downward and fades into the terminal zone */
+@keyframes rr-fragment-fall {
+  0%   { transform: translateY(0px);  opacity: 1; }
+  22%  { opacity: 1; }
+  100% { transform: translateY(38px); opacity: 0; }
+}
+
 @keyframes rr-scrim-in {
   from { opacity: 0; }
   to   { opacity: 1; }

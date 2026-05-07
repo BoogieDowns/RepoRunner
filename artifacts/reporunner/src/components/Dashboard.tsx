@@ -30,6 +30,24 @@ interface MeteorDef {
   layer: 0 | 1 | 2;   // 0 = background, 1 = midground, 2 = foreground
 }
 
+interface RippleDef {
+  id:       number;
+  left:     number;    // % from left edge
+  dividerY: number;    // px from top of viewport (= container top since inset:0)
+  op:       number;    // opacity scalar
+}
+
+interface FragmentDef {
+  id:       number;
+  left:     number;    // % from left edge
+  dividerY: number;    // px anchor (where the divider line is)
+  offsetY:  number;    // px below divider to start
+  driftX:   number;    // horizontal px offset from left%
+  op:       number;    // max opacity
+  size:     number;    // px square side
+  dur:      number;    // animation seconds
+}
+
 /**
  * A single meteor streak.
  * Spawns at top: -70vh (above viewport), plays one full fall, then calls onDone.
@@ -106,8 +124,18 @@ function MeteorLine({ id, left, dur, h, op, layer, onDone }: MeteorDef & { onDon
   );
 }
 
-function AmbientBackground({ anyRunning, bothRunning }: { anyRunning: boolean; bothRunning: boolean }) {
-  const [meteors, setMeteors]   = useState<MeteorDef[]>([]);
+function AmbientBackground({
+  anyRunning,
+  bothRunning,
+  dividerRef,
+}: {
+  anyRunning:  boolean;
+  bothRunning: boolean;
+  dividerRef:  React.RefObject<HTMLElement | null>;
+}) {
+  const [meteors,   setMeteors]   = useState<MeteorDef[]>([]);
+  const [ripples,   setRipples]   = useState<RippleDef[]>([]);
+  const [fragments, setFragments] = useState<FragmentDef[]>([]);
   const spawnerRef     = useRef<ReturnType<typeof setInterval> | null>(null);
   const idRef          = useRef(0);
   const wasRunningRef  = useRef(false);
@@ -122,29 +150,79 @@ function AmbientBackground({ anyRunning, bothRunning }: { anyRunning: boolean; b
     setMeteors(prev => prev.filter(m => m.id !== id));
   }, []);
 
+  /*
+   * Trigger a divider impact: a brief horizontal ripple on the line + a handful
+   * of tiny pixel fragments that drift down into the terminal zone.
+   * Only fired for mid (layer=1) and fg (layer=2) meteors.
+   */
+  const triggerImpactRef = useRef<(left: number, op: number, layer: 1 | 2, dividerY: number) => void>(() => {});
+  const triggerImpact = useCallback((left: number, op: number, layer: 1 | 2, dividerY: number) => {
+    /* Ripple */
+    const rippleId = ++idRef.current;
+    setRipples(prev => [...prev, { id: rippleId, left, dividerY, op }]);
+    setTimeout(() => setRipples(prev => prev.filter(r => r.id !== rippleId)), 780);
+
+    /* Pixel fragments — more for fg, fewer for mid */
+    const count = layer === 2 ? 5 : 3;
+    const newFrags: FragmentDef[] = Array.from({ length: count }, () => ({
+      id:      ++idRef.current,
+      left,
+      dividerY,
+      offsetY: Math.random() * 3,
+      driftX:  (Math.random() - 0.5) * 30,
+      op:      op * (layer === 2 ? 0.52 : 0.34) * (0.5 + Math.random() * 0.5),
+      size:    Math.random() < 0.38 ? 3 : 2,
+      dur:     0.9 + Math.random() * 0.7,
+    }));
+    setFragments(prev => [...prev, ...newFrags]);
+    newFrags.forEach(f =>
+      setTimeout(() => setFragments(prev => prev.filter(fr => fr.id !== f.id)), (f.dur + 0.25) * 1000)
+    );
+  }, []);
+  triggerImpactRef.current = triggerImpact;
+
   /* Stable callback: creates one new meteor with randomised properties.
    * Layer distribution: 35% background, 45% midground, 20% foreground.
    * Each layer gets its own speed/size/opacity ranges so they read as
-   * genuinely different depth planes rather than uniform random variation. */
+   * genuinely different depth planes rather than uniform random variation.
+   *
+   * For mid/fg meteors, schedules a divider impact (ripple + fragments)
+   * at the moment the meteor head crosses the log-panel border line. */
   const spawnMeteor = useCallback(() => {
-    setMeteors(prev => {
-      const id   = ++idRef.current;
-      const left = 5 + Math.random() * 87;   // 5–92 %
-      const rand = Math.random();
-      const layer: 0 | 1 | 2 = rand < 0.35 ? 0 : rand < 0.80 ? 1 : 2;
-      // bg: slow + short + dim | mid: current | fg: fast + tall + bright
-      const dur = layer === 0 ? 9.5 + Math.random() * 5.0   // 9.5–14.5 s
-                : layer === 2 ? 4.2 + Math.random() * 2.6   // 4.2–6.8 s
-                :               6.2 + Math.random() * 3.4;  // 6.2–9.6 s
-      const h   = layer === 0 ? 14  + Math.random() * 18    // 14–32 vh
-                : layer === 2 ? 46  + Math.random() * 30    // 46–76 vh
-                :               32  + Math.random() * 26;   // 32–58 vh
-      const op  = layer === 0 ? 0.09 + Math.random() * 0.15 // 0.09–0.24
-                : layer === 2 ? 0.54 + Math.random() * 0.30 // 0.54–0.84
-                :               0.28 + Math.random() * 0.34; // 0.28–0.62
-      return [...prev, { id, left, dur, h, op, layer }];
-    });
-  }, []);
+    /* Compute all values outside the state updater to avoid side-effects
+     * (React may call updaters more than once in StrictMode). */
+    const id   = ++idRef.current;
+    const left = 5 + Math.random() * 87;   // 5–92 %
+    const rand = Math.random();
+    const layer: 0 | 1 | 2 = rand < 0.35 ? 0 : rand < 0.80 ? 1 : 2;
+    // bg: slow + short + dim | mid: current | fg: fast + tall + bright
+    const dur = layer === 0 ? 9.5 + Math.random() * 5.0   // 9.5–14.5 s
+              : layer === 2 ? 4.2 + Math.random() * 2.6   // 4.2–6.8 s
+              :               6.2 + Math.random() * 3.4;  // 6.2–9.6 s
+    const h   = layer === 0 ? 14  + Math.random() * 18    // 14–32 vh
+              : layer === 2 ? 46  + Math.random() * 30    // 46–76 vh
+              :               32  + Math.random() * 26;   // 32–58 vh
+    const op  = layer === 0 ? 0.09 + Math.random() * 0.15 // 0.09–0.24
+              : layer === 2 ? 0.54 + Math.random() * 0.30 // 0.54–0.84
+              :               0.28 + Math.random() * 0.34; // 0.28–0.62
+
+    setMeteors(prev => [...prev, { id, left, dur, h, op, layer }]);
+
+    /* Schedule divider impact for mid/fg meteors only.
+     * rr-fall: element top starts at -70vh, translates +175vh over dur seconds.
+     * Meteor head (bottom of element) at time t: y(t) = -70 + h + (t/dur)*175  vh.
+     * Solve for y(t) = dividerVh: tImpact = (dividerVh + 70 − h) * dur / 175. */
+    if (layer >= 1 && dividerRef.current) {
+      const dividerVh = dividerRef.current.getBoundingClientRect().top / window.innerHeight * 100;
+      const tImpact   = (dividerVh + 70 - h) * dur / 175;
+      if (tImpact > 0.05 && tImpact < dur) {
+        setTimeout(() => {
+          const liveY = dividerRef.current?.getBoundingClientRect().top ?? -1;
+          if (liveY > 0) triggerImpactRef.current(left, op, layer as 1 | 2, liveY);
+        }, tImpact * 1000);
+      }
+    }
+  }, [dividerRef]);
 
   useEffect(() => {
     /* Clear any running spawner before reconfiguring */
@@ -259,6 +337,54 @@ function AmbientBackground({ anyRunning, bothRunning }: { anyRunning: boolean; b
       {/* Dynamic meteors — each spawns above viewport, falls once, self-removes */}
       {meteors.map(m => (
         <MeteorLine key={m.id} {...m} onDone={removeMeteor} />
+      ))}
+
+      {/* Divider impact ripples — horizontal pulse expanding from impact point */}
+      {ripples.map(r => (
+        <div
+          key={r.id}
+          style={{
+            position:        "absolute",
+            top:             `${r.dividerY}px`,
+            left:            `${r.left}%`,
+            width:           "180px",
+            height:          "2px",
+            transform:       "translateX(-50%)",
+            background:      `linear-gradient(90deg,
+              transparent 0%,
+              rgba(190,34,34,${r.op * 0.45}) 20%,
+              rgba(224,52,52,${r.op * 0.82}) 50%,
+              rgba(190,34,34,${r.op * 0.45}) 80%,
+              transparent 100%
+            )`,
+            boxShadow:       `0 0 6px 1px rgba(200,40,40,${r.op * 0.28})`,
+            pointerEvents:   "none",
+            animationName:       "rr-ripple-pulse",
+            animationDuration:   "0.72s",
+            animationTimingFunction: "ease-out",
+            animationFillMode:   "forwards",
+          }}
+        />
+      ))}
+
+      {/* Pixel fragments — digital dissolve effect as meteors enter terminal zone */}
+      {fragments.map(f => (
+        <div
+          key={f.id}
+          style={{
+            position:        "absolute",
+            top:             `${f.dividerY + f.offsetY}px`,
+            left:            `calc(${f.left}% + ${f.driftX}px)`,
+            width:           `${f.size}px`,
+            height:          `${f.size}px`,
+            background:      `rgba(196,36,36,${f.op})`,
+            pointerEvents:   "none",
+            animationName:       "rr-fragment-fall",
+            animationDuration:   `${f.dur}s`,
+            animationTimingFunction: "ease-in",
+            animationFillMode:   "forwards",
+          }}
+        />
       ))}
     </div>
   );
@@ -610,13 +736,15 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
     }
   };
 
+  const logSectionRef = useRef<HTMLElement>(null);
+
   const DIV = "w-px h-4 flex-none hidden sm:block";
   const DIV_STYLE = { background: "#1e1e1e" };
 
   return (
     <div className="h-screen flex flex-col bg-background text-foreground animate-in fade-in duration-300 relative overflow-hidden">
 
-      <AmbientBackground anyRunning={anyRunning} bothRunning={bothRunning} />
+      <AmbientBackground anyRunning={anyRunning} bothRunning={bothRunning} dividerRef={logSectionRef} />
 
       {/* ── Header ── */}
       <header
@@ -817,6 +945,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
 
       {/* ── Logs Panel ── */}
       <section
+        ref={logSectionRef}
         className="flex-1 min-h-0 flex flex-col relative"
         style={{ borderTop: "1px solid #161616" }}
       >

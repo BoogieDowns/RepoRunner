@@ -1,0 +1,166 @@
+RepoRunner’s meteor effect is in a really good place. Please do one **small visual refinement pass only** on the meteor interaction.
+
+Do **not** redesign the UI.
+Do **not** change layout.
+Do **not** change functionality.
+Do **not** change IPC, process logic, logs behavior, setup behavior, or product flow.
+
+This is only about adding two extra visual behaviors to the existing meteor effect.
+
+## Requested changes
+
+I want the falling red meteors to do two new things:
+
+1. create a **small red ripple** when they hit the first horizontal grey divider line above the terminal/log section
+2. become **pixelated / digitized** as they continue falling through the terminal section below
+
+---
+
+## 1. Add a subtle red ripple at the divider line
+
+There is a horizontal grey line that separates the upper interface from the lower terminal/log section.
+
+When a meteor reaches and crosses that first horizontal divider line, I want a small visual interaction at the impact point.
+
+### Desired effect
+
+At the point where the meteor meets that line:
+
+* a subtle **red ripple / pulse / wave** should spread outward along the line
+* it should feel like a small energy impact
+* it should be quick and elegant
+* it should not be large or flashy
+
+Think:
+
+* a tiny red disturbance
+* a brief wave on the line
+* a small ripple of energy
+* a restrained pulse from the impact point
+
+### Direction
+
+The ripple should be:
+
+* subtle
+* short-lived
+* cinematic
+* premium
+* red
+* slightly glowy
+* not cartoonish
+
+It could be something like:
+
+* a small expanding ring clipped to the line
+* a short horizontal red pulse spreading left/right from the impact point
+* a tiny impact bloom that quickly fades
+
+Use best judgment, but keep it tasteful.
+
+### Important restraint
+
+Do **not** make it:
+
+* too large
+* too bright
+* too frequent-looking
+* distracting
+* like a video game hit effect
+
+This should feel like a sophisticated UI/atmospheric detail.
+
+---
+
+## 2. Make meteors become pixelated in the terminal section
+
+Once the meteors pass below that divider line and continue through the terminal/log section, I want them to change character slightly.
+
+### Desired effect
+
+As they move through the terminal section:
+
+* they should become more **pixelated / digitized**
+* their tails or bodies should start to break up into small red pixel-like fragments
+* it should feel like the meteors are dissolving into digital noise/data as they pass through the terminal region
+
+Think:
+
+* analog signal entering digital space
+* meteor dissolving into pixels
+* red streak breaking into small square fragments
+* subtle digitization
+
+### Direction
+
+The pixelation should be:
+
+* subtle
+* stylish
+* integrated with the terminal area
+* not blocky in a cheap way
+* not too noisy
+
+The effect could be something like:
+
+* the lower part of the meteor tail becomes fragmented
+* a few tiny square red particles trail behind
+* the smooth streak transitions into a slightly pixel-broken pattern
+* small square fragments fade out as the meteor continues downward
+
+### Important restraint
+
+Do **not** make it:
+
+* overly chunky
+* glitchy in a harsh way
+* busy
+* messy
+* like confetti
+* like a retro 8-bit gimmick
+
+It should still feel elegant and cinematic.
+
+---
+
+## 3. Preserve current meteor behavior
+
+Keep all current lifecycle logic and atmosphere intact:
+
+* meteors still spawn from above the viewport
+* meteors still fall downward naturally
+* meteors still have layered depth
+* meteors still stop spawning when services are inactive
+* existing meteors still finish their fall after stop
+* the overall meteor density and speed should remain as they are now
+
+Do **not** break the current system.
+
+---
+
+## 4. Preserve current visual style
+
+Keep:
+
+* dark black/red cinematic mood
+* current layered meteor depth
+* current slower fall speed
+* current spawn rate
+* current fade behavior
+* current UI layout
+* current button and card styling
+
+This is only a small atmospheric enhancement.
+
+---
+
+## Acceptance criteria
+
+After this change:
+
+1. Meteors create a small red ripple/pulse when they hit the horizontal divider line above the terminal section.
+2. The ripple is subtle, elegant, and short-lived.
+3. Meteors become slightly pixelated/digitized as they continue through the terminal section.
+4. The pixelation feels cinematic and tasteful, not noisy or gimmicky.
+5. Current meteor spawn/fall/lifecycle behavior remains intact.
+6. No unrelated UI or functionality changes are made.
