@@ -376,95 +376,153 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
     statuses.frontend === "stopped" && statuses.backend === "stopped";
 
   const getStatusDisplay = (status: string) => {
-    /* Shared indicator lens style — base of every plastic light */
-    const lensBase: React.CSSProperties = {
-      display: "inline-block",
+    /*
+      Plastic indicator module — text lives INSIDE the lens surface.
+      All states share the same rectangular form; only color/glow differs.
+      Texture: repeating horizontal ribs at 3px pitch over a radial illumination gradient.
+      Top specular: linear fade from a bright edge to nothing at ~30% height.
+    */
+    const module: React.CSSProperties = {
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: "5px",
+      padding: "4px 10px",
+      borderRadius: "4px",
+      fontSize: "10px",
+      fontWeight: 600,
+      letterSpacing: "0.11em",
+      textTransform: "uppercase",
+      lineHeight: 1,
+      whiteSpace: "nowrap",
+      userSelect: "none",
       flexShrink: 0,
-      width: "13px",
-      height: "13px",
-      borderRadius: "3px",
     };
-    /* Horizontal rib texture overlay — same for all states */
-    const ribs = "repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.22) 2px, rgba(0,0,0,0.22) 3px)";
-    const textBase: React.CSSProperties = { fontSize: "11px", fontWeight: 500, lineHeight: 1 };
+
+    /* Fine horizontal ribs — same opacity/pitch for all states */
+    const ribs = (dark: number) =>
+      `repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,${dark}) 2px, rgba(0,0,0,${dark}) 3px)`;
 
     switch (status) {
       case "running":
         return (
-          <div className="flex items-center gap-2">
-            <span
-              className="rr-indicator-running"
-              style={{
-                ...lensBase,
-                background: `${ribs}, radial-gradient(ellipse at 38% 30%, rgba(255,175,175,0.96) 0%, rgba(228,42,42,0.93) 24%, rgba(178,16,16,0.87) 60%, rgba(72,4,4,0.95) 100%)`,
-                border: "1px solid rgba(215,40,40,0.65)",
-              }}
-            />
-            <span style={{ ...textBase, color: "#e03030" }}>Running</span>
-          </div>
+          <span
+            className="rr-indicator-running"
+            style={{
+              ...module,
+              background: [
+                ribs(0.20),
+                "linear-gradient(180deg, rgba(255,210,210,0.24) 0%, transparent 32%)",
+                "radial-gradient(ellipse at 50% 40%, rgba(255,165,165,0.72) 0%, rgba(218,36,36,0.88) 30%, rgba(155,12,12,0.90) 66%, rgba(60,3,3,0.96) 100%)",
+              ].join(", "),
+              border: "1px solid rgba(210,38,38,0.65)",
+              color: "#ffcece",
+              textShadow: "0 0 7px rgba(255,100,100,0.80)",
+            }}
+          >
+            Running
+          </span>
         );
+
       case "starting":
         return (
-          <div className="flex items-center gap-2">
-            <Loader2
-              className="animate-spin"
-              style={{ width: "13px", height: "13px", flexShrink: 0, color: "#f2b8a0" }}
-            />
-            <span style={{ ...textBase, color: "#f2b8a0" }}>Starting</span>
-          </div>
+          <span
+            style={{
+              ...module,
+              background: [
+                ribs(0.22),
+                "linear-gradient(180deg, rgba(242,184,160,0.18) 0%, transparent 36%)",
+                "radial-gradient(ellipse at 50% 40%, rgba(175,95,60,0.65) 0%, rgba(110,45,20,0.84) 44%, rgba(50,16,6,0.92) 100%)",
+              ].join(", "),
+              border: "1px solid rgba(242,184,160,0.32)",
+              boxShadow: "0 0 7px rgba(242,184,160,0.14), inset 0 1px 0 rgba(242,184,160,0.18), inset 0 -1px 0 rgba(0,0,0,0.42)",
+              color: "#f2b8a0",
+              textShadow: "0 0 6px rgba(242,184,160,0.55)",
+            }}
+          >
+            <Loader2 className="w-[9px] h-[9px] animate-spin flex-none" />
+            Starting
+          </span>
         );
+
       case "stopping":
         return (
-          <div className="flex items-center gap-2">
-            <Loader2
-              className="animate-spin"
-              style={{ width: "13px", height: "13px", flexShrink: 0, color: "#c8967e" }}
-            />
-            <span style={{ ...textBase, color: "#c8967e" }}>Stopping</span>
-          </div>
+          <span
+            style={{
+              ...module,
+              background: [
+                ribs(0.24),
+                "linear-gradient(180deg, rgba(200,150,126,0.14) 0%, transparent 36%)",
+                "radial-gradient(ellipse at 50% 40%, rgba(145,78,50,0.58) 0%, rgba(90,38,18,0.80) 48%, rgba(40,14,6,0.92) 100%)",
+              ].join(", "),
+              border: "1px solid rgba(200,150,126,0.24)",
+              boxShadow: "0 0 5px rgba(200,150,126,0.10), inset 0 1px 0 rgba(200,150,126,0.12), inset 0 -1px 0 rgba(0,0,0,0.44)",
+              color: "#c8967e",
+              textShadow: "0 0 5px rgba(200,150,126,0.40)",
+            }}
+          >
+            <Loader2 className="w-[9px] h-[9px] animate-spin flex-none" />
+            Stopping
+          </span>
         );
+
       case "failed":
         return (
-          <div className="flex items-center gap-2">
-            <span
-              style={{
-                ...lensBase,
-                background: `${ribs}, radial-gradient(ellipse at 38% 30%, rgba(255,110,110,0.88) 0%, rgba(224,48,48,0.84) 28%, rgba(158,18,18,0.82) 64%, rgba(72,5,5,0.92) 100%)`,
-                border: "1px solid rgba(224,48,48,0.52)",
-                boxShadow: "0 0 7px rgba(224,48,48,0.34), inset 0 1px 0 rgba(255,180,180,0.18), inset 0 -1px 0 rgba(0,0,0,0.40)",
-              }}
-            />
-            <span style={{ ...textBase, color: "#f04848" }}>Failed</span>
-          </div>
+          <span
+            style={{
+              ...module,
+              background: [
+                ribs(0.20),
+                "linear-gradient(180deg, rgba(255,180,180,0.20) 0%, transparent 32%)",
+                "radial-gradient(ellipse at 50% 40%, rgba(255,120,120,0.70) 0%, rgba(224,44,44,0.86) 30%, rgba(155,16,16,0.88) 64%, rgba(60,4,4,0.95) 100%)",
+              ].join(", "),
+              border: "1px solid rgba(224,48,48,0.55)",
+              boxShadow: "0 0 8px rgba(224,48,48,0.36), inset 0 1px 0 rgba(255,180,180,0.18), inset 0 -1px 0 rgba(0,0,0,0.42)",
+              color: "#ffaaaa",
+              textShadow: "0 0 6px rgba(255,100,100,0.70)",
+            }}
+          >
+            Failed
+          </span>
         );
+
       case "unknown":
         return (
-          <div className="flex items-center gap-2">
-            <span
-              style={{
-                ...lensBase,
-                background: `repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.32) 2px, rgba(0,0,0,0.32) 3px), radial-gradient(ellipse at 38% 30%, rgba(38,38,38,0.80) 0%, rgba(18,18,18,0.90) 55%, rgba(7,7,7,0.95) 100%)`,
-                border: "1px solid #222",
-                boxShadow: "inset 0 1px 0 rgba(60,60,60,0.10), inset 0 -1px 0 rgba(0,0,0,0.55)",
-              }}
-            />
-            <span style={{ ...textBase, color: "#4a4845" }}>Unknown</span>
-          </div>
+          <span
+            style={{
+              ...module,
+              background: [
+                ribs(0.34),
+                "linear-gradient(180deg, rgba(60,60,60,0.12) 0%, transparent 38%)",
+                "radial-gradient(ellipse at 50% 40%, rgba(38,38,38,0.78) 0%, rgba(18,18,18,0.90) 55%, rgba(7,7,7,0.96) 100%)",
+              ].join(", "),
+              border: "1px solid #222",
+              boxShadow: "inset 0 1px 0 rgba(60,60,60,0.10), inset 0 -1px 0 rgba(0,0,0,0.56)",
+              color: "#4a4845",
+            }}
+          >
+            Unknown
+          </span>
         );
+
       case "stopped":
       default:
         return (
-          <div className="flex items-center gap-2">
-            <span
-              style={{
-                ...lensBase,
-                background: `repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.32) 2px, rgba(0,0,0,0.32) 3px), radial-gradient(ellipse at 38% 30%, rgba(48,10,10,0.78) 0%, rgba(20,5,5,0.88) 52%, rgba(7,2,2,0.95) 100%)`,
-                border: "1px solid rgba(65,16,16,0.42)",
-                boxShadow: "inset 0 1px 0 rgba(70,22,22,0.10), inset 0 -1px 0 rgba(0,0,0,0.55)",
-              }}
-            />
-            <span style={{ ...textBase, color: "#3c3a38" }}>Stopped</span>
-          </div>
+          <span
+            style={{
+              ...module,
+              background: [
+                ribs(0.34),
+                "linear-gradient(180deg, rgba(70,18,18,0.14) 0%, transparent 38%)",
+                "radial-gradient(ellipse at 50% 40%, rgba(46,10,10,0.76) 0%, rgba(18,4,4,0.88) 55%, rgba(6,1,1,0.96) 100%)",
+              ].join(", "),
+              border: "1px solid rgba(62,14,14,0.42)",
+              boxShadow: "inset 0 1px 0 rgba(70,20,20,0.10), inset 0 -1px 0 rgba(0,0,0,0.56)",
+              color: "#3c3a38",
+            }}
+          >
+            Stopped
+          </span>
         );
     }
   };
