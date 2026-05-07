@@ -1,0 +1,178 @@
+RepoRunner’s meteor divider/pixel effects are implemented correctly, but they are too subtle.
+
+Please do one **visibility/intensity tuning pass only** on these two effects:
+
+1. the red ripple on the horizontal divider line
+2. the pixelated/digitized meteor fragments below the divider
+
+Do **not** redesign the UI.
+Do **not** change layout.
+Do **not** change functionality.
+Do **not** change IPC, process logic, logs behavior, setup behavior, product flow, button styling, or card styling.
+Do **not** change the meteor spawn rate, fall speed, lifecycle, or layer system.
+
+This is only about making the existing ripple and pixel effects more visible.
+
+## Current issue
+
+The ripple exists, but I can barely see it.
+
+The pixel fragments exist, but it is hard to tell that the meteor becomes pixelated after crossing into the terminal/log section.
+
+I want both effects to be much more obvious while still looking premium and cinematic.
+
+---
+
+## 1. Make the divider ripple much more prominent
+
+The ripple on the horizontal divider line needs to be clearly visible.
+
+Right now it is too small/subtle.
+
+Please increase:
+
+* ripple width
+* brightness
+* opacity
+* glow
+* duration slightly if needed
+
+### Desired ripple feel
+
+When a meteor hits the divider line, I want a noticeable red energy ripple to spread along the line from the impact point.
+
+It should feel like:
+
+* a visible red pulse
+* a small energy wave
+* an impact travelling along the divider
+* cinematic and clear
+
+It should not be huge or ridiculous, but it should be obvious.
+
+### Suggested tuning
+
+The current ripple is apparently around `180px`.
+
+Please increase it significantly, for example:
+
+```text
+ripple width: 320px–480px
+```
+
+Also increase the glow/opacity enough that it is clearly visible against the grey divider line.
+
+Use best judgment, but make it clearly noticeable.
+
+### Keep it elegant
+
+Do not make it:
+
+* cartoonish
+* too thick
+* messy
+* full-screen
+* distracting
+
+But it should no longer be barely visible.
+
+---
+
+## 2. Make the pixelation much more obvious
+
+The current pixel fragments are too small and too few.
+
+I want the meteor to look **clearly pixelated / digitized** after it passes through the divider line into the terminal section.
+
+### Desired pixelation
+
+The meteor should visibly break into larger red square fragments.
+
+Think:
+
+* digital breakup
+* chunky red pixels
+* signal converting into terminal data
+* meteor dissolving into square fragments
+
+The fragments should be obvious enough that I can tell what is happening at a glance.
+
+### Suggested tuning
+
+Current fragments are apparently `2–3px`.
+
+Please increase them.
+
+Use bigger square fragments, for example:
+
+```text
+pixel size: 4px–7px
+```
+
+Increase the number of fragments too.
+
+Current count is apparently:
+
+* 3 for mid meteors
+* 5 for foreground meteors
+
+Please increase to something like:
+
+* 6–9 for mid meteors
+* 10–14 for foreground meteors
+
+Also increase their scatter range and vertical drift slightly so the pixelation reads as a breakup trail.
+
+### Visual behavior
+
+When a meteor crosses into the terminal section:
+
+* a cluster of larger red square pixels should appear around the impact/crossing point
+* the pixels should drift downward into the terminal area
+* they should fade naturally
+* foreground meteors should create a stronger pixelation effect than midground meteors
+
+### Keep it tasteful
+
+Do not make it:
+
+* confetti
+* messy
+* too many particles
+* bright all over the logs
+* distracting from readability
+
+But it should be clearly visible.
+
+---
+
+## 3. Preserve existing correct behavior
+
+Keep the already-working logic:
+
+* ripple happens when mid/foreground meteor crosses the divider
+* background meteors can stay excluded
+* pixels happen at the same crossing moment
+* meteors continue falling normally
+* spawn rate remains the same
+* fall speed remains the same
+* lifecycle remains the same
+* no new meteors spawn when stopped
+* existing meteors finish after stop
+
+Do not break any of that.
+
+---
+
+## Acceptance criteria
+
+After this tuning:
+
+1. Divider ripples are clearly visible when meteors hit the line.
+2. Ripples spread wider and brighter than before.
+3. Pixelation is obvious after meteors enter the terminal section.
+4. Pixel fragments are visibly square and larger than before.
+5. Foreground meteor pixel effects are stronger than midground.
+6. The effect still feels cinematic and not chaotic.
+7. Logs remain readable.
+8. No unrelated UI or functionality changes are made.

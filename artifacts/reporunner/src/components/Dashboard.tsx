@@ -163,16 +163,16 @@ function AmbientBackground({
     setTimeout(() => setRipples(prev => prev.filter(r => r.id !== rippleId)), 780);
 
     /* Pixel fragments — more for fg, fewer for mid */
-    const count = layer === 2 ? 5 : 3;
+    const count = layer === 2 ? 12 : 7;
     const newFrags: FragmentDef[] = Array.from({ length: count }, () => ({
       id:      ++idRef.current,
       left,
       dividerY,
-      offsetY: Math.random() * 3,
-      driftX:  (Math.random() - 0.5) * 30,
-      op:      op * (layer === 2 ? 0.52 : 0.34) * (0.5 + Math.random() * 0.5),
-      size:    Math.random() < 0.38 ? 3 : 2,
-      dur:     0.9 + Math.random() * 0.7,
+      offsetY: Math.random() * 6,
+      driftX:  (Math.random() - 0.5) * 56,
+      op:      op * (layer === 2 ? 0.80 : 0.58) * (0.5 + Math.random() * 0.5),
+      size:    Math.random() < 0.45 ? 6 : Math.random() < 0.7 ? 5 : 4,
+      dur:     1.0 + Math.random() * 0.9,
     }));
     setFragments(prev => [...prev, ...newFrags]);
     newFrags.forEach(f =>
@@ -345,22 +345,22 @@ function AmbientBackground({
           key={r.id}
           style={{
             position:        "absolute",
-            top:             `${r.dividerY}px`,
+            top:             `${r.dividerY - 1}px`,
             left:            `${r.left}%`,
-            width:           "180px",
-            height:          "2px",
+            width:           "420px",
+            height:          "3px",
             transform:       "translateX(-50%)",
             background:      `linear-gradient(90deg,
               transparent 0%,
-              rgba(190,34,34,${r.op * 0.45}) 20%,
-              rgba(224,52,52,${r.op * 0.82}) 50%,
-              rgba(190,34,34,${r.op * 0.45}) 80%,
+              rgba(200,38,38,${r.op * 0.70}) 18%,
+              rgba(240,60,60,${r.op * 1.00}) 50%,
+              rgba(200,38,38,${r.op * 0.70}) 82%,
               transparent 100%
             )`,
-            boxShadow:       `0 0 6px 1px rgba(200,40,40,${r.op * 0.28})`,
+            boxShadow:       `0 0 10px 3px rgba(210,44,44,${r.op * 0.55})`,
             pointerEvents:   "none",
             animationName:       "rr-ripple-pulse",
-            animationDuration:   "0.72s",
+            animationDuration:   "0.90s",
             animationTimingFunction: "ease-out",
             animationFillMode:   "forwards",
           }}
