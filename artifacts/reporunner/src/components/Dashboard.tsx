@@ -133,9 +133,9 @@ function AmbientBackground({ anyRunning, bothRunning }: { anyRunning: boolean; b
       const rand = Math.random();
       const layer: 0 | 1 | 2 = rand < 0.35 ? 0 : rand < 0.80 ? 1 : 2;
       // bg: slow + short + dim | mid: current | fg: fast + tall + bright
-      const dur = layer === 0 ? 7.0 + Math.random() * 4.2   // 7.0–11.2 s
-                : layer === 2 ? 3.0 + Math.random() * 2.0   // 3.0–5.0 s
-                :               4.8 + Math.random() * 2.8;  // 4.8–7.6 s
+      const dur = layer === 0 ? 9.5 + Math.random() * 5.0   // 9.5–14.5 s
+                : layer === 2 ? 4.2 + Math.random() * 2.6   // 4.2–6.8 s
+                :               6.2 + Math.random() * 3.4;  // 6.2–9.6 s
       const h   = layer === 0 ? 14  + Math.random() * 18    // 14–32 vh
                 : layer === 2 ? 46  + Math.random() * 30    // 46–76 vh
                 :               32  + Math.random() * 26;   // 32–58 vh
@@ -159,7 +159,7 @@ function AmbientBackground({ anyRunning, bothRunning }: { anyRunning: boolean; b
       wasRunningRef.current = true;
 
       /* Ongoing stream: sparser for 1 service, slightly denser for 2 */
-      const interval = bothRunning ? 1220 : 1980;
+      const interval = bothRunning ? 1050 : 1700;
       spawnerRef.current = setInterval(spawnMeteor, interval);
     } else {
       wasRunningRef.current = false;

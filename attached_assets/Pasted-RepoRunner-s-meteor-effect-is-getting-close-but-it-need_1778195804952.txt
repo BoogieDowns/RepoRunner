@@ -1,0 +1,128 @@
+RepoRunner’s meteor effect is getting close, but it needs one more **small tuning pass**.
+
+Do **not** redesign the UI.
+Do **not** change layout.
+Do **not** change functionality.
+Do **not** change IPC, process logic, logs behavior, setup behavior, or product flow.
+
+This is only about **tuning the meteor animation balance**.
+
+## Current issue
+
+The spawn rate has improved a bit, which is good.
+
+But now:
+
+1. the meteors are falling a little too fast
+2. the spawn rate still needs to increase a little more
+
+So the next pass should be:
+
+* **slightly more meteors overall**
+* **slower fall speed**
+* still cinematic and restrained
+
+---
+
+## Requested adjustments
+
+### 1. Increase spawn rate a little more
+
+Please increase the meteor spawn rate a bit further.
+
+A good target is:
+
+* around **10–20% more meteors** than the current version
+
+I do **not** want a storm or clutter.
+
+The scene should just feel:
+
+* a bit more alive
+* a bit more continuous
+* a bit more populated
+
+---
+
+### 2. Slow down the falling speed
+
+Please reduce the fall speed slightly.
+
+Right now they feel a bit too quick.
+
+I want the meteors to feel:
+
+* smoother
+* heavier
+* more cinematic
+* more atmospheric
+
+They should still move clearly, but not streak past too quickly.
+
+A good direction would be:
+
+* slightly longer animation duration
+* slightly calmer downward travel speed
+* preserve the current fade behavior
+
+---
+
+## Important balance
+
+Please keep the overall look:
+
+* elegant
+* premium
+* restrained
+* cinematic
+
+Do **not** make it:
+
+* chaotic
+* too busy
+* too fast
+* game-like
+
+---
+
+## Preserve current behavior
+
+Keep all current lifecycle logic intact:
+
+* meteors spawn from above the viewport
+* meteors fall downward through the interface
+* meteors fade naturally
+* meteors stop spawning when services are inactive
+* existing meteors continue falling after stop
+* existing meteors clean themselves up after finishing
+
+Do **not** break any of that.
+
+---
+
+## Preserve layered depth
+
+Keep the current layered meteor depth system:
+
+* faint background meteors
+* normal midground meteors
+* slightly brighter foreground meteors
+
+Just tune the overall system so it has:
+
+* a slightly fuller flow
+* a slightly slower fall rhythm
+
+---
+
+## Acceptance criteria
+
+After this change:
+
+1. Meteors spawn slightly more often than they do now.
+2. Meteors fall slightly slower than they do now.
+3. The scene feels more continuous and atmospheric.
+4. The effect is still restrained and not cluttered.
+5. The layered depth system remains intact.
+6. The current meteor lifecycle behavior still works correctly.
+7. No unrelated UI or functionality changes are made.
