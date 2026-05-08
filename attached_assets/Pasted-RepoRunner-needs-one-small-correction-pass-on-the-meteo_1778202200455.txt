@@ -1,0 +1,99 @@
+RepoRunner needs one small correction pass on the meteor impact ripple only.
+
+Do not redesign the UI.
+Do not change layout.
+Do not change functionality.
+Do not change buttons, cards, logs behavior, modal, meteor spawn logic, or process logic.
+
+This is only about refining the ripple effect that appears when a meteor hits the horizontal divider line above the terminal section.
+
+## Current state
+
+The ripple effect is heading in the right direction.
+
+But it still needs refinement:
+
+1. the ripple is too wide horizontally
+2. the ripple is too flat vertically
+3. the red is a bit too solid and needs to fade more softly
+
+## Requested changes
+
+### 1. Make the ripple narrower horizontally
+
+When the meteor hits the divider line, the ripple/wave should not stretch so far left and right.
+
+Please reduce the horizontal width of the ripple so it feels more localized around the impact point.
+
+Think:
+- tighter
+- more concentrated
+- less spread out
+
+It should feel like a focused disturbance in the line, not a long wide wave.
+
+### 2. Increase the vertical wave shape
+
+Make the ripple more visible vertically.
+
+Right now it is too flat.
+
+Please increase the vertical oscillation / amplitude of the ripple so the line deformation is easier to read.
+
+Think:
+- a more noticeable up/down waveform
+- slightly taller wave peaks and dips
+- still elegant, but more obvious
+
+### 3. Make the red fade out more
+
+The red ripple/glow needs to dissolve more softly.
+
+Please make the red:
+- softer at the outer edges
+- less solid / less harsh
+- more feathered
+- more transparent as it dissipates outward
+
+The center can still be brighter near impact, but the ripple should fall off more gracefully.
+
+## Desired overall result
+
+When a meteor hits the divider line:
+
+- there is a visible red impact point
+- a tighter ripple appears in the line
+- the ripple is more vertically readable
+- the ripple fades out softly and cleanly
+- it feels more refined and less stretched
+
+## Keep
+
+Keep:
+- the existing meteor concept
+- the impact behavior
+- the pixelation after crossing the line
+- the dark black/red aesthetic
+
+## Do not change
+
+Do not change:
+- meteor spawn rate
+- meteor speed
+- meteor lifecycle
+- layout
+- button styling
+- engine panel
+- setup modal
+- logs behavior
+- anything unrelated to the ripple refinement
+
+## Acceptance criteria
+
+After this pass:
+
+1. The ripple is narrower horizontally.
+2. The ripple is more vertically visible.
+3. The red fade is softer and more feathered.
+4. The effect feels tighter and cleaner overall.
+5. No unrelated UI or functionality changes are made.
