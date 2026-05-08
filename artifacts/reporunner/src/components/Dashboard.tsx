@@ -549,9 +549,9 @@ function RepoRunnerLogo() {
         src={rrLogoMark}
         alt="RepoRunner"
         style={{
-          width: 72,
+          width: 86,
           height: "auto",
-          maxHeight: 42,
+          maxHeight: 50,
           flexShrink: 0,
           filter: "drop-shadow(0 0 8px rgba(185,12,24,0.55))",
           display: "block",
@@ -988,7 +988,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
         {/* Project identity */}
         <div className="flex flex-col justify-center min-w-0 flex-1">
           <span
-            className="text-[14px] leading-tight truncate"
+            className="text-[17px] leading-tight truncate"
             style={{ fontWeight: 600, color: "#dedad5" }}
           >
             {project.name}
