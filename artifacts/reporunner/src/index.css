@@ -256,7 +256,7 @@
 }
 
 .rr-indicator-transitioning {
-  animation: rr-indicator-peach-pulse 2.8s ease-in-out infinite;
+  animation: rr-indicator-peach-pulse 0.8s ease-in-out infinite;
 }
 
 @keyframes rr-fall {
