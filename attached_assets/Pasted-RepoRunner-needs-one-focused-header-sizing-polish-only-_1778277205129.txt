@@ -1,0 +1,92 @@
+RepoRunner needs one **focused header sizing polish** only.
+
+Do **not** redesign the app.
+Do **not** change functionality.
+Do **not** change dashboard cards, Quick Actions buttons, engine lights, logs, meteors, setup modal, IPC, process logic, or product flow.
+
+This is only about the **top-left header branding/project area**.
+
+## Current issue
+
+In the top-left header:
+
+* the RR logo still feels a bit too small
+* the project name text, currently shown as `X Slinger App`, feels too small
+* the repo path text can stay secondary, but the project name should have more presence
+
+## Requested changes
+
+### 1. Make the RR logo slightly bigger
+
+Increase the RR logo size modestly.
+
+Do **not** overcorrect.
+
+Target direction:
+
+```text
+increase current RR logo size by about 15–25%
+```
+
+It should feel more like a strong app brand mark while still fitting cleanly in the header.
+
+Keep it:
+
+* crisp
+* proportionally scaled
+* vertically centered
+* not stretched
+* not blurry
+* not floating
+
+### 2. Make the project name text bigger
+
+Increase the project name text size.
+
+The project name should feel more readable and important.
+
+Target direction:
+
+```text
+increase project name font size by about 15–25%
+```
+
+It should be clearly stronger than the repo path underneath it.
+
+### 3. Preserve repo path as secondary
+
+The repo path should remain smaller and dimmer than the project name.
+
+You may make a tiny alignment adjustment if needed after increasing the project name, but do not make the path prominent.
+
+### 4. Keep header alignment clean
+
+After resizing, make sure:
+
+* RR logo remains vertically centered
+* divider remains aligned
+* project name and path remain cleanly stacked
+* header height does not become awkward
+* no layout shift affects the rest of the dashboard
+
+## Important restraint
+
+Do not:
+
+* bring back the wordmark
+* change the project name content
+* change the repo path content
+* make the logo huge
+* increase the header height dramatically
+* move the header layout around
+* touch unrelated UI
+
+## Acceptance criteria
+
+After this pass:
+
+1. RR logo is slightly larger and feels more intentional.
+2. Project name text is larger and easier to read.
+3. Repo path remains secondary.
+4. Logo, divider, project name, and path are aligned cleanly.
+5. No unrelated UI or functionality changes are made.
