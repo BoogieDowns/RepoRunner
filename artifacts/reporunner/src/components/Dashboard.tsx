@@ -879,7 +879,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                 animation: "rr-glow-flicker 0.7s ease-out forwards",
                 zIndex: 0,
               }} />
-              <span style={{ position: "relative", zIndex: 1, color: "rgba(60,42,42,0.82)" }}>
+              <span style={{ position: "relative", zIndex: 1, color: "rgba(78,52,52,0.90)" }}>
                 Stopped
               </span>
             </span>
@@ -1056,7 +1056,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
               }}
             >
               <CardHeader className="px-5 pt-4 pb-3" style={{ borderBottom: "1px solid #191818" }}>
-                <CardTitle style={{ ...LABEL, color: "#3a3836" }}>
+                <CardTitle style={{ ...LABEL, color: "#4e4c4a" }}>
                   Engine
                 </CardTitle>
               </CardHeader>
@@ -1067,7 +1067,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                       Frontend
                     </p>
                     {project.frontendPort && (
-                      <p className="text-[11px] leading-none mt-2" style={{ ...MONO, color: "#383432" }}>
+                      <p className="text-[11px] leading-none mt-2" style={{ ...MONO, color: "#4c4846" }}>
                         :{project.frontendPort}
                       </p>
                     )}
@@ -1081,7 +1081,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                       Backend
                     </p>
                     {project.backendPort && (
-                      <p className="text-[11px] leading-none mt-2" style={{ ...MONO, color: "#383432" }}>
+                      <p className="text-[11px] leading-none mt-2" style={{ ...MONO, color: "#4c4846" }}>
                         :{project.backendPort}
                       </p>
                     )}
