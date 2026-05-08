@@ -1,0 +1,93 @@
+Please do one **focused top-left header branding update** only.
+
+Do **not** redesign the app.
+Do **not** change functionality.
+Do **not** change buttons, engine lights, logs, meteors, setup modal, dashboard structure, spacing outside the header, IPC, or product flow.
+
+This is only about the **top-left branding area**.
+
+## Requested change
+
+I want to **remove the wordmark entirely** and keep **only the RR logo mark** in the top-left header.
+
+## Required changes
+
+### 1. Remove the wordmark
+
+Remove the imported `REPORUNNER` wordmark from the header completely.
+
+After this change, the left branding area should contain:
+
+* the RR logo mark only
+* then the divider
+* then the project name / repo path block
+
+### 2. Keep only the RR logo
+
+Use only the imported RR logo mark.
+
+Do not replace it.
+Do not redraw it.
+Do not add any text beside it.
+
+### 3. Make the RR logo significantly bigger
+
+Increase the RR logo size again so it becomes the clear anchor of the header.
+
+Target:
+
+* noticeably larger than it is now
+* roughly **1.7x to 2x** the current rendered size
+* visually strong and intentional
+* not tiny or decorative
+
+It should feel like a proper branded app mark, not a small icon.
+
+### 4. Keep it crisp and balanced
+
+Make sure the RR logo is:
+
+* crisp
+* not stretched
+* not blurry
+* optically centered vertically in the header
+* padded nicely inside the left header area
+
+### 5. Rebalance the left header section
+
+Since the wordmark is being removed, rebalance the left side of the header so it still looks clean.
+
+Please adjust as needed:
+
+* width of the left branding block
+* spacing between the RR logo and the divider
+* spacing between the divider and the project name block
+
+The structure should become:
+
+```text
+[ larger RR logo ] | [ project name ]
+                    [ repo path ]
+```
+
+## Important restraint
+
+Do not:
+
+* leave the wordmark in place
+* replace the RR with text
+* make the RR only slightly bigger
+* distort the logo
+* shift unrelated layout outside what is needed for the header balance
+
+## Acceptance criteria
+
+After this change:
+
+1. The wordmark is completely removed.
+2. Only the RR logo remains in the top-left branding area.
+3. The RR logo is significantly larger.
+4. The RR logo is crisp and properly centered.
+5. The divider and project name block still align cleanly.
+6. The header feels cleaner and stronger.
+7. No unrelated UI or functionality changes are made.

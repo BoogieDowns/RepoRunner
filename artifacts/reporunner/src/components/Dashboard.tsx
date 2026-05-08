@@ -443,10 +443,10 @@ function RepoRunnerLogo() {
       alt="RepoRunner logo"
       aria-hidden="true"
       style={{
-        width: "96px",
-        height: "96px",
+        width: "140px",
+        height: "140px",
         objectFit: "contain",
-        filter: "drop-shadow(0 0 10px rgba(204,30,30,0.55))",
+        filter: "drop-shadow(0 0 12px rgba(204,30,30,0.58))",
         flexShrink: 0,
       }}
     />
@@ -814,18 +814,6 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
           style={{ filter: "drop-shadow(0 0 10px rgba(204,34,34,0.14))" }}
         >
           <RepoRunnerLogo />
-          <img
-            src={rrWordmark}
-            alt="RepoRunner"
-            style={{
-              height: "52px",
-              width: "auto",
-              objectFit: "contain",
-              filter: "drop-shadow(0 0 8px rgba(204,30,30,0.28))",
-              flexShrink: 0,
-              userSelect: "none",
-            }}
-          />
         </div>
 
         <div className={DIV} style={DIV_STYLE} />
