@@ -475,8 +475,9 @@ function OpenCometIcon({ className }: { className?: string }) {
   return (
     <svg
       className={className}
-      width="18"
-      height="18"
+      width="22"
+      height="22"
+      style={{ width: 22, height: 22, flexShrink: 0 }}
       viewBox="0 0 24 24"
       fill="none"
       aria-hidden="true"
