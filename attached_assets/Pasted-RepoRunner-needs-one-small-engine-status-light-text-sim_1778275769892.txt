@@ -1,0 +1,138 @@
+RepoRunner needs one **small engine/status light text simplification** only.
+
+Do **not** redesign the UI.
+Do **not** change layout.
+Do **not** change engine/service logic.
+Do **not** change start/stop timing.
+Do **not** change button behavior.
+Do **not** change logs, meteors, setup modal, header, IPC, process logic, or product flow.
+
+This is only about the **text shown inside the red plastic engine status lights**.
+
+## Requested change
+
+Simplify the status light text.
+
+When a service is active or transitioning, the light should only ever show:
+
+```text
+RUNNING
+```
+
+Do **not** show:
+
+```text
+STARTING
+STOPPING
+```
+
+inside the light anymore.
+
+## Desired behavior
+
+### When starting
+
+When the service starts:
+
+* the red light should slowly illuminate exactly as it does now
+* the text inside the light should say `RUNNING`
+* no `STARTING` text should appear
+* no text transition/crossfade is needed
+
+### When running
+
+When the service is running:
+
+* the red light stays fully illuminated
+* the text says `RUNNING`
+
+### When stopping
+
+When the service is stopping:
+
+* the light should keep the same current stopping/fade-out behavior
+* the text inside the light should still say `RUNNING` while it fades out
+* no `STOPPING` text should appear
+* keep the final shutdown flicker if it currently exists
+
+### When stopped
+
+When the service is stopped:
+
+* the light should be dark/unlit
+* the text should return to `STOPPED`, or remain as the existing stopped-state text if that is already how the unlit light works
+
+## Important
+
+This is only a display/text simplification.
+
+Do **not** change the underlying status logic.
+
+Internally the app can still track:
+
+```text
+STARTING
+RUNNING
+STOPPING
+STOPPED
+```
+
+But visually inside the light:
+
+```text
+STARTING displays as RUNNING
+RUNNING displays as RUNNING
+STOPPING displays as RUNNING
+STOPPED displays as STOPPED
+```
+
+## Remove unnecessary text fade
+
+Since the active/transition states all display `RUNNING`, remove or disable any unnecessary text crossfade between:
+
+```text
+STARTING → RUNNING
+RUNNING → STOPPING
+```
+
+There should be no visible text change during those active transitions anymore.
+
+The light animation should carry the state change.
+
+## Preserve current light behavior
+
+Keep:
+
+* startup fade-on
+* running steady illumination
+* stopping fade-out
+* final shutdown flicker
+* red plastic/ribbed lens styling
+* no spinner
+* no pulsing
+* same light size
+* independent Frontend / Backend behavior
+
+## Do not change
+
+Do not change:
+
+* service logic
+* actual statuses
+* logs wording
+* button behavior
+* engine panel layout
+* ports
+* app functionality
+
+## Acceptance criteria
+
+After this change:
+
+1. `STARTING` visually displays as `RUNNING` inside the light.
+2. `RUNNING` visually displays as `RUNNING`.
+3. `STOPPING` visually displays as `RUNNING` while the light fades out.
+4. `STOPPED` remains visibly stopped/unlit.
+5. The light animation behavior remains unchanged.
+6. No text crossfade is needed between active/transition states.
+7. No functionality or unrelated UI changes are made.

@@ -831,7 +831,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                 ].join(", "),
                 zIndex: 0,
               }} />
-              <StatusTextFade text="Starting" color="rgba(255,226,222,0.98)" textShadow="0 0 10px rgba(255,95,85,0.92)" />
+              <StatusTextFade text="Running" color="rgba(255,226,222,0.98)" textShadow="0 0 10px rgba(255,95,85,0.92)" />
             </span>
           </span>
         );
@@ -863,7 +863,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                 animation: "rr-glow-flicker 0.7s ease-out forwards",
                 zIndex: 0,
               }} />
-              <StatusTextFade text="Stopping" color="rgba(255,226,222,0.98)" textShadow="0 0 10px rgba(255,95,85,0.92)" />
+              <StatusTextFade text="Running" color="rgba(255,226,222,0.98)" textShadow="0 0 10px rgba(255,95,85,0.92)" />
             </span>
           </span>
         );
