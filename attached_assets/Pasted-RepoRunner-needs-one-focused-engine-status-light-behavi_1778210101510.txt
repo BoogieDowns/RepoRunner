@@ -1,0 +1,187 @@
+RepoRunner needs one **focused engine/status light behavior correction** only.
+
+Do **not** redesign the UI.
+Do **not** change layout.
+Do **not** change functionality.
+Do **not** change service logic, process management, IPC, setup behavior, logs behavior, meteors, buttons, or product flow.
+
+This is only about making the engine/status light animation match the real service transition timing more closely.
+
+## Current issue
+
+The recent changes barely made a visible difference.
+
+The important thing is this:
+
+The light should not just use an arbitrary fixed fade duration.
+
+The light should visually match the actual app transition:
+
+* while the service is starting, the light should gradually illuminate
+* when the service reaches `RUNNING`, the light should be fully illuminated
+* while the service is stopping, the light should gradually dim down
+* when the service reaches `STOPPED`, the light should be off
+* just before it fully shuts off, it should do a more intense final red flicker
+
+## Desired behavior
+
+### STARTING
+
+When the service enters:
+
+```text
+STARTING
+```
+
+the red light should begin dark/low and gradually brighten.
+
+It should continue brightening across the whole starting period.
+
+When the service changes to:
+
+```text
+RUNNING
+```
+
+the light should be at full brightness.
+
+So it should feel like:
+
+```text
+STARTING begins → red lens slowly powers up → RUNNING reached → full red illumination
+```
+
+### RUNNING
+
+When status is:
+
+```text
+RUNNING
+```
+
+the light should stay fully illuminated red.
+
+No pulse.
+No spinner.
+
+### STOPPING
+
+When the service enters:
+
+```text
+STOPPING
+```
+
+the red light should begin dimming down.
+
+It should continue dimming across the whole stopping period.
+
+When the service changes to:
+
+```text
+STOPPED
+```
+
+the light should be off.
+
+So it should feel like:
+
+```text
+STOPPING begins → red lens slowly powers down → final flicker → STOPPED reached → dark/unlit
+```
+
+## Important implementation guidance
+
+If possible, do not rely only on fixed CSS durations.
+
+Tie the illumination level to the actual service status transition state where possible.
+
+The visual state should clearly reflect:
+
+```text
+STARTING = partial brightness building up
+RUNNING = full brightness
+STOPPING = brightness fading down
+STOPPED = off
+```
+
+If the code already knows when a service starts/stops, use that timing/state to make the animation feel synchronized.
+
+If a fixed animation is still needed, make it long enough to visually cover the typical start/stop transition instead of completing too quickly.
+
+## Final shutdown flicker
+
+The final shutdown flicker needs to be more intense.
+
+Right now it is still too subtle.
+
+Please make the final flicker:
+
+* brighter
+* more noticeable
+* a sharper red flash
+* clearly visible before the light turns off
+
+Suggested direction:
+
+```text
+30–50% more intense than current
+```
+
+It should feel like an old physical red indicator light giving one last power-cut flash.
+
+Do **not** make it cartoonish or huge, but it should be obvious.
+
+The flicker should affect the red lens/glow, not the text.
+
+The `STOPPED` text should not flash white.
+
+## Remove arbitrary quick fade behavior
+
+If there is any remaining fast fade-on/fade-off timing from previous experiments, remove or replace it.
+
+The light should not snap to full brightness too quickly.
+
+The startup illumination should feel like it takes the full starting process.
+
+The shutdown dim should feel like it takes the full stopping process.
+
+## Preserve
+
+Keep:
+
+* no pulsing
+* no spinner
+* active/transition lights stay red
+* same status light size
+* same plastic/ribbed lens style
+* same wording inside the lights
+* same stopped unlit style
+* same layout
+
+## Do not change
+
+Do not change:
+
+* actual service start/stop logic
+* command execution
+* IPC
+* logs
+* buttons
+* meteors
+* setup modal
+* app functionality
+
+## Acceptance criteria
+
+After this change:
+
+1. During `STARTING`, the red light visibly ramps up over the full starting period.
+2. When it reaches `RUNNING`, the red light is fully illuminated.
+3. During `STOPPING`, the red light visibly fades down over the full stopping period.
+4. When it reaches `STOPPED`, the red light is fully off.
+5. The final shutdown flicker is clearly brighter and more noticeable.
+6. The final flicker affects the light/lens, not the text.
+7. The `STOPPED` text does not flash white.
+8. No pulsing or spinner is reintroduced.
+9. No unrelated UI or functionality changes are made.

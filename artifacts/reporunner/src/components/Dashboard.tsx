@@ -638,7 +638,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                 color: "rgba(255,226,222,0.98)",
                 textShadow: "0 0 10px rgba(255,95,85,0.92)",
                 boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18), 0 0 15px rgba(204,34,34,0.82), 0 0 5px rgba(204,34,34,0.56)",
-                animation: "rr-lens-on 1.8s ease-in forwards",
+                animation: "rr-lens-on 0.15s ease-out forwards",
               }}
             >
               Running
@@ -664,7 +664,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
               color: "rgba(255,226,222,0.98)",
               textShadow: "0 0 10px rgba(255,95,85,0.92)",
               boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18), 0 0 15px rgba(204,34,34,0.82), 0 0 5px rgba(204,34,34,0.56)",
-              animation: "rr-lens-on 1.8s ease-in forwards",
+              animation: "rr-lens-on 1.6s ease-in forwards",
             }}>
               Starting
             </span>
@@ -689,7 +689,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
               color: "rgba(255,226,222,0.98)",
               textShadow: "0 0 10px rgba(255,95,85,0.92)",
               boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18), 0 0 15px rgba(204,34,34,0.82), 0 0 5px rgba(204,34,34,0.56)",
-              animation: "rr-lens-off 1.8s ease-out forwards",
+              animation: "rr-lens-off 0.7s ease-out forwards",
             }}>
               Stopping
             </span>
