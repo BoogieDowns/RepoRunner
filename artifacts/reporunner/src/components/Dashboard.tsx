@@ -479,7 +479,7 @@ function InstallStackIcon({ className, strokeWidth = 1.5 }: { className?: string
   );
 }
 
-/* ─── Open icon (comet: filled circle head + 3 graded parallel 45° tail strokes) ─*/
+/* ─── Open icon (comet: 2 parallel 45° lines + stroked circle drawn on top) ──*/
 
 function OpenCometIcon({ className }: { className?: string }) {
   return (
@@ -493,19 +493,19 @@ function OpenCometIcon({ className }: { className?: string }) {
       aria-hidden="true"
     >
       {/*
-        Filled circle: fill="currentColor" means tail strokes can start inside
-        the circle boundary. The filled area hides the overlap, so the visible
-        portion of stroke 1 emerges cleanly at the circle edge — zero gap possible.
+        DRAW ORDER: lines first, circle last.
+        The circle's opaque stroke ring is painted on top of line 1's endpoint,
+        covering it completely — seamless connection, zero gap, no fill required.
+
+        Both lines travel at exactly 45° (dx = −dy in screen coords).
+        Line 1 ends at (12.17, 10.33) = circle's lower-left boundary point
+          (cx − r/√2, cy + r/√2) = (15 − 2.83, 7.5 + 2.83).
+        Line 2 is a parallel trail offset 2 units perpendicular (upper-left direction).
       */}
-      <circle cx="15" cy="7.5" r="4" fill="currentColor" stroke="none" />
-      {/*
-        All three lines at exactly 45° lower-left (direction −1, +1).
-        Stroke 1 starts inside the circle (dist 2.5 < r 4) — hidden by fill,
-        exits cleanly at the lower-left boundary. Strokes 2 & 3 are outside.
-      */}
-      <line x1="13"   y1="9"   x2="5"   y2="17"  />  {/* long  — inside circle, exits at ≈(11.9,10.1) */}
-      <line x1="11"   y1="13"  x2="7.5" y2="16.5" />  {/* med   — outside circle */}
-      <line x1="9.5"  y1="16"  x2="7.5" y2="18"  />  {/* short — outside circle */}
+      <line x1="7.2" y1="15.3" x2="12.2" y2="10.3" />  {/* long  — end at circle edge */}
+      <line x1="5.8" y1="13.9" x2="10.8" y2="8.9"  />  {/* short — parallel trail    */}
+      {/* Circle painted last — ring covers line 1 endpoint, seamless */}
+      <circle cx="15" cy="7.5" r="4" />
     </svg>
   );
 }
