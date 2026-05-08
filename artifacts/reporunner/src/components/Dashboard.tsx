@@ -32,13 +32,13 @@ import { Separator } from "@/components/ui/separator";
  * y=12 aligns with the physical divider line so undisturbed tails sit on it.
  */
 const WAVE_PATH = (() => {
-  // Span ±200 px (400 px total), amplitude 10 px, decay τ=50 px
-  const A = 10, omega = 0.053, tau = 50;
+  // Compact wave packet: span ±110 px (220 px total), amplitude 7 px, decay τ=32 px
+  const A = 7, omega = 0.055, tau = 32;
   const pts: string[] = [];
-  for (let x = -200; x <= 200; x += 2) {
+  for (let x = -110; x <= 110; x += 2) {
     const env = Math.exp(-Math.abs(x) / tau);
-    const y   = 14 + A * Math.cos(omega * x) * env;
-    pts.push(`${x === -200 ? "M" : "L"}${(x + 200).toFixed(1)},${y.toFixed(2)}`);
+    const y   = 12 + A * Math.cos(omega * x) * env;
+    pts.push(`${x === -110 ? "M" : "L"}${(x + 110).toFixed(1)},${y.toFixed(2)}`);
   }
   return pts.join(" ");
 })();
@@ -390,38 +390,38 @@ function AmbientBackground({
         <svg
           key={`wave-${r.id}`}
           aria-hidden="true"
-          width="400"
-          height="28"
-          viewBox="0 0 400 28"
+          width="220"
+          height="24"
+          viewBox="0 0 220 24"
           style={{
             position:  "absolute",
-            top:       `${r.dividerY - 14}px`,
+            top:       `${r.dividerY - 12}px`,
             left:      `${r.left}%`,
             transform: "translateX(-50%)",
             overflow:  "hidden",
             pointerEvents: "none",
-            filter:    `drop-shadow(0 0 4px rgba(210,44,44,${r.op * 0.60}))`,
-            WebkitMaskImage: "radial-gradient(ellipse 90% 200% at 50% 50%, black 22%, rgba(0,0,0,0.55) 55%, rgba(0,0,0,0.10) 80%, transparent 100%)",
-            maskImage:        "radial-gradient(ellipse 90% 200% at 50% 50%, black 22%, rgba(0,0,0,0.55) 55%, rgba(0,0,0,0.10) 80%, transparent 100%)",
+            filter:    `drop-shadow(0 0 3px rgba(210,44,44,${r.op * 0.42}))`,
+            WebkitMaskImage: "radial-gradient(ellipse 80% 200% at 50% 50%, black 20%, rgba(0,0,0,0.40) 55%, transparent 85%)",
+            maskImage:        "radial-gradient(ellipse 80% 200% at 50% 50%, black 20%, rgba(0,0,0,0.40) 55%, transparent 85%)",
             animationName:        "rr-wave-expand",
-            animationDuration:    "1.05s",
+            animationDuration:    "0.80s",
             animationTimingFunction: "ease-out",
             animationFillMode:    "forwards",
           }}
         >
-          {/* Outer glow — diffuse halo, toned down */}
+          {/* Soft outer glow */}
           <path
             d={WAVE_PATH}
             fill="none"
-            stroke={`rgba(204,40,40,${r.op * 0.36})`}
-            strokeWidth="6"
+            stroke={`rgba(204,40,40,${r.op * 0.28})`}
+            strokeWidth="5"
             strokeLinecap="round"
           />
-          {/* Bright core */}
+          {/* Core line */}
           <path
             d={WAVE_PATH}
             fill="none"
-            stroke={`rgba(252,72,72,${r.op * 0.78})`}
+            stroke={`rgba(240,64,64,${r.op * 0.65})`}
             strokeWidth="1.5"
             strokeLinecap="round"
           />
@@ -442,11 +442,11 @@ function AmbientBackground({
             height:       "8px",
             borderRadius: "50%",
             transform:    "translateX(-50%)",
-            background:   `rgba(255,200,200,${r.op * 0.80})`,
+            background:   `rgba(255,190,190,${r.op * 0.55})`,
             boxShadow: [
-              `0 0  4px 1px rgba(255, 90, 90,${r.op * 0.70})`,
-              `0 0  9px 3px rgba(220, 50, 50,${r.op * 0.52})`,
-              `0 0 18px 6px rgba(180, 28, 28,${r.op * 0.28})`,
+              `0 0  3px 1px rgba(255, 80, 80,${r.op * 0.48})`,
+              `0 0  7px 2px rgba(210, 44, 44,${r.op * 0.30})`,
+              `0 0 13px 4px rgba(170, 24, 24,${r.op * 0.14})`,
             ].join(", "),
             pointerEvents:   "none",
             animationName:        "rr-flash-burst",

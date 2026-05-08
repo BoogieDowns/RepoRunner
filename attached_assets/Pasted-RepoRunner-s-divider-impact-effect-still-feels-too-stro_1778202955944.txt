@@ -1,0 +1,192 @@
+RepoRunner’s divider impact effect still feels too strong and too complicated.
+
+Please do one **cleanup / rollback pass only** on the meteor impact effect where the meteors hit the divider line above the terminal section.
+
+Do **not** redesign the UI.
+Do **not** change layout.
+Do **not** change functionality.
+Do **not** change buttons, cards, logs, modal, meteor spawn rate, meteor fall speed, meteor lifecycle, or general app behavior.
+
+This is only about **simplifying and reducing the divider hit effect**.
+
+## Core problem
+
+The current divider hit effect still feels too heavy and visually overbuilt.
+
+It seems like there are too many layered visual elements trying to sell the impact:
+
+* too much flash
+* too much glow
+* too much wave presence
+* too much overall visual dominance
+
+I want to **strip it back** and make it feel much more restrained.
+
+## What I want instead
+
+When a meteor hits the divider line:
+
+1. there should be a **small red impact flash** at the hit point
+2. the divider line should show a **small localized ripple**
+3. the ripple should be clearly visible, but not large
+4. the meteor should then continue downward
+5. once below the divider, the meteor should look **clearly pixelated**
+
+So the effect should read like:
+
+**impact flash → small line ripple → meteor continues → meteor becomes pixelated below the line**
+
+---
+
+## Important: simplify the structure
+
+Please simplify the implementation.
+
+If there are currently multiple heavy layered ripple/flare elements, reduce it to a more restrained setup.
+
+I do **not** want:
+
+* a huge spreading halo
+* a giant glowing band
+* a dominant red bar
+* a large bloom effect
+* anything that takes over the scene
+
+I want:
+
+* one small impact flash
+* one small localized line ripple
+* subtle fadeout
+
+---
+
+## 1. Reduce the impact flash further
+
+The red impact flash should be smaller and quieter.
+
+Please reduce:
+
+* brightness
+* glow
+* bloom
+* opacity
+* visual footprint
+
+It should still be visible, but feel like a **tight contact spark**, not a bright burst.
+
+### Desired feel
+
+* small
+* precise
+* restrained
+* premium
+* quick
+
+---
+
+## 2. Make the ripple smaller and more local
+
+The ripple in the divider line should be:
+
+* **narrower horizontally**
+* **smaller overall**
+* **less dominant**
+* **more localized around the hit point**
+
+Right now it still feels too broad / visually loud.
+
+### Desired direction
+
+Think of a **tight little wave disturbance** centered on the impact point.
+
+Not a large effect across the divider.
+
+### Guidance
+
+Use something roughly in this spirit:
+
+* localized span around the hit point only
+* noticeably smaller than current
+* brief duration
+* subtle fade
+
+If helpful, think closer to:
+
+* a compact wave packet
+* not a long glowing strip
+
+---
+
+## 3. Keep the ripple readable vertically, but restrained
+
+The wave should still visibly deform the divider line.
+
+So:
+
+* do not flatten it completely
+* do not remove it
+* keep it readable
+
+But reduce it enough that it feels integrated.
+
+### Good direction
+
+* clearly visible
+* but modest
+* elegant
+* not dominant
+
+---
+
+## 4. Fade the red more
+
+The red needs to fade away more softly and more quickly.
+
+Please reduce:
+
+* residual red intensity
+* long glow persistence
+* heavy lingering red in the line
+
+The effect should dissipate naturally and cleanly.
+
+---
+
+## 5. Preserve the post-divider pixelation
+
+Keep the meteor pixelation behavior **after** it passes through the divider.
+
+But make sure the hit effect and the pixelation are visually distinct:
+
+* the divider hit should read as a ripple/flash in the line
+* the meteor itself should then become clearly pixelated **after** crossing below the divider
+
+Do not blur these two ideas together.
+
+---
+
+## 6. Target feel
+
+The overall effect should feel:
+
+* subtle
+* cinematic
+* technical
+* premium
+* controlled
+
+It should **support** the atmosphere, not dominate the screen.
+
+---
+
+## Acceptance criteria
+
+After this change:
+
+1. The impact flash is smaller and less intense.
+2. The ripple is noticeably more localized.
+3. The ripple is still visible, but much less dominant.
+4. The red glow fades away more cleanly.
+5. The divider reaction feels simpler and more restrained.
+6. The meteor still becomes pixelated after passing below the divider.
+7. No unrelated UI or functionality changes are made.
