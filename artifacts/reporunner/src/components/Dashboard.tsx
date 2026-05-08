@@ -475,17 +475,14 @@ function OpenCometIcon({ className }: { className?: string }) {
   return (
     <svg
       className={className}
-      width="22"
-      height="22"
-      style={{ width: 22, height: 22, flexShrink: 0 }}
       viewBox="0 0 24 24"
       fill="none"
       aria-hidden="true"
     >
-      <circle cx="15.5" cy="7.5" r="4.5" stroke="currentColor" strokeWidth="1.9" />
-      <path d="M10.8 6.3 L7.4 9.7"   stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
-      <path d="M12.2 11.2 L6.2 17.2" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
-      <path d="M14.1 13.6 L8.1 19.6" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+      <circle cx="15.5" cy="7.5" r="4.5" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M10.8 6.3 L7.4 9.7"   stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M12.2 11.2 L6.2 17.2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M14.1 13.6 L8.1 19.6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   );
 }

@@ -1,0 +1,197 @@
+RepoRunner needs one **final visual polish pass** on the Quick Actions area only.
+
+Do **not** redesign the app.
+Do **not** change functionality.
+Do **not** change button labels.
+Do **not** change button order.
+Do **not** change engine lights, logs, meteors, setup modal, header, IPC, process logic, or product flow.
+
+This is only about polishing the **Quick Actions buttons and icons** so the whole control panel feels more finished and cohesive.
+
+## Scope
+
+Polish only this area:
+
+* Start Frontend button
+* Start Backend button
+* Stop Engine button
+* Pull button
+* Install button
+* Restart button
+* Open button
+* icons inside those buttons
+* spacing/alignment inside those buttons
+
+## Goal
+
+Make the buttons and icons feel like one premium, finished system.
+
+They should look:
+
+* clean
+* balanced
+* intentional
+* symmetrical
+* polished
+* readable
+* high-end
+* consistent
+
+This should be a refinement pass, not a redesign.
+
+---
+
+## 1. Icon polish
+
+Make all button icons feel visually matched.
+
+Check and refine:
+
+* icon optical size
+* icon stroke weight
+* icon vertical alignment
+* icon-to-text spacing
+* icon clarity
+* icon color/opacity in enabled and disabled states
+
+The icons should not feel like they come from different sources.
+
+They should feel like a single icon family.
+
+### Important
+
+Do **not** replace all icons.
+Do **not** invent new symbols.
+Do **not** change the meaning of icons.
+Do **not** spend time fighting the Open icon if it remains imperfect.
+
+Just make the set feel cohesive and clean.
+
+---
+
+## 2. Button typography polish
+
+Make the LunaObscura-style button text feel better balanced inside the buttons.
+
+Check:
+
+* font size
+* letter spacing
+* vertical centering
+* text/icon baseline
+* text clarity
+* padding around the text
+
+The text should not feel cramped, too wide, too dim, or misaligned.
+
+---
+
+## 3. Internal spacing polish
+
+Inside each button, make sure:
+
+* icon and text spacing is consistent
+* left/right padding feels balanced
+* text does not sit too close to the edge
+* icon does not sit too close to the edge
+* the content feels optically centered
+
+The row should feel disciplined and symmetrical.
+
+---
+
+## 4. Glass button material polish
+
+The button material is close.
+
+Please refine it subtly so the buttons feel more premium.
+
+Check:
+
+* top highlight intensity
+* reflective shine
+* bevel definition
+* red button glow
+* neutral button shine
+* disabled button treatment
+* hover/active states
+
+Do not overdo the shine.
+
+The result should feel like:
+
+* glossy glass
+* physical controls
+* dark sci-fi dashboard
+* premium and restrained
+
+Not:
+
+* cartoon
+* toy plastic
+* overly bright chrome
+* flat matte buttons
+
+---
+
+## 5. Alignment polish
+
+Make the two button rows feel visually balanced.
+
+Do not change the basic layout:
+
+Top row:
+
+* Start Frontend
+* Start Backend
+* Stop Engine
+
+Bottom row:
+
+* Pull
+* Install
+* Restart
+* Open
+
+But refine:
+
+* row spacing
+* horizontal gaps
+* visual alignment
+* row centering
+* button consistency
+
+---
+
+## 6. Keep changes restrained
+
+This pass should make the current design better, not different.
+
+Do not change:
+
+* labels
+* functionality
+* app structure
+* panel layout
+* status lights
+* logs
+* meteors
+* setup modal
+* header
+
+Only polish the Quick Actions buttons/icons.
+
+---
+
+## Acceptance criteria
+
+After this pass:
+
+1. All Quick Actions buttons feel visually cohesive.
+2. Icons feel more matched as a set.
+3. Icon/text spacing is cleaner.
+4. Text is readable and properly centered.
+5. Button highlights are polished but not harsh.
+6. Button rows feel balanced and intentional.
+7. Disabled/enabled states still read clearly.
+8. No unrelated UI or functionality changes are made.

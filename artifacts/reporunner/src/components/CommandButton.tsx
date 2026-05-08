@@ -42,11 +42,11 @@ export function CommandButton({
       {loading ? (
         <Loader2 className="h-4 w-4 animate-spin flex-none" />
       ) : (
-        <Icon className="h-4 w-4 flex-none" strokeWidth={1.5} />
+        <Icon className="h-[18px] w-[18px] flex-none" strokeWidth={1.5} />
       )}
       <span style={{
         fontFamily: "'HS LunaObscura', sans-serif",
-        fontSize: "0.63rem",
+        fontSize: "0.65rem",
         letterSpacing: "0.03em",
         lineHeight: 1,
       }}>{label}</span>
