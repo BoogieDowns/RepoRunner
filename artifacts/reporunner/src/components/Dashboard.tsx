@@ -606,7 +606,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
       lineHeight: 1,
       whiteSpace: "nowrap",
       userSelect: "none",
-      transition: "box-shadow 1.8s ease-in, background 1.8s ease-in, color 1.8s ease-in",
+      transition: "box-shadow 0.4s ease-out, background 0.4s ease-out, color 0.4s ease-out",
     };
 
     /* Fine horizontal lens ribs at 2.5px pitch */
@@ -637,6 +637,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                 color: "rgba(255,226,222,0.98)",
                 textShadow: "0 0 10px rgba(255,95,85,0.92)",
                 boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18), 0 0 15px rgba(204,34,34,0.82), 0 0 5px rgba(204,34,34,0.56)",
+                animation: "rr-lens-on 1.2s ease-in forwards",
               }}
             >
               Running
@@ -662,6 +663,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
               color: "rgba(246,196,174,0.96)",
               textShadow: "0 0 8px rgba(242,184,160,0.62)",
               boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18), 0 0 11px rgba(242,184,160,0.52), 0 0 4px rgba(242,184,160,0.32)",
+              animation: "rr-lens-on 1.2s ease-in forwards",
             }}>
               <Loader2 className="w-[9px] h-[9px] animate-spin flex-none" />
               Starting
@@ -687,6 +689,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
               color: "rgba(214,162,130,0.92)",
               textShadow: "0 0 7px rgba(200,148,115,0.48)",
               boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18), 0 0 10px rgba(200,148,115,0.44), 0 0 4px rgba(200,148,115,0.28)",
+              animation: "rr-lens-on 1.2s ease-in forwards",
             }}>
               <Loader2 className="w-[9px] h-[9px] animate-spin flex-none" />
               Stopping

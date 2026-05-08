@@ -1,0 +1,99 @@
+RepoRunner needs one **tiny status-light transition timing adjustment** only.
+
+Do **not** redesign the UI.
+Do **not** change layout.
+Do **not** change functionality.
+Do **not** change service logic, process management, IPC, setup behavior, logs behavior, meteors, buttons, or product flow.
+
+This is only about the engine/status light transition timing.
+
+## Requested changes
+
+### 1. Speed up illumination ramp-up to 1.2s
+
+When an active status light turns on, it should reach full brightness in about:
+
+```text
+1.2s
+```
+
+Apply this to:
+
+* `RUNNING` red light
+* `STARTING` peach light
+* `STOPPING` peach light
+
+Desired behavior:
+
+```text
+off/unlit → illuminates over 1.2s → stays steadily lit
+```
+
+Do not pulse.
+
+### 2. Turn off quickly when stopping/stopped
+
+When a light turns off and returns to `STOPPED`, it should dim/off quickly in about:
+
+```text
+0.4s
+```
+
+Desired behavior:
+
+```text
+active/lit → turns off over 0.4s → stopped/unlit
+```
+
+Do not let it slowly fade down over 1.2s.
+
+## Important distinction
+
+Use different transition timing for:
+
+```text
+turning on: 1.2s
+turning off: 0.4s
+```
+
+The lights should feel like:
+
+* slightly dramatic when powering on
+* quick and decisive when turning off
+
+## Preserve
+
+Keep:
+
+* no pulsing
+* current plastic/ribbed lens style
+* current square indicator shape
+* current status text inside the light
+* current red/peach colors
+* current `STOPPED` unlit styling
+* current layout
+* current behavior
+
+## Do not change
+
+Do not change:
+
+* status logic
+* status wording
+* button styling
+* logs
+* meteors
+* setup modal
+* app functionality
+
+## Acceptance criteria
+
+After this change:
+
+1. `RUNNING` turns on over about `1.2s`.
+2. `STARTING` turns on over about `1.2s`.
+3. `STOPPING` turns on over about `1.2s`.
+4. Active lights turn off to `STOPPED` over about `0.4s`.
+5. None of the lights pulse.
+6. Active lights stay steadily illuminated after ramp-up.
+7. No unrelated UI or functionality changes are made.

@@ -259,6 +259,11 @@
   animation: rr-indicator-peach-pulse 1.6s ease-in-out infinite;
 }
 
+@keyframes rr-lens-on {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
 @keyframes rr-fall {
   0%   { transform: translateY(0); }
   100% { transform: translateY(175vh); }
