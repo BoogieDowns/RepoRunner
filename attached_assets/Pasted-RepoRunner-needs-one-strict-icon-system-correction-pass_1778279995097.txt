@@ -1,0 +1,274 @@
+RepoRunner needs one **strict icon-system correction pass** for the quick action buttons.
+
+This is **not** a general polish pass.
+This is **not** a redesign.
+This is **not** a “tiny tweak and see what happens” pass.
+
+I want you to **fix the remaining weak icons properly in one pass** so they look like they came out of the **same factory** as the good ones.
+
+## Do not change
+
+Do **not** change:
+
+* layout
+* button order
+* button sizes
+* button labels
+* typography
+* panel spacing
+* button glass styling
+* engine panel
+* lights
+* logs
+* meteors
+* setup modal
+* functionality
+
+Only fix the **button icons**.
+
+---
+
+## Icons that are already good enough — leave them alone
+
+Do **not** change these:
+
+* Start Frontend
+* Start Backend
+* Install
+
+Those are the benchmark.
+
+---
+
+## Icons that still need real correction
+
+Fix only these four:
+
+* Stop Engine
+* Pull
+* Restart
+* Open
+
+---
+
+## Core problem
+
+These four icons still do **not** feel like part of the same system.
+
+They currently feel inconsistent in:
+
+* size
+* stroke presence
+* clarity
+* optical weight
+* shape quality
+* polish
+* legibility at button size
+
+I do **not** want another timid micro-adjustment.
+I want a **proper correction pass**.
+
+---
+
+## System rules for all four corrected icons
+
+All four corrected icons must be normalized so they visibly belong together.
+
+They should all share the same:
+
+* icon box size
+* optical size
+* visual weight
+* stroke thickness
+* line quality
+* centering
+* icon-to-label spacing
+* level of detail
+
+### Required normalization
+
+Please normalize the custom icons to a shared icon system:
+
+* same SVG viewport / coordinate logic
+* same rendered icon size as a group
+* same stroke thickness across the set
+* same roundness / linecap / linejoin treatment where appropriate
+* same optical centering
+* same baseline alignment
+
+If needed, rebuild the weak icons from scratch as custom SVGs instead of trying to salvage bad geometry.
+
+Do **not** keep nudging bad paths forever.
+
+---
+
+## 1. Stop Engine icon
+
+This icon needs to be **bigger** and stronger.
+
+### Requirements
+
+* make the symbol visibly larger in its icon box
+* clean circular boundary
+* clean internal X
+* balanced proportions
+* same visual confidence as the Start icons and Install icon
+
+### Do not make it
+
+* tiny
+* weak
+* thin
+* muddy
+* off-center
+
+This one should read instantly and cleanly at button size.
+
+---
+
+## 2. Pull icon
+
+This icon still needs cleanup.
+
+### Requirements
+
+* preserve the general concept
+* improve silhouette clarity
+* improve centering
+* improve readability
+* give it stronger shape definition
+* match the same system feel as the other good icons
+
+It should look intentional, not vague or accidental.
+
+---
+
+## 3. Restart icon
+
+This is still one of the weakest icons.
+
+The correct direction is:
+
+* **two smooth mirrored wave-like strokes**
+* like **two sine-wave curves crossing through each other**
+* elegant
+* symmetrical
+* readable at small size
+* simple but deliberate
+
+### Important
+
+It should **not** look like:
+
+* DNA
+* random loops
+* a sideways squiggle
+* a weak X
+* cramped mirrored hooks
+
+### Very important instruction
+
+If the current geometry is wrong, **replace it**.
+
+Do not rotate the existing bad shape.
+Do not slightly distort the existing bad shape.
+Do not interpret loosely.
+
+Rebuild the Restart icon so it clearly reads as:
+
+**two smooth mirrored crossing wave curves**
+
+and make it look clean at button size.
+
+---
+
+## 4. Open icon
+
+This icon is still not right.
+
+### Requirements
+
+It should read as a clean, premium symbol with:
+
+* a circular head
+* clean angled linework
+* balanced composition
+* clearer geometry
+* better symmetry
+* better clarity at small size
+
+### Important
+
+The icon should feel like a deliberate clean symbol, not a rough sketch.
+
+If needed, rebuild it from scratch.
+Do not just nudge the current lines by tiny amounts.
+
+---
+
+## Use the references
+
+Use the previously provided reference images for:
+
+* Restart
+* Open
+* Pull
+* Stop Engine
+
+Especially for:
+
+* Restart = two crossing wave/sine-like curves
+* Open = clean circle + angled line composition
+
+Match the **character** of the references closely.
+
+---
+
+## Strict implementation guidance
+
+Please do this properly:
+
+1. inspect the current custom SVG icon components
+2. identify the four weak ones
+3. rebuild or correct them decisively
+4. normalize them into one coherent icon system
+5. verify visually in the actual buttons
+
+Do **not** just claim the math looks right.
+Do **not** just describe coordinates.
+Do **not** stop after a tiny tweak.
+
+I want the result judged by **how it looks in the actual UI**, not by code theory.
+
+---
+
+## Visual benchmark
+
+When finished, these four icons should feel:
+
+* sharper
+* cleaner
+* more premium
+* more legible
+* better centered
+* slightly more detailed if needed
+* consistent with each other
+* consistent with the stronger Start and Install icons
+
+They should look like a **matched manufactured set**.
+
+---
+
+## Acceptance criteria
+
+This pass is only successful if all of the following are true:
+
+1. Stop Engine icon is visibly larger and cleaner.
+2. Pull icon looks more polished and readable.
+3. Restart icon clearly reads as two smooth crossing wave-like curves.
+4. Open icon looks cleaner and more intentional.
+5. All four corrected icons have consistent size, stroke, centering, and polish.
+6. Start Frontend, Start Backend, and Install remain unchanged.
+7. No unrelated layout, style, or functionality changes are made.
+
+If necessary, rebuild the weak icons from scratch rather than continuing to “slightly adjust” poor geometry.

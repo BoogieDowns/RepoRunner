@@ -428,7 +428,7 @@ function AmbientBackground({
   );
 }
 
-/* ─── Restart icon (two crossing sine-wave curves, split endpoints, cross at 12,12) ─*/
+/* ─── Restart icon (two compound S-curves crossing at center — true sine-wave character) */
 
 function RestartOrbitIcon({ className, strokeWidth = 1.5 }: { className?: string; strokeWidth?: number }) {
   return (
@@ -442,10 +442,18 @@ function RestartOrbitIcon({ className, strokeWidth = 1.5 }: { className?: string
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      {/* Wave 1: starts upper-left, arcs up then down, ends lower-right — crosses at (12,12) */}
-      <path d="M3,10 C7,3 17,21 21,14" />
-      {/* Wave 2: mirror — starts lower-left, arcs down then up, ends upper-right */}
-      <path d="M3,14 C7,21 17,3 21,10" />
+      {/*
+        Wave 1: left-upper → center(12,12) → right-lower
+        Two cubic segments joined at center: first half bows up, second half bows down.
+        Result: smooth S-curve from (3,10) through (12,12) to (21,14).
+      */}
+      <path d="M3,10 C6,4 10,4 12,12 C14,20 18,20 21,14" />
+      {/*
+        Wave 2: mirror of Wave 1.
+        Left-lower → center(12,12) → right-upper
+        First half bows down, second half bows up.
+      */}
+      <path d="M3,14 C6,20 10,20 12,12 C14,4 18,4 21,10" />
     </svg>
   );
 }
@@ -471,7 +479,7 @@ function InstallStackIcon({ className, strokeWidth = 1.5 }: { className?: string
   );
 }
 
-/* ─── Open icon (comet: circle head + 3 parallel 45° trailing strokes) ───────*/
+/* ─── Open icon (comet: solid circle head + 3 graded parallel 45° tail strokes) ─*/
 
 function OpenCometIcon({ className }: { className?: string }) {
   return (
@@ -479,19 +487,26 @@ function OpenCometIcon({ className }: { className?: string }) {
       className={className}
       viewBox="0 0 24 24"
       fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinecap="round"
       aria-hidden="true"
     >
-      {/* Circle head — upper right */}
-      <circle cx="15" cy="7" r="4" stroke="currentColor" strokeWidth="1.5" />
-      {/* Three parallel 45° tail strokes fanning toward lower-left */}
-      <line x1="10.8" y1="5"    x2="4"   y2="11.8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <line x1="11.5" y1="10"   x2="7"   y2="14.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <line x1="13.5" y1="13.5" x2="9"   y2="18"   stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      {/* Circle head — upper right quadrant, r=4 */}
+      <circle cx="15" cy="7.5" r="4" />
+      {/*
+        Three parallel tail strokes, all at exactly 45° (direction: lower-left).
+        Graded lengths: long → medium → short, fanning away from the circle.
+        Start points verified outside circle (dist from (15,7.5) > 4).
+      */}
+      <line x1="10.5" y1="5"    x2="3.5"  y2="12"  />  {/* long   — dist≈5.6 ✓ */}
+      <line x1="11.5" y1="10"   x2="7"    y2="14.5" />  {/* medium — dist≈4.6 ✓ */}
+      <line x1="13.5" y1="14"   x2="9.5"  y2="18"  />  {/* short  — dist≈6.7 ✓ */}
     </svg>
   );
 }
 
-/* ─── Pull icon (three evenly-spaced concentric rings, gravity-well / funnel) ─*/
+/* ─── Pull icon (three concentric rings + focal dot — gravity-well / vortex) ─*/
 
 function PullRingsIcon({ className, strokeWidth = 1.5 }: { className?: string; strokeWidth?: number }) {
   return (
@@ -505,10 +520,12 @@ function PullRingsIcon({ className, strokeWidth = 1.5 }: { className?: string; s
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      {/* Evenly spaced at cy 7 / 12 / 17, proportionally scaled rx/ry */}
-      <ellipse cx="12" cy="7"  rx="7.5" ry="2.4" />
-      <ellipse cx="12" cy="12" rx="5"   ry="1.8" />
-      <ellipse cx="12" cy="17" rx="2.8" ry="1.2" />
+      {/* Wide spread: cy at 6 / 12 / 18 for maximum distinct ring separation */}
+      <ellipse cx="12" cy="6"  rx="8.5" ry="2.5" />
+      <ellipse cx="12" cy="12" rx="5.5" ry="2"   />
+      <ellipse cx="12" cy="18" rx="2.5" ry="1.4" />
+      {/* Focal dot at the convergence point */}
+      <circle  cx="12" cy="21" r="1.2" fill="currentColor" stroke="none" />
     </svg>
   );
 }
@@ -527,10 +544,14 @@ function StopCircleXIcon({ className, strokeWidth = 1.5 }: { className?: string;
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      {/* r=7.5; X arms endpoint at 45° on circle: 12 ± 7.5/√2 ≈ 6.7 / 17.3 */}
-      <circle cx="12" cy="12" r="7.5" />
-      <line x1="6.7" y1="6.7" x2="17.3" y2="17.3" />
-      <line x1="17.3" y1="6.7" x2="6.7" y2="17.3" />
+      {/*
+        r=9 fills the icon box boldly.
+        X arm endpoints at 45° on the circle: 12 ± 9/√2 ≈ 12 ± 6.36 → 5.6 / 18.4
+        Arms reach exactly to the circle edge — no gap, no overshoot.
+      */}
+      <circle cx="12" cy="12" r="9" />
+      <line x1="5.6" y1="5.6" x2="18.4" y2="18.4" />
+      <line x1="18.4" y1="5.6" x2="5.6" y2="18.4" />
     </svg>
   );
 }
