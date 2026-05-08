@@ -1,0 +1,173 @@
+RepoRunner’s meteor divider interaction still needs one more **precise correction pass**.
+
+Right now:
+
+* the **pixelation has mostly stopped**
+* the **ripple is still barely visible or not visible**
+* the **red impact flash at the divider line is gone**
+
+I want to restore and strengthen the divider-line impact effect.
+
+Do **not** redesign the UI.
+Do **not** change layout.
+Do **not** change functionality.
+Do **not** change meteor spawn rate, fall speed, lifecycle, buttons, logs, cards, setup modal, IPC, or product flow.
+
+This is only about the **divider-line impact effect**.
+
+---
+
+## What I want
+
+When a meteor hits the horizontal divider line above the terminal/log section, I want **two clearly visible things**:
+
+1. a **red impact flash** right at the contact point
+2. a **prominent red ripple/pulse travelling along the divider line**
+
+Then, after that, the meteor can continue downward.
+
+The divider effect should be easy to see.
+
+---
+
+## 1. Restore the red impact flash
+
+Bring back the impact flash at the exact point where the meteor meets the divider line.
+
+### Desired impact flash
+
+At impact, there should be:
+
+* a bright small red flash at the contact point
+* slightly glowy
+* short-lived
+* crisp and obvious
+* visually attached to the divider line
+
+Think:
+
+* a small energy strike
+* a contact flash
+* a bright red spark/bloom on the line
+
+### Important
+
+Do **not** make this:
+
+* pixelated
+* blocky
+* huge
+* detached from the line
+* a vague blur with no clear center
+
+It should be a visible, clear red flash on the divider.
+
+---
+
+## 2. Make the ripple much more prominent
+
+The ripple on the divider line is currently too weak.
+
+I want the line itself to visibly react when hit.
+
+### Desired ripple behavior
+
+After the impact flash:
+
+* a red pulse/ripple should spread left and right along the horizontal divider line
+* it should be clearly visible
+* it should have a brighter center near the impact point
+* it should fade outward toward the ends
+* it should feel like energy travelling through the line
+
+Think:
+
+* line pulse
+* electrical wave
+* energized divider
+* red wave travelling along the horizontal rule
+
+### Make it stronger
+
+Please increase:
+
+* visibility
+* opacity
+* glow
+* width
+* thickness slightly if needed
+* duration slightly if needed
+
+The ripple should be **prominent**, not subtle to the point of disappearing.
+
+A good target would be:
+
+* clearly visible at a glance
+* still tasteful
+* still premium
+
+### Important detail
+
+The ripple must read as a **line effect**, not as particles or a flare cloud.
+
+So:
+
+* anchor it directly on the divider line
+* let the pulse travel along the line
+* give it soft faded ends
+* keep the strongest intensity near the center
+
+---
+
+## 3. Separate ripple from pixelation
+
+The problem before was that the ripple and pixelation seemed to get mixed up.
+
+For this pass:
+
+* focus on the **divider-line flash + ripple**
+* do **not** use pixel-like shapes for the ripple
+* do **not** make the impact look blocky
+* do **not** let the ripple read like a pixel burst
+
+The ripple should be smooth and line-based.
+
+If the pixelation effect below the line is currently disabled or reduced, that is fine for now.
+
+The main priority is:
+
+```text
+visible impact flash + visible line ripple
+```
+
+---
+
+## 4. Preserve everything else
+
+Keep:
+
+* current meteor spawn rate
+* current meteor fall speed
+* current layered depth
+* current UI styling
+* current layout
+* current button styles
+* current logs panel
+* current engine card
+* current modal behavior
+
+Do not change unrelated parts of the app.
+
+---
+
+## Acceptance criteria
+
+After this fix:
+
+1. When a meteor hits the divider, there is a clearly visible red impact flash.
+2. A clearly visible red ripple/pulse travels left and right along the divider line.
+3. The ripple is anchored to the line and reads as a line effect.
+4. The ripple is prominent, not barely visible.
+5. The ripple has soft faded ends.
+6. The effect is not pixelated or blocky.
+7. No unrelated UI or functionality changes are made.

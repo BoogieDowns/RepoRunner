@@ -282,6 +282,10 @@ function AmbientBackground({
   const grainUrl = `url('data:image/svg+xml,<svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100%25" height="100%25" filter="url(%23n)"/></svg>')`;
 
   return (
+    <>
+    {/* ── Masked atmospheric layer: meteors, grain, moon ────────────────────
+        This mask fades content toward the bottom. Ripples/fragments must NOT
+        live here — they sit at the divider which is in the masked-out zone. */}
     <div
       aria-hidden="true"
       style={{
@@ -341,85 +345,115 @@ function AmbientBackground({
       {meteors.map(m => (
         <MeteorLine key={m.id} {...m} onDone={removeMeteor} />
       ))}
+    </div>
 
-      {/* Divider impact ripples — two line-anchored elements per hit */}
+    {/* ── Unmasked impact layer ───────────────────────────────────────────────
+        Ripples and fragments MUST live outside the masked container above.
+        The mask fades to ~0.06 opacity at the divider position, which would
+        make them invisible. This sibling div has no mask applied. */}
+    <div
+      aria-hidden="true"
+      style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none", zIndex: 0 }}
+    >
+      {/* Impact ripples — three overlaid elements, all anchored to the divider line */}
       {ripples.flatMap(r => [
-        /* 1. Wide glow halo — energy spreading along the wire */
+        /* 1. Wide glow halo — energy spreading 460px along the wire */
         <div
           key={`rbar-${r.id}`}
           style={{
-            position:        "absolute",
-            top:             `${r.dividerY}px`,
-            left:            `${r.left}%`,
-            width:           "460px",
-            height:          "3px",
-            transform:       "translateX(-50%)",
-            background:      `linear-gradient(90deg,
+            position:  "absolute",
+            top:       `${r.dividerY}px`,
+            left:      `${r.left}%`,
+            width:     "460px",
+            height:    "3px",
+            transform: "translateX(-50%)",
+            background: `linear-gradient(90deg,
               transparent 0%,
-              rgba(200,38,38,${r.op * 0.05}) 4%,
-              rgba(210,42,42,${r.op * 0.40}) 18%,
-              rgba(232,56,56,${r.op * 0.85}) 38%,
-              rgba(248,68,68,${r.op * 1.00}) 50%,
-              rgba(232,56,56,${r.op * 0.85}) 62%,
-              rgba(210,42,42,${r.op * 0.40}) 82%,
-              rgba(200,38,38,${r.op * 0.05}) 96%,
+              rgba(200,36,36,${r.op * 0.08}) 4%,
+              rgba(214,44,44,${r.op * 0.55}) 20%,
+              rgba(236,58,58,${r.op * 0.90}) 40%,
+              rgba(252,72,72,${r.op * 1.00}) 50%,
+              rgba(236,58,58,${r.op * 0.90}) 60%,
+              rgba(214,44,44,${r.op * 0.55}) 80%,
+              rgba(200,36,36,${r.op * 0.08}) 96%,
               transparent 100%
             )`,
-            boxShadow:       `0 0 11px 3px rgba(210,44,44,${r.op * 0.58})`,
+            boxShadow:       `0 0 14px 4px rgba(214,44,44,${r.op * 0.70})`,
             pointerEvents:   "none",
-            animationName:       "rr-ripple-pulse",
-            animationDuration:   "0.95s",
+            animationName:        "rr-ripple-pulse",
+            animationDuration:    "1.00s",
             animationTimingFunction: "ease-out",
-            animationFillMode:   "forwards",
+            animationFillMode:    "forwards",
           }}
         />,
-        /* 2. Bright lit-line segment — the hot spot sitting exactly on the line */
+        /* 2. Bright lit-line segment — shorter, 1px, fires and fades fast */
         <div
           key={`rhot-${r.id}`}
           style={{
-            position:        "absolute",
-            top:             `${r.dividerY}px`,
-            left:            `${r.left}%`,
-            width:           "160px",
-            height:          "1px",
-            transform:       "translateX(-50%)",
-            background:      `linear-gradient(90deg,
+            position:  "absolute",
+            top:       `${r.dividerY}px`,
+            left:      `${r.left}%`,
+            width:     "200px",
+            height:    "1px",
+            transform: "translateX(-50%)",
+            background: `linear-gradient(90deg,
               transparent 0%,
-              rgba(240,60,60,${r.op * 0.60}) 20%,
-              rgba(255,100,100,${r.op * 1.00}) 50%,
-              rgba(240,60,60,${r.op * 0.60}) 80%,
+              rgba(250,80,80,${r.op * 0.70}) 22%,
+              rgba(255,115,115,${r.op * 1.00}) 50%,
+              rgba(250,80,80,${r.op * 0.70}) 78%,
               transparent 100%
             )`,
-            boxShadow:       `0 0 4px 1px rgba(255,90,90,${r.op * 0.70})`,
+            boxShadow:       `0 0 5px 2px rgba(255,100,100,${r.op * 0.80})`,
             pointerEvents:   "none",
-            animationName:       "rr-ripple-pulse",
-            animationDuration:   "0.62s",
+            animationName:        "rr-ripple-pulse",
+            animationDuration:    "0.60s",
             animationTimingFunction: "ease-out",
-            animationFillMode:   "forwards",
+            animationFillMode:    "forwards",
+          }}
+        />,
+        /* 3. Contact flash — small bright vertical strike at the exact impact point */
+        <div
+          key={`rflash-${r.id}`}
+          style={{
+            position:  "absolute",
+            top:       `${r.dividerY - 3}px`,
+            left:      `${r.left}%`,
+            width:     "4px",
+            height:    "7px",
+            transform: "translateX(-50%)",
+            background: `rgba(255,140,140,${r.op * 0.95})`,
+            boxShadow: `0 0 10px 4px rgba(240,64,64,${r.op * 0.85}), 0 0 22px 8px rgba(200,36,36,${r.op * 0.45})`,
+            borderRadius: "1px",
+            pointerEvents:   "none",
+            animationName:        "rr-ripple-pulse",
+            animationDuration:    "0.38s",
+            animationTimingFunction: "ease-out",
+            animationFillMode:    "forwards",
           }}
         />,
       ])}
 
-      {/* Pixel fragments — digital dissolve effect as meteors enter terminal zone */}
+      {/* Pixel fragments — digital dissolve in the terminal zone */}
       {fragments.map(f => (
         <div
           key={f.id}
           style={{
-            position:        "absolute",
-            top:             `${f.dividerY + f.offsetY}px`,
-            left:            `calc(${f.left}% + ${f.driftX}px)`,
-            width:           `${f.size}px`,
-            height:          `${f.size}px`,
-            background:      `rgba(196,36,36,${f.op})`,
+            position:  "absolute",
+            top:       `${f.dividerY + f.offsetY}px`,
+            left:      `calc(${f.left}% + ${f.driftX}px)`,
+            width:     `${f.size}px`,
+            height:    `${f.size}px`,
+            background: `rgba(196,36,36,${f.op})`,
             pointerEvents:   "none",
-            animationName:       "rr-fragment-fall",
-            animationDuration:   `${f.dur}s`,
+            animationName:        "rr-fragment-fall",
+            animationDuration:    `${f.dur}s`,
             animationTimingFunction: "ease-in",
-            animationFillMode:   "forwards",
+            animationFillMode:    "forwards",
           }}
         />
       ))}
     </div>
+    </>
   );
 }
 
