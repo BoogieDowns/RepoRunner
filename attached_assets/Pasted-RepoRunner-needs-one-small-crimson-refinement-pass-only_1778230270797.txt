@@ -1,0 +1,123 @@
+RepoRunner needs one **small crimson refinement pass** only.
+
+Do **not** redesign the UI.
+Do **not** change layout.
+Do **not** change functionality.
+Do **not** change button sizing, typography, icons, meteors behavior, ripple behavior, setup behavior, logs behavior, engine logic, IPC, or product flow.
+
+This is only about making the red action buttons lean slightly deeper into a **dark crimson** colour.
+
+## Current state
+
+The red system is much better now and the crimson direction is working.
+
+However, the main red action buttons could still lean a little more toward a darker, richer crimson.
+
+## Apply to these buttons only
+
+Refine the red tone on:
+
+```text
+START FRONTEND
+START BACKEND
+STOP ENGINE
+Save Configuration
+```
+
+## Requested direction
+
+Shift these buttons slightly darker and richer.
+
+Target feel:
+
+* dark crimson
+* ruby glass
+* richer red
+* moodier
+* more premium
+* less bright standard red
+
+Think:
+
+```text
+dark crimson glass
+```
+
+Not:
+
+```text
+bright red UI button
+orange-red
+pink-red
+magenta
+neon red
+```
+
+## Suggested colour direction
+
+Use something close to:
+
+```css
+#9F0D1C
+```
+
+or:
+
+```css
+#A40E1D
+```
+
+as the deeper crimson anchor.
+
+For hover, use a slightly brighter crimson from the same family.
+
+For active/pressed, use a darker crimson from the same family.
+
+## Important
+
+Do **not** make everything flat and identical.
+
+Preserve the current glass material system:
+
+* gradients
+* highlights
+* shadows
+* bevels
+* glows
+* disabled treatment
+* hover / active states
+
+Only retint the red button family deeper.
+
+## Keep the existing brand consistency
+
+The buttons should still match the RR logo and the newer crimson system, but with more depth.
+
+This should be a **subtle colour refinement**, not a full redesign.
+
+## Do not change
+
+Do not change:
+
+* neutral grey buttons
+* log colours
+* icon shapes
+* button layout
+* button text
+* engine lights
+* meteors
+* ripple effects
+* setup modal layout
+* app behavior
+
+Only adjust the red button material colour family for the listed buttons.
+
+## Acceptance criteria
+
+After this pass:
+
+1. Red buttons feel darker and more crimson.
+2. Red buttons still feel like glossy glass.
+3. Hover and active states remain in the same crimson family.
+4. Stop Engine and Save Configuration match the same red family.
+5. No layout, icon, text, or functionality changes are made.
