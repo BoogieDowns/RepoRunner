@@ -1,0 +1,126 @@
+RepoRunner needs one **focused Install icon concept correction** only.
+
+Do **not** redesign the UI.
+Do **not** change layout.
+Do **not** change button labels.
+Do **not** change button sizes.
+Do **not** change button styling.
+Do **not** change any icons except the `Install` icon.
+Do **not** change engine lights, logs, meteors, setup modal, header, IPC, process logic, or product flow.
+
+This is only about correcting the custom `Install` icon.
+
+## Current issue
+
+The current `Install` icon still does not feel right.
+
+It now reads too much like:
+
+```text
+stacked database rings / DNA-like rings
+```
+
+That is not the direction I want.
+
+The reference image felt more like:
+
+```text
+two sine waves crossing over each other
+```
+
+or a clean futuristic waveform / interwoven signal mark.
+
+## Correct visual direction
+
+Please revise the `Install` icon so it reads more like:
+
+* two smooth crossing sine-wave curves
+* mirrored flowing wave lines
+* an interwoven technical signal
+* clean futuristic waveform
+* compact and readable inside the button
+
+It should feel closer to **two waves crossing through each other**, not stacked database rings.
+
+## What to avoid
+
+Do **not** make it look like:
+
+* database cylinders
+* stacked ovals
+* hamburger lines
+* DNA ladder
+* three separate rings
+* a spring
+* a coil
+
+The current ellipse/ring approach is the wrong concept.
+
+## Build direction
+
+Replace the current three-ellipse `InstallStackIcon` geometry with a custom SVG made from curved paths.
+
+Use:
+
+* stroke only
+* no fill
+* `currentColor`
+* rounded stroke caps
+* rounded stroke joins
+* same shared icon size system
+* same visual stroke weight as other icons
+
+## Shape requirement
+
+The icon should be built from **two primary smooth paths**:
+
+1. one wave curve flowing left-to-right
+2. a second mirrored wave curve crossing it
+
+The two curves should cross near the center and create a clean interwoven wave shape.
+
+Think:
+
+```text
+~ crossing with mirrored ~
+```
+
+but simplified and balanced for a small button icon.
+
+## Visual requirements
+
+The new Install icon should:
+
+* be readable at normal button size
+* feel symmetrical and intentional
+* have enough curve height to read as waves
+* not be too delicate
+* not be too busy
+* sit centered beside the `INSTALL` label
+* visually match the weight of Pull, Restart, Open, and Stop icons
+
+## Important restraint
+
+Only change the `Install` icon SVG/component.
+
+Do not touch:
+
+* Pull icon
+* Restart icon
+* Open icon
+* Stop Engine icon
+* Start icons
+* button layout
+* button text
+* button styling
+* app behavior
+
+## Acceptance criteria
+
+After this change:
+
+1. The `Install` icon no longer looks like stacked database rings.
+2. It reads as two crossing sine-wave style curves.
+3. The icon feels clean, futuristic, and readable.
+4. It visually matches the other custom button icons.
+5. No unrelated UI or functionality changes are made.
