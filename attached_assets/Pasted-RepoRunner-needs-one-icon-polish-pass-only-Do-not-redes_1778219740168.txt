@@ -1,0 +1,171 @@
+RepoRunner needs one **icon polish pass only**.
+
+Do **not** redesign the UI.
+Do **not** change layout.
+Do **not** change button labels.
+Do **not** change functionality.
+Do **not** change button order, button sizing, engine lights, logs, meteors, setup modal, IPC, process logic, or product flow.
+
+This is only about **polishing and matching all quick-action button icons** so they feel like one coherent set.
+
+## Goal
+
+Right now the button icons work, but they do not yet feel fully unified.
+
+I want all quick-action button icons to look like they belong to the **same family**.
+
+That means:
+- same visual weight
+- same stroke thickness
+- same scale
+- same optical size
+- same vertical alignment
+- same icon-to-text spacing
+- same level of detail
+- same sci-fi / premium feel
+
+## Buttons in scope
+
+Polish and harmonize the icons for:
+
+- Start Frontend
+- Start Backend
+- Stop Engine
+- Pull
+- Install
+- Restart
+- Open
+
+## Important direction
+
+Keep the **existing symbol concepts** for each button.
+
+Do **not** invent new meanings.
+Do **not** swap icons around.
+Do **not** replace them with generic Lucide/library icons unless the current icon is already based on that and visually matches.
+
+If custom SVG icons are already being used, keep using custom SVGs and refine them.
+
+Use the earlier reference images / already-established symbol directions **if needed**, but the main goal is:
+**make the full icon set feel visually matched and intentional.**
+
+## What needs to be fixed
+
+Please refine the icon system so that all button icons share:
+
+### 1. Matching scale
+Each icon should occupy a similar optical footprint.
+
+No icon should feel:
+- too tiny
+- too tall
+- too wide
+- too thin
+- too heavy
+
+Standardize them so they all feel equally sized next to their labels.
+
+### 2. Matching stroke weight
+Use a consistent stroke thickness across the whole set.
+
+If one icon feels hairline-thin and another feels chunky, fix that.
+
+They should all feel like they came from the same drawing system.
+
+### 3. Matching baseline / vertical alignment
+Every icon should sit cleanly in line with the LunaObscura button text.
+
+No icon should feel too high or too low relative to:
+- the button center
+- the text baseline
+- the button label block
+
+### 4. Matching icon-to-text spacing
+The gap between icon and label should be even and clean across all buttons.
+
+No button should have:
+- cramped icon/text spacing
+- too much empty gap
+- inconsistent spacing relative to others
+
+### 5. Matching geometry / finish
+All icons should feel like part of one premium sci-fi system.
+
+They should share:
+- similar roundness vs sharpness
+- similar corner behavior
+- similar line endings
+- similar visual precision
+
+### 6. Matching enabled / disabled rendering
+Icons should behave consistently across states.
+
+That means:
+- enabled buttons: crisp, readable, polished
+- disabled buttons: dimmed consistently, but still clean
+- active red buttons: icon tint and contrast should match the label treatment
+
+## Strong visual target
+
+The icons should feel:
+- futuristic
+- minimal
+- technical
+- premium
+- clean
+- intentional
+
+They should **not** feel:
+- random
+- mismatched
+- clip-art-like
+- from different icon packs
+- inconsistent in weight or scale
+
+## Implementation guidance
+
+Please do a focused cleanup pass on the icon components and button layout values.
+
+Useful areas to standardize:
+- shared icon size
+- shared stroke width
+- shared `strokeLinecap`
+- shared `strokeLinejoin`
+- shared viewBox discipline
+- shared wrapper sizing
+- shared icon/text gap
+- shared vertical alignment rules
+
+If helpful, create a small shared icon style standard and make each custom SVG conform to it.
+
+For example:
+- one shared icon box size
+- one shared stroke width range
+- one shared alignment rule
+- one shared CSS class for button icon rendering
+
+## Preserve current UI
+
+Do not change:
+- button text wording
+- button order
+- button layout
+- button glass styling
+- panel styling
+- engine box
+- log area
+- meteor effects
+- setup modal
+- app behavior
+
+## Acceptance criteria
+
+After this pass:
+
+1. All quick-action button icons feel like one matched set.
+2. Icon scale is visually consistent across all buttons.
+3. Stroke weight is visually consistent across all buttons.
+4. Icon-to-text spacing is even and clean.
+5. Icons are properly vertically aligned with the text.
+6. Enabled, disabled, and active states all render consistently.
+7. No button labels, layout, or functionality are changed.

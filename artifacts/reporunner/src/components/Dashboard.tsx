@@ -442,11 +442,9 @@ function RestartOrbitIcon({ className, strokeWidth = 1.5 }: { className?: string
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      {/* left curve: upper-left → sweeps out left → through center → lower-right */}
-      <path d="M5,7 C1,10 8,13 12,12 C16,11 20,16 19,17" />
-      {/* right curve: mirror */}
-      <path d="M19,7 C23,10 16,13 12,12 C8,11 4,16 5,17" />
-      <ellipse cx="12" cy="12" rx="2" ry="1.3" />
+      <path d="M5,6.5 C1,10 8,13 12,12 C16,11 20,16.5 19,17.5" />
+      <path d="M19,6.5 C23,10 16,13 12,12 C8,11 4,16.5 5,17.5" />
+      <ellipse cx="12" cy="12" rx="2.5" ry="1.5" />
     </svg>
   );
 }
@@ -465,9 +463,9 @@ function InstallStackIcon({ className, strokeWidth = 1.5 }: { className?: string
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      <ellipse cx="12" cy="8"  rx="7" ry="2.2" />
-      <ellipse cx="12" cy="12" rx="7" ry="2.2" />
-      <ellipse cx="12" cy="16" rx="7" ry="2.2" />
+      <ellipse cx="12" cy="8.5"  rx="6.5" ry="1.9" />
+      <ellipse cx="12" cy="12"   rx="6.5" ry="1.9" />
+      <ellipse cx="12" cy="15.5" rx="6.5" ry="1.9" />
     </svg>
   );
 }
@@ -507,9 +505,9 @@ function PullRingsIcon({ className, strokeWidth = 1.5 }: { className?: string; s
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      <ellipse cx="12" cy="7"   rx="8"   ry="2.8" />
-      <ellipse cx="12" cy="12"  rx="5.5" ry="2"   />
-      <ellipse cx="12" cy="16"  rx="3"   ry="1.4" />
+      <ellipse cx="12" cy="7.5"  rx="6.5" ry="2.3" />
+      <ellipse cx="12" cy="12"   rx="4.5" ry="1.7" />
+      <ellipse cx="12" cy="15.5" rx="2.5" ry="1.2" />
     </svg>
   );
 }
@@ -528,9 +526,9 @@ function StopCircleXIcon({ className, strokeWidth = 1.5 }: { className?: string;
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      <circle cx="12" cy="12" r="9" />
-      <line x1="6.5" y1="6.5" x2="17.5" y2="17.5" />
-      <line x1="17.5" y1="6.5" x2="6.5" y2="17.5" />
+      <circle cx="12" cy="12" r="7.5" />
+      <line x1="7.5" y1="7.5" x2="16.5" y2="16.5" />
+      <line x1="16.5" y1="7.5" x2="7.5" y2="16.5" />
     </svg>
   );
 }
