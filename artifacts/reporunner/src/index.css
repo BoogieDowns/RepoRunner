@@ -264,17 +264,28 @@
   to   { opacity: 1; }
 }
 
-/* Per-state names force the browser to restart the animation on every status change */
-@keyframes rr-lens-starting { from { opacity: 0; } to { opacity: 1; } }
-@keyframes rr-lens-running  { from { opacity: 0; } to { opacity: 1; } }
-@keyframes rr-lens-stopped  { from { opacity: 0; } to { opacity: 1; } }
+/* Shared fade-on for STARTING and RUNNING — same name means no restart on STARTING→RUNNING */
+@keyframes rr-lens-active {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
 
-@keyframes rr-lens-off {
-  0%   { opacity: 1;    filter: brightness(1); }
-  72%  { opacity: 0.28; filter: brightness(1); }
-  79%  { opacity: 1.00; filter: brightness(3.4); }
-  86%  { opacity: 0.10; filter: brightness(0.4); }
-  100% { opacity: 0;    filter: brightness(1); }
+/* Opacity-only fade-out — shared by STOPPING and STOPPED so no restart on STOPPING→STOPPED */
+@keyframes rr-lens-off-opacity {
+  0%   { opacity: 1;    }
+  72%  { opacity: 0.28; }
+  79%  { opacity: 1.00; }
+  86%  { opacity: 0.10; }
+  100% { opacity: 0;    }
+}
+
+/* Filter-only brightness spike — applied to glow child only, never touches text (sibling) */
+@keyframes rr-glow-flicker {
+  0%   { filter: brightness(1);   }
+  72%  { filter: brightness(1);   }
+  79%  { filter: brightness(3.4); }
+  86%  { filter: brightness(0.4); }
+  100% { filter: brightness(1);   }
 }
 
 @keyframes rr-fall {

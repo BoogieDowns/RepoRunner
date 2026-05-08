@@ -570,6 +570,29 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
   const bothStopped =
     statuses.frontend === "stopped" && statuses.backend === "stopped";
 
+  /*
+    Light keys: only increment when a service transitions INTO "starting".
+    This remounts the element for a fresh animation on each new run, without
+    remounting on STARTING→RUNNING or STOPPING→STOPPED (so the animation
+    continues uninterrupted and only the text word changes).
+  */
+  const [lightKeys, setLightKeys] = useState({ frontend: "fe-0", backend: "be-0" });
+  const prevStatusRef = useRef<{ frontend: string; backend: string }>({
+    frontend: "stopped",
+    backend: "stopped",
+  });
+  useEffect(() => {
+    const prev = prevStatusRef.current;
+    const ts = Date.now();
+    setLightKeys(keys => {
+      const next = { ...keys };
+      if (statuses.frontend === "starting" && prev.frontend !== "starting") next.frontend = `fe-${ts}`;
+      if (statuses.backend  === "starting" && prev.backend  !== "starting") next.backend  = `be-${ts}`;
+      return next;
+    });
+    prevStatusRef.current = { frontend: statuses.frontend, backend: statuses.backend };
+  }, [statuses.frontend, statuses.backend]);
+
   const getStatusDisplay = (status: string, lightKey: string) => {
     /*
       Two-element structure:
@@ -627,24 +650,22 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
             border: "1px solid rgba(60,14,14,0.95)",
             boxShadow: "0 2px 7px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,110,110,0.05), inset 0 -1px 0 rgba(0,0,0,0.40)",
           }}>
+            {/* animation on lens parent: opacity fades in, text inherits it as part of the light */}
             <span style={{
               ...lens,
               position: "relative",
               overflow: "hidden",
-              background: "none",
-              boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18)",
+              animation: "rr-lens-active 2.8s ease-in forwards",
+              boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18), 0 0 15px rgba(204,34,34,0.82), 0 0 5px rgba(204,34,34,0.56)",
             }}>
+              {/* glow background — no animation; parent opacity handles the fade */}
               <span style={{
-                position: "absolute",
-                inset: 0,
-                borderRadius: "1px",
+                position: "absolute", inset: 0, borderRadius: "1px",
                 background: [
                   ribs(0.26),
                   specular(255, 230, 225, 0.28),
                   "radial-gradient(ellipse at 50% 58%, rgba(255,180,164,0.96) 0%, rgba(232,52,52,0.98) 24%, rgba(178,18,18,0.98) 58%, rgba(62,4,4,0.99) 100%)",
                 ].join(", "),
-                boxShadow: "0 0 15px rgba(204,34,34,0.82), 0 0 5px rgba(204,34,34,0.56)",
-                animation: "rr-lens-running 1.2s ease-in forwards",
                 zIndex: 0,
               }} />
               <span style={{ position: "relative", zIndex: 1, color: "rgba(255,226,222,0.98)", textShadow: "0 0 10px rgba(255,95,85,0.92)" }}>
@@ -662,24 +683,21 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
             border: "1px solid rgba(60,14,14,0.95)",
             boxShadow: "0 2px 7px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,110,110,0.05), inset 0 -1px 0 rgba(0,0,0,0.40)",
           }}>
+            {/* Same animation name as "running" — browser won't restart on STARTING→RUNNING */}
             <span style={{
               ...lens,
               position: "relative",
               overflow: "hidden",
-              background: "none",
-              boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18)",
+              animation: "rr-lens-active 2.8s ease-in forwards",
+              boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18), 0 0 15px rgba(204,34,34,0.82), 0 0 5px rgba(204,34,34,0.56)",
             }}>
               <span style={{
-                position: "absolute",
-                inset: 0,
-                borderRadius: "1px",
+                position: "absolute", inset: 0, borderRadius: "1px",
                 background: [
                   ribs(0.26),
                   specular(255, 230, 225, 0.28),
                   "radial-gradient(ellipse at 50% 58%, rgba(255,180,164,0.96) 0%, rgba(232,52,52,0.98) 24%, rgba(178,18,18,0.98) 58%, rgba(62,4,4,0.99) 100%)",
                 ].join(", "),
-                boxShadow: "0 0 15px rgba(204,34,34,0.82), 0 0 5px rgba(204,34,34,0.56)",
-                animation: "rr-lens-starting 2.8s ease-in forwards",
                 zIndex: 0,
               }} />
               <span style={{ position: "relative", zIndex: 1, color: "rgba(255,226,222,0.98)", textShadow: "0 0 10px rgba(255,95,85,0.92)" }}>
@@ -697,35 +715,26 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
             border: "1px solid rgba(60,14,14,0.95)",
             boxShadow: "0 2px 7px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,110,110,0.05), inset 0 -1px 0 rgba(0,0,0,0.40)",
           }}>
+            {/* opacity-only on lens parent: text fades with the light as one unit */}
             <span style={{
               ...lens,
               position: "relative",
               overflow: "hidden",
-              background: "none",
-              /* inset shadows only — give the lens physical depth without affecting the glow layer */
-              boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18)",
+              animation: "rr-lens-off-opacity 0.7s ease-out forwards",
+              boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18), 0 0 15px rgba(204,34,34,0.82), 0 0 5px rgba(204,34,34,0.56)",
             }}>
-              {/* Glow layer — receives filter:brightness flicker; text is a sibling so it's immune */}
+              {/* filter:brightness spike on glow child only — text (sibling) is immune */}
               <span style={{
-                position: "absolute",
-                inset: 0,
-                borderRadius: "1px",
+                position: "absolute", inset: 0, borderRadius: "1px",
                 background: [
                   ribs(0.26),
                   specular(255, 230, 225, 0.28),
                   "radial-gradient(ellipse at 50% 58%, rgba(255,180,164,0.96) 0%, rgba(232,52,52,0.98) 24%, rgba(178,18,18,0.98) 58%, rgba(62,4,4,0.99) 100%)",
                 ].join(", "),
-                boxShadow: "0 0 15px rgba(204,34,34,0.82), 0 0 5px rgba(204,34,34,0.56)",
-                animation: "rr-lens-off 0.7s ease-out forwards",
+                animation: "rr-glow-flicker 0.7s ease-out forwards",
                 zIndex: 0,
               }} />
-              {/* Text layer — above the glow, never touched by filter */}
-              <span style={{
-                position: "relative",
-                zIndex: 1,
-                color: "rgba(255,226,222,0.98)",
-                textShadow: "0 0 10px rgba(255,95,85,0.92)",
-              }}>
+              <span style={{ position: "relative", zIndex: 1, color: "rgba(255,226,222,0.98)", textShadow: "0 0 10px rgba(255,95,85,0.92)" }}>
                 Stopping
               </span>
             </span>
@@ -788,23 +797,22 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
             border: "1px solid rgba(48,10,10,0.94)",
             boxShadow: "0 2px 7px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.65)",
           }}>
+            {/* Same animation names as STOPPING — browser keeps state, no restart, only text changes */}
             <span style={{
               ...lens,
               position: "relative",
               overflow: "hidden",
-              background: "none",
+              animation: "rr-lens-off-opacity 0.7s ease-out forwards",
               boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18)",
             }}>
               <span style={{
-                position: "absolute",
-                inset: 0,
-                borderRadius: "1px",
+                position: "absolute", inset: 0, borderRadius: "1px",
                 background: [
                   ribs(0.38),
                   "linear-gradient(148deg, rgba(65,18,18,0.10) 0%, transparent 34%)",
                   "radial-gradient(ellipse at 50% 58%, rgba(42,7,7,0.72) 0%, rgba(15,3,3,0.88) 55%, rgba(4,1,1,0.97) 100%)",
                 ].join(", "),
-                animation: "rr-lens-stopped 0.08s ease-out forwards",
+                animation: "rr-glow-flicker 0.7s ease-out forwards",
                 zIndex: 0,
               }} />
               <span style={{ position: "relative", zIndex: 1, color: "rgba(60,42,42,0.82)" }}>
@@ -1016,7 +1024,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                       </p>
                     )}
                   </div>
-                  {getStatusDisplay(statuses.frontend, `fe-${statuses.frontend}`)}
+                  {getStatusDisplay(statuses.frontend, lightKeys.frontend)}
                 </div>
                 <Separator style={{ background: "#161616" }} />
                 <div className="flex items-center justify-between gap-3">
@@ -1030,7 +1038,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                       </p>
                     )}
                   </div>
-                  {getStatusDisplay(statuses.backend, `be-${statuses.backend}`)}
+                  {getStatusDisplay(statuses.backend, lightKeys.backend)}
                 </div>
               </CardContent>
             </Card>
