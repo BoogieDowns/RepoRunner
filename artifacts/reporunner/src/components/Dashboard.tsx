@@ -561,6 +561,73 @@ function RepoRunnerLogo() {
   );
 }
 
+/* ─── Status light text crossfade ──────────────────────────────────────────
+   Smoothly fades the label word when status changes (e.g. STARTING → RUNNING).
+   The outer wrapper preserves position:relative + zIndex:1 so it sits above
+   the glow layer inside the lens. Only the text transitions; the lens itself
+   is unaffected.
+*/
+function StatusTextFade({
+  text,
+  color,
+  textShadow,
+}: {
+  text: string;
+  color: string;
+  textShadow?: string;
+}) {
+  const [curText, setCurText] = useState(text);
+  const [prev, setPrev] = useState<{ text: string; color: string; textShadow?: string } | null>(null);
+  /* Track the last confirmed style so fade-out uses the old colour, not new */
+  const lastStyle = useRef({ color, textShadow });
+
+  useEffect(() => {
+    if (text !== curText) {
+      setPrev({ text: curText, color: lastStyle.current.color, textShadow: lastStyle.current.textShadow });
+      setCurText(text);
+      lastStyle.current = { color, textShadow };
+      const t = setTimeout(() => setPrev(null), 280);
+      return () => clearTimeout(t);
+    }
+    lastStyle.current = { color, textShadow };
+    return undefined;
+  }, [text, color, textShadow]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return (
+    <span style={{ position: "relative", zIndex: 1 }}>
+      {prev && (
+        <span
+          key={prev.text + "-out"}
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: prev.color,
+            ...(prev.textShadow ? { textShadow: prev.textShadow } : {}),
+            animation: "rr-status-text-out 0.24s ease forwards",
+            pointerEvents: "none",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {prev.text}
+        </span>
+      )}
+      <span
+        key={curText}
+        style={{
+          color,
+          ...(textShadow ? { textShadow } : {}),
+          animation: "rr-status-text-in 0.24s ease forwards",
+        }}
+      >
+        {curText}
+      </span>
+    </span>
+  );
+}
+
 /* ─── Dashboard ─────────────────────────────────────────────────────────────*/
 
 interface DashboardProps {
@@ -734,9 +801,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                 ].join(", "),
                 zIndex: 0,
               }} />
-              <span style={{ position: "relative", zIndex: 1, color: "rgba(255,226,222,0.98)", textShadow: "0 0 10px rgba(255,95,85,0.92)" }}>
-                Running
-              </span>
+              <StatusTextFade text="Running" color="rgba(255,226,222,0.98)" textShadow="0 0 10px rgba(255,95,85,0.92)" />
             </span>
           </span>
         );
@@ -766,9 +831,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                 ].join(", "),
                 zIndex: 0,
               }} />
-              <span style={{ position: "relative", zIndex: 1, color: "rgba(255,226,222,0.98)", textShadow: "0 0 10px rgba(255,95,85,0.92)" }}>
-                Starting
-              </span>
+              <StatusTextFade text="Starting" color="rgba(255,226,222,0.98)" textShadow="0 0 10px rgba(255,95,85,0.92)" />
             </span>
           </span>
         );
@@ -800,9 +863,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                 animation: "rr-glow-flicker 0.7s ease-out forwards",
                 zIndex: 0,
               }} />
-              <span style={{ position: "relative", zIndex: 1, color: "rgba(255,226,222,0.98)", textShadow: "0 0 10px rgba(255,95,85,0.92)" }}>
-                Stopping
-              </span>
+              <StatusTextFade text="Stopping" color="rgba(255,226,222,0.98)" textShadow="0 0 10px rgba(255,95,85,0.92)" />
             </span>
           </span>
         );
@@ -881,9 +942,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                 animation: "rr-glow-flicker 0.7s ease-out forwards",
                 zIndex: 0,
               }} />
-              <span style={{ position: "relative", zIndex: 1, color: "rgba(78,52,52,0.90)" }}>
-                Stopped
-              </span>
+              <StatusTextFade text="Stopped" color="rgba(78,52,52,0.90)" />
             </span>
           </span>
         );

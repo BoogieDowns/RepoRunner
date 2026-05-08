@@ -1,0 +1,137 @@
+RepoRunner needs one **small engine light text transition change** only.
+
+Do **not** redesign the UI.
+Do **not** change layout.
+Do **not** change engine/service logic.
+Do **not** change start/stop timing.
+Do **not** change button behavior.
+Do **not** change logs, meteors, setup modal, header, IPC, process logic, or product flow.
+
+This is only about the **text transition inside the red plastic engine status lights**.
+
+## Current behavior
+
+When the status text changes from:
+
+```text
+STARTING
+```
+
+to:
+
+```text
+RUNNING
+```
+
+it currently changes instantly.
+
+## Requested change
+
+I want the text inside the red plastic light to **fade from one word to the next**.
+
+Specifically:
+
+```text
+STARTING → RUNNING
+```
+
+should fade smoothly.
+
+The light itself should keep its current illumination behavior.
+
+Only the lettering should transition.
+
+## Desired behavior
+
+When the status changes:
+
+1. `STARTING` text fades out
+2. `RUNNING` text fades in
+3. the red plastic light/lens stays visually continuous underneath
+4. no white flash
+5. no layout shift
+6. no change to the light size
+
+The effect should feel like the wording is changing on the same illuminated physical light.
+
+## Timing direction
+
+Keep the fade subtle and quick.
+
+Suggested duration:
+
+```text
+0.18s–0.3s
+```
+
+A good target is:
+
+```text
+0.24s
+```
+
+## Apply to status text changes inside the light
+
+Apply this text fade to status label changes such as:
+
+```text
+STARTING → RUNNING
+RUNNING → STOPPING
+STOPPING → STOPPED
+STOPPED → STARTING
+```
+
+But be careful: the `STOPPING → STOPPED` transition should still avoid the previous white text flash problem.
+
+The text fade should be controlled and not flash bright.
+
+## Important implementation detail
+
+Animate only the text opacity/crossfade.
+
+Do **not** animate:
+
+* the whole status light container
+* the red lens brightness
+* the outer glow
+* the light background
+* layout dimensions
+
+If needed, use a stable text layer/crossfade approach so the text changes smoothly without affecting the light animation.
+
+## Preserve current good behavior
+
+Keep:
+
+* red light fade-on behavior
+* red light fade-off behavior
+* final shutdown flicker
+* no spinner
+* no pulsing
+* same red plastic/ribbed lens styling
+* same status light size
+* independent Frontend / Backend light animations
+
+## Do not change
+
+Do not change:
+
+* actual status logic
+* service timing
+* button behavior
+* status wording
+* light size
+* light position
+* engine panel layout
+* app functionality
+
+## Acceptance criteria
+
+After this change:
+
+1. `STARTING → RUNNING` text fades smoothly instead of changing instantly.
+2. The red light illumination remains continuous.
+3. The text fade does not cause a white flash.
+4. The light does not resize or shift.
+5. The final shutdown flicker still affects the light/lens correctly.
+6. No functionality or unrelated UI changes are made.
