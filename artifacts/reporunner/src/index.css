@@ -486,24 +486,24 @@ input[type="number"] {
   border-radius: inherit;
   pointer-events: none;
   background: radial-gradient(
-    ellipse 120% 105% at 50% -18%,
-    rgba(255, 255, 255, 0.42) 0%,
-    rgba(255, 255, 255, 0.24) 24%,
-    rgba(255, 255, 255, 0.09) 48%,
-    rgba(255, 255, 255, 0.02) 66%,
-    transparent 78%
+    ellipse 120% 114% at 50% -16%,
+    rgba(255, 255, 255, 0.46) 0%,
+    rgba(255, 255, 255, 0.22) 22%,
+    rgba(255, 255, 255, 0.08) 46%,
+    rgba(255, 255, 255, 0.02) 64%,
+    transparent 76%
   );
   z-index: 0;
   transition: background 0.15s ease;
 }
 .btn-glass:hover:not(:disabled)::before {
   background: radial-gradient(
-    ellipse 120% 105% at 50% -18%,
-    rgba(255, 255, 255, 0.54) 0%,
-    rgba(255, 255, 255, 0.32) 24%,
-    rgba(255, 255, 255, 0.13) 48%,
-    rgba(255, 255, 255, 0.03) 66%,
-    transparent 78%
+    ellipse 120% 114% at 50% -16%,
+    rgba(255, 255, 255, 0.58) 0%,
+    rgba(255, 255, 255, 0.30) 22%,
+    rgba(255, 255, 255, 0.12) 46%,
+    rgba(255, 255, 255, 0.03) 64%,
+    transparent 76%
   );
 }
 .btn-glass:active:not(:disabled)::before {
@@ -570,42 +570,42 @@ input[type="number"] {
       180deg,
       transparent 0%,
       transparent 24%,
-      rgba(255, 255, 255, 0.045) 34%,
-      rgba(255, 255, 255, 0.07) 44%,
-      rgba(255, 255, 255, 0.025) 54%,
+      rgba(255, 255, 255, 0.062) 34%,
+      rgba(255, 255, 255, 0.095) 44%,
+      rgba(255, 255, 255, 0.032) 54%,
       transparent 63%
     ),
     /* lower bounce reflection */
     linear-gradient(
       180deg,
       transparent 0%,
-      transparent 58%,
-      rgba(255, 255, 255, 0.04) 65%,
-      rgba(255, 255, 255, 0.07) 72%,
-      rgba(255, 255, 255, 0.02) 80%,
+      transparent 56%,
+      rgba(255, 255, 255, 0.055) 64%,
+      rgba(255, 255, 255, 0.092) 72%,
+      rgba(255, 255, 255, 0.024) 80%,
       transparent 88%
     ),
     /* main body */
     linear-gradient(
       180deg,
-      rgba(130, 106, 106, 0.92) 0%,
-      rgba(82, 64, 64, 0.93) 12%,
-      rgba(24, 18, 18, 0.96) 38%,
+      rgba(148, 120, 120, 0.93) 0%,
+      rgba(88, 68, 68, 0.94) 12%,
+      rgba(26, 20, 20, 0.97) 38%,
       rgba(6, 5, 5, 0.99) 68%,
       rgba(10, 8, 8, 1.00) 100%
     );
-  border: 1px solid rgba(138, 112, 112, 0.54);
+  border: 1px solid rgba(148, 120, 120, 0.58);
   box-shadow:
-    0 4px 14px rgba(0, 0, 0, 0.76),
-    0 1px 4px rgba(0, 0, 0, 0.54),
-    inset 0 1px 0 rgba(255, 255, 255, 0.46),
-    inset 0 2px 1px rgba(255, 255, 255, 0.11),
-    inset 0 5px 22px rgba(255, 255, 255, 0.10),
-    inset 1px 0 0 rgba(255, 255, 255, 0.08),
-    inset -1px 0 0 rgba(255, 255, 255, 0.05),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.68),
-    inset 0 -5px 14px rgba(0, 0, 0, 0.46);
-  color: #a09c9a;
+    0 5px 18px rgba(0, 0, 0, 0.80),
+    0 1px 4px rgba(0, 0, 0, 0.56),
+    inset 0 1px 0 rgba(255, 255, 255, 0.54),
+    inset 0 2px 1px rgba(255, 255, 255, 0.14),
+    inset 0 5px 22px rgba(255, 255, 255, 0.14),
+    inset 1px 0 0 rgba(255, 255, 255, 0.10),
+    inset -1px 0 0 rgba(255, 255, 255, 0.06),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.72),
+    inset 0 -5px 16px rgba(0, 0, 0, 0.56);
+  color: #aca8a6;
 }
 .btn-glass-secondary:hover:not(:disabled) {
   background:
@@ -635,18 +635,18 @@ input[type="number"] {
       rgba(8, 6, 6, 1.00) 68%,
       rgba(12, 10, 10, 1.00) 100%
     );
-  border-color: rgba(172, 140, 140, 0.70);
+  border-color: rgba(180, 148, 148, 0.74);
   box-shadow:
-    0 6px 18px rgba(0, 0, 0, 0.80),
-    0 2px 5px rgba(0, 0, 0, 0.56),
-    inset 0 1px 0 rgba(255, 255, 255, 0.50),
-    inset 0 2px 1px rgba(255, 255, 255, 0.12),
-    inset 0 5px 24px rgba(255, 255, 255, 0.09),
-    inset 1px 0 0 rgba(255, 255, 255, 0.09),
-    inset -1px 0 0 rgba(255, 255, 255, 0.05),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.68),
-    inset 0 -5px 14px rgba(0, 0, 0, 0.42);
-  color: #b0a8a6;
+    0 7px 22px rgba(0, 0, 0, 0.84),
+    0 2px 5px rgba(0, 0, 0, 0.58),
+    inset 0 1px 0 rgba(255, 255, 255, 0.62),
+    inset 0 2px 1px rgba(255, 255, 255, 0.16),
+    inset 0 5px 24px rgba(255, 255, 255, 0.13),
+    inset 1px 0 0 rgba(255, 255, 255, 0.11),
+    inset -1px 0 0 rgba(255, 255, 255, 0.06),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.74),
+    inset 0 -5px 16px rgba(0, 0, 0, 0.56);
+  color: #beb8b6;
 }
 .btn-glass-secondary:active:not(:disabled) {
   background: linear-gradient(
@@ -690,24 +690,24 @@ input[type="number"] {
     /* main body */
     linear-gradient(
       180deg,
-      rgba(185, 44, 44, 0.92) 0%,
-      rgba(118, 26, 26, 0.93) 12%,
-      rgba(24, 8, 8, 0.96) 38%,
+      rgba(198, 50, 50, 0.93) 0%,
+      rgba(128, 28, 28, 0.94) 12%,
+      rgba(26, 8, 8, 0.97) 38%,
       rgba(6, 2, 2, 0.99) 68%,
       rgba(10, 4, 4, 1.00) 100%
     );
-  border: 1px solid rgba(204, 34, 34, 0.46);
+  border: 1px solid rgba(204, 34, 34, 0.52);
   box-shadow:
-    0 4px 14px rgba(0, 0, 0, 0.76),
-    0 0 16px rgba(204, 34, 34, 0.15),
-    inset 0 1px 0 rgba(255, 178, 178, 0.48),
-    inset 0 2px 1px rgba(255, 140, 140, 0.11),
-    inset 0 5px 22px rgba(255, 60, 60, 0.09),
-    inset 1px 0 0 rgba(255, 120, 120, 0.07),
-    inset -1px 0 0 rgba(255, 80, 80, 0.04),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.64),
-    inset 0 -5px 14px rgba(0, 0, 0, 0.38);
-  color: #c83535;
+    0 5px 18px rgba(0, 0, 0, 0.80),
+    0 0 20px rgba(204, 34, 34, 0.20),
+    inset 0 1px 0 rgba(255, 178, 178, 0.56),
+    inset 0 2px 1px rgba(255, 140, 140, 0.14),
+    inset 0 5px 22px rgba(255, 60, 60, 0.12),
+    inset 1px 0 0 rgba(255, 120, 120, 0.09),
+    inset -1px 0 0 rgba(255, 80, 80, 0.05),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.68),
+    inset 0 -5px 16px rgba(0, 0, 0, 0.50);
+  color: #d23838;
 }
 .btn-glass-primary:hover:not(:disabled) {
   background:
@@ -799,18 +799,18 @@ input[type="number"] {
       rgba(14, 3, 3, 0.99) 68%,
       rgba(20, 5, 5, 1.00) 100%
     );
-  border: 1px solid rgba(204, 34, 34, 0.76);
+  border: 1px solid rgba(204, 34, 34, 0.82);
   box-shadow:
-    0 4px 14px rgba(0, 0, 0, 0.76),
-    0 0 22px rgba(204, 34, 34, 0.30),
-    inset 0 1px 0 rgba(255, 188, 188, 0.54),
-    inset 0 2px 1px rgba(255, 150, 150, 0.13),
-    inset 0 5px 22px rgba(255, 60, 60, 0.12),
-    inset 1px 0 0 rgba(255, 120, 120, 0.08),
-    inset -1px 0 0 rgba(255, 80, 80, 0.05),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.64),
-    inset 0 -5px 14px rgba(0, 0, 0, 0.38);
-  color: #d03232;
+    0 5px 18px rgba(0, 0, 0, 0.80),
+    0 0 26px rgba(204, 34, 34, 0.34),
+    inset 0 1px 0 rgba(255, 188, 188, 0.62),
+    inset 0 2px 1px rgba(255, 150, 150, 0.16),
+    inset 0 5px 22px rgba(255, 60, 60, 0.15),
+    inset 1px 0 0 rgba(255, 120, 120, 0.10),
+    inset -1px 0 0 rgba(255, 80, 80, 0.06),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.70),
+    inset 0 -5px 16px rgba(0, 0, 0, 0.50);
+  color: #d83636;
 }
 .btn-glass-danger:hover:not(:disabled) {
   background:
