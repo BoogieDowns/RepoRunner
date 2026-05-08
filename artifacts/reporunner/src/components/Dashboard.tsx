@@ -443,10 +443,10 @@ function RepoRunnerLogo() {
       alt="RepoRunner logo"
       aria-hidden="true"
       style={{
-        width: "56px",
-        height: "56px",
+        width: "96px",
+        height: "96px",
         objectFit: "contain",
-        filter: "drop-shadow(0 0 9px rgba(204,30,30,0.52))",
+        filter: "drop-shadow(0 0 10px rgba(204,30,30,0.55))",
         flexShrink: 0,
       }}
     />
@@ -805,7 +805,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
 
       {/* ── Header ── */}
       <header
-        className="h-[56px] flex-none flex items-center px-5 gap-4 relative"
+        className="h-[72px] flex-none flex items-center px-5 gap-4 relative"
         style={{ borderBottom: "1px solid #161616", background: "rgba(7,7,7,0.92)" }}
       >
         {/* Brand */}
@@ -818,10 +818,10 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
             src={rrWordmark}
             alt="RepoRunner"
             style={{
-              height: "28px",
+              height: "52px",
               width: "auto",
               objectFit: "contain",
-              filter: "drop-shadow(0 0 6px rgba(204,30,30,0.22))",
+              filter: "drop-shadow(0 0 8px rgba(204,30,30,0.28))",
               flexShrink: 0,
               userSelect: "none",
             }}
