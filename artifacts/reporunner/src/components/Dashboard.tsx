@@ -447,8 +447,8 @@ function StopCircleXIcon({ className, strokeWidth = 1.5 }: { className?: string;
       aria-hidden="true"
     >
       <circle cx="12" cy="12" r="9" />
-      <line x1="15" y1="9" x2="9" y2="15" />
-      <line x1="9" y1="9" x2="15" y2="15" />
+      <line x1="6.5" y1="6.5" x2="17.5" y2="17.5" />
+      <line x1="17.5" y1="6.5" x2="6.5" y2="17.5" />
     </svg>
   );
 }
