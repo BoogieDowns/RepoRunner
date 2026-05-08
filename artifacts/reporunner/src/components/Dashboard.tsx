@@ -596,6 +596,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
       alignItems: "center",
       justifyContent: "center",
       gap: "5px",
+      minWidth: "74px",
       padding: "4px 9px",
       borderRadius: "1px",
       fontFamily: "'JetBrains Mono', monospace",
@@ -649,23 +650,22 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
         return (
           <span style={{
             ...housing,
-            background: "linear-gradient(180deg, #1a0e07 0%, #070402 100%)",
-            border: "1px solid rgba(52,28,10,0.92)",
-            boxShadow: "0 2px 7px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.65)",
+            background: "linear-gradient(180deg, #1e0c0c 0%, #070202 100%)",
+            border: "1px solid rgba(60,14,14,0.95)",
+            boxShadow: "0 2px 7px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,110,110,0.05), inset 0 -1px 0 rgba(0,0,0,0.40)",
           }}>
             <span style={{
               ...lens,
               background: [
-                ribs(0.28),
-                specular(242, 184, 160, 0.22),
-                "radial-gradient(ellipse at 50% 58%, rgba(198,112,72,0.88) 0%, rgba(128,54,22,0.94) 40%, rgba(58,18,6,0.97) 100%)",
+                ribs(0.26),
+                specular(255, 230, 225, 0.28),
+                "radial-gradient(ellipse at 50% 58%, rgba(255,180,164,0.96) 0%, rgba(232,52,52,0.98) 24%, rgba(178,18,18,0.98) 58%, rgba(62,4,4,0.99) 100%)",
               ].join(", "),
-              color: "rgba(246,196,174,0.96)",
-              textShadow: "0 0 8px rgba(242,184,160,0.62)",
-              boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18), 0 0 11px rgba(242,184,160,0.52), 0 0 4px rgba(242,184,160,0.32)",
-              animation: "rr-lens-on 0.7s ease-in forwards",
+              color: "rgba(255,226,222,0.98)",
+              textShadow: "0 0 10px rgba(255,95,85,0.92)",
+              boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18), 0 0 15px rgba(204,34,34,0.82), 0 0 5px rgba(204,34,34,0.56)",
+              animation: "rr-lens-on 1.8s ease-in forwards",
             }}>
-              <Loader2 className="w-[9px] h-[9px] animate-spin flex-none" />
               Starting
             </span>
           </span>
@@ -675,23 +675,22 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
         return (
           <span style={{
             ...housing,
-            background: "linear-gradient(180deg, #160c06 0%, #060402 100%)",
-            border: "1px solid rgba(44,24,8,0.88)",
-            boxShadow: "0 2px 7px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.65)",
+            background: "linear-gradient(180deg, #1e0c0c 0%, #070202 100%)",
+            border: "1px solid rgba(60,14,14,0.95)",
+            boxShadow: "0 2px 7px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,110,110,0.05), inset 0 -1px 0 rgba(0,0,0,0.40)",
           }}>
             <span style={{
               ...lens,
               background: [
-                ribs(0.30),
-                specular(200, 148, 115, 0.15),
-                "radial-gradient(ellipse at 50% 58%, rgba(170,92,56,0.74) 0%, rgba(108,46,17,0.90) 44%, rgba(44,15,5,0.97) 100%)",
+                ribs(0.26),
+                specular(255, 230, 225, 0.28),
+                "radial-gradient(ellipse at 50% 58%, rgba(255,180,164,0.96) 0%, rgba(232,52,52,0.98) 24%, rgba(178,18,18,0.98) 58%, rgba(62,4,4,0.99) 100%)",
               ].join(", "),
-              color: "rgba(214,162,130,0.92)",
-              textShadow: "0 0 7px rgba(200,148,115,0.48)",
-              boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18), 0 0 10px rgba(200,148,115,0.44), 0 0 4px rgba(200,148,115,0.28)",
-              animation: "rr-lens-on 0.7s ease-in forwards",
+              color: "rgba(255,226,222,0.98)",
+              textShadow: "0 0 10px rgba(255,95,85,0.92)",
+              boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18), 0 0 15px rgba(204,34,34,0.82), 0 0 5px rgba(204,34,34,0.56)",
+              animation: "rr-lens-off 1.8s ease-out forwards",
             }}>
-              <Loader2 className="w-[9px] h-[9px] animate-spin flex-none" />
               Stopping
             </span>
           </span>
