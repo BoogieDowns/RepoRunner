@@ -443,17 +443,18 @@ function RestartOrbitIcon({ className, strokeWidth = 1.5 }: { className?: string
       aria-hidden="true"
     >
       {/*
-        Wave 1: left-upper → center(12,12) → right-lower
-        Two cubic segments joined at center: first half bows up, second half bows down.
-        Result: smooth S-curve from (3,10) through (12,12) to (21,14).
+        Two crossing cubic bezier curves, both passing through center (12,12).
+        Midpoint formula: (P0 + 3·P1 + 3·P2 + P3) / 8 = (12,12) verified for both.
+
+        Curve 1: enters top-left area (10,6), CP1 bows hard LEFT (2,6),
+                 CP2 bows hard RIGHT (22,18), exits bottom-right (14,18).
+        Curve 2: mirror — enters top-right (14,6), bows RIGHT then LEFT, exits bottom-left (10,18).
+
+        At t=0.25 the two curves are ~7 units apart in x, creating the
+        pronounced spread of the reference image. They converge at (12,12).
       */}
-      <path d="M3,10 C6,4 10,4 12,12 C14,20 18,20 21,14" />
-      {/*
-        Wave 2: mirror of Wave 1.
-        Left-lower → center(12,12) → right-upper
-        First half bows down, second half bows up.
-      */}
-      <path d="M3,14 C6,20 10,20 12,12 C14,4 18,4 21,10" />
+      <path d="M10,6 C2,6 22,18 14,18" />
+      <path d="M14,6 C22,6 2,18 10,18" />
     </svg>
   );
 }
