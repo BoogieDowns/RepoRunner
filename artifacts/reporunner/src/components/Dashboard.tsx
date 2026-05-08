@@ -586,7 +586,7 @@ function StatusTextFade({
       setPrev({ text: curText, color: lastStyle.current.color, textShadow: lastStyle.current.textShadow });
       setCurText(text);
       lastStyle.current = { color, textShadow };
-      const t = setTimeout(() => setPrev(null), 280);
+      const t = setTimeout(() => setPrev(null), 720);
       return () => clearTimeout(t);
     }
     lastStyle.current = { color, textShadow };
@@ -606,7 +606,7 @@ function StatusTextFade({
             justifyContent: "center",
             color: prev.color,
             ...(prev.textShadow ? { textShadow: prev.textShadow } : {}),
-            animation: "rr-status-text-out 0.24s ease forwards",
+            animation: "rr-status-text-out 0.7s ease forwards",
             pointerEvents: "none",
             whiteSpace: "nowrap",
           }}
@@ -619,7 +619,7 @@ function StatusTextFade({
         style={{
           color,
           ...(textShadow ? { textShadow } : {}),
-          animation: "rr-status-text-in 0.24s ease forwards",
+          animation: "rr-status-text-in 0.7s ease forwards",
         }}
       >
         {curText}

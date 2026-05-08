@@ -349,6 +349,8 @@
   from { opacity: 0; }
   to   { opacity: 1; }
 }
+/* Duration tokens for status-text crossfade — used in StatusTextFade component */
+/* out: 0.7s  in: 0.7s  timeout: 720ms */
 
 @layer utilities {
   input[type="search"]::-webkit-search-cancel-button {
