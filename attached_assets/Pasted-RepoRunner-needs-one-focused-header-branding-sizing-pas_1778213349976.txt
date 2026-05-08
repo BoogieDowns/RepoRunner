@@ -1,0 +1,112 @@
+RepoRunner needs one **focused header branding sizing pass** only.
+
+Do **not** redesign the app.
+Do **not** change functionality.
+Do **not** change dashboard layout, button behavior, engine lights, logs, meteors, setup modal, IPC, process logic, or product flow.
+
+This is only about making the imported **top-left logo mark and wordmark** the correct size and balance inside the header.
+
+## Current issue
+
+The imported logo mark and wordmark are now in the top-left header, but they are too small.
+
+They look under-scaled compared to the rest of the UI.
+
+The header branding needs to feel more intentional and properly sized.
+
+## Requested changes
+
+### 1. Increase logo mark size
+
+Make the logo mark larger so it is clearly visible and feels like a real app brand mark.
+
+It should not be tiny or hard to read.
+
+Please scale it up while keeping it:
+
+* crisp
+* not blurry
+* not distorted
+* vertically centered
+* balanced with the wordmark
+* not oversized
+
+### 2. Increase wordmark size
+
+Make the RepoRunner wordmark larger so it reads properly in the header.
+
+It should feel like the primary brand identity, not a tiny decorative asset.
+
+Please scale it up while keeping it:
+
+* readable
+* crisp
+* aligned with the logo mark
+* visually balanced
+* not overpowering the project name area
+
+### 3. Adjust the brand/header area if needed
+
+The top-left brand section/header area can be a little wider if needed.
+
+Please give the logo + wordmark enough room to breathe.
+
+If necessary:
+
+* increase the brand block width slightly
+* adjust spacing between logo mark and wordmark
+* adjust spacing between wordmark and divider
+* keep project name/path aligned cleanly after the divider
+
+Do not make the header huge.
+Just give the imported brand assets enough room.
+
+## Visual direction
+
+The top-left header should feel:
+
+* premium
+* intentional
+* branded
+* balanced
+* readable
+* clean
+
+The logo and wordmark should look like they belong in the interface, not like tiny pasted-in assets.
+
+## Preserve existing header structure
+
+Keep the same general header structure:
+
+```text
+[logo mark] [wordmark] | [project name]
+                         [repo path]
+```
+
+Do not add new text.
+Do not add new branding labels.
+Do not reintroduce `DEV CONSOLE`.
+
+## Important constraints
+
+Do not:
+
+* stretch the logo non-proportionally
+* distort the wordmark
+* crop either asset
+* make them blurry
+* move them to another part of the app
+* change the project name/path behavior
+* change the rest of the dashboard
+
+## Acceptance criteria
+
+After this pass:
+
+1. The logo mark is noticeably larger and easier to see.
+2. The wordmark is noticeably larger and easier to read.
+3. Both assets remain crisp and undistorted.
+4. The brand block has enough width/breathing room.
+5. The logo, wordmark, divider, project name, and path feel properly aligned.
+6. The header still feels clean and premium.
+7. No unrelated UI or functionality changes are made.
