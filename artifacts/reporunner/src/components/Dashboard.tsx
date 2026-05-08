@@ -3,7 +3,6 @@ import rrLogoMark from "../assets/rr-logo-mark.png";
 import {
   Play,
   Server,
-  RotateCw,
   Copy,
   Trash2,
   Settings2,
@@ -426,6 +425,29 @@ function AmbientBackground({
 
     </div>
     </>
+  );
+}
+
+/* ─── Restart icon (two mirrored S-curves crossing through a central oval) ───*/
+
+function RestartOrbitIcon({ className, strokeWidth = 1.5 }: { className?: string; strokeWidth?: number }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {/* left curve: upper-left → sweeps out left → through center → lower-right */}
+      <path d="M5,7 C1,10 8,13 12,12 C16,11 20,16 19,17" />
+      {/* right curve: mirror */}
+      <path d="M19,7 C23,10 16,13 12,12 C8,11 4,16 5,17" />
+      <ellipse cx="12" cy="12" rx="2" ry="1.3" />
+    </svg>
   );
 }
 
@@ -1011,7 +1033,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                     />
                     <CommandButton
                       label="Restart"
-                      icon={RotateCw}
+                      icon={RestartOrbitIcon}
                       onClick={wrapAction("restart", window.repoRunner.restartAll)}
                       loading={actionLoading["restart"]}
                       variant="outline"
