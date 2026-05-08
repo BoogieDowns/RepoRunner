@@ -895,7 +895,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
       case "frontend": return "#cc4444";
       case "backend":  return "#5080a8";
       case "system":
-      default:         return "#3a3836";
+      default:         return "#575452";
     }
   };
 
@@ -1165,7 +1165,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
           {logs.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center gap-2 select-none">
               <span style={{ fontSize: "12px", color: "#484644", letterSpacing: "0.02em" }}>No logs yet</span>
-              <span style={{ fontSize: "11px", color: "#383634", letterSpacing: "0.01em" }}>
+              <span style={{ fontSize: "11px", color: "#484442", letterSpacing: "0.01em" }}>
                 Run Pull, Install, or Start a service to see output here.
               </span>
             </div>
@@ -1195,7 +1195,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                   >
                     [{log.source}]
                   </span>
-                  <span className="whitespace-pre-wrap break-all min-w-0" style={{ color: "#7e7c7a" }}>
+                  <span className="whitespace-pre-wrap break-all min-w-0" style={{ color: "#8c8a88" }}>
                     {log.text}
                   </span>
                 </div>

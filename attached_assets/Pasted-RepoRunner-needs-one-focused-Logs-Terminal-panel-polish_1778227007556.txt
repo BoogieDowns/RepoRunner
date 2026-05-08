@@ -1,0 +1,182 @@
+RepoRunner needs one **focused Logs / Terminal panel polish pass** only.
+
+Do **not** redesign the app.
+Do **not** change functionality.
+Do **not** change log behavior.
+Do **not** change copy logs behavior.
+Do **not** change clear logs behavior.
+Do **not** change dashboard buttons, engine lights, setup modal, header, meteors, IPC, process logic, or product flow.
+
+This is only about making the **logs / terminal panel** feel more polished, readable, and integrated with the current UI.
+
+## Current goal
+
+The Quick Actions buttons are done.
+The Setup modal is done.
+
+Now inspect and polish the Logs / Terminal panel.
+
+## Scope
+
+Only inspect and polish:
+
+* logs panel header
+* terminal/log container
+* log rows
+* timestamps
+* source labels like `[SYSTEM]`, `[INSTALL]`, `[FRONTEND]`, `[BACKEND]`, `[GIT]`
+* empty state
+* Copy / Clear buttons
+* scrollbar inside the logs panel
+* terminal panel border/shadow/background
+
+## Do not change
+
+Do not add:
+
+* search
+* filters
+* tabs
+* log levels
+* new controls
+* new behavior
+
+Do not change:
+
+* what logs are shown
+* log order
+* log copying
+* log clearing
+* logging logic
+* process behavior
+
+This is visual polish only.
+
+## 1. Inspect the logs panel visually first
+
+Open the dashboard and inspect the logs panel directly.
+
+If possible, inspect both:
+
+* empty logs state
+* active logs with several lines
+
+Do not guess blindly from code only.
+
+## 2. Logs readability
+
+Make sure log lines are easy to scan.
+
+Check:
+
+* timestamp contrast
+* source label contrast
+* message text contrast
+* row spacing
+* line height
+* font size
+* text wrapping
+* visual separation between entries
+
+The logs should feel technical and terminal-like, but not cramped.
+
+## 3. Source label polish
+
+Check source labels such as:
+
+```text
+[SYSTEM]
+[INSTALL]
+[FRONTEND]
+[BACKEND]
+[GIT]
+```
+
+They should be:
+
+* readable
+* consistently styled
+* visually distinct enough to scan
+* not too bright
+* not too dim
+
+Keep the existing color logic, including the peach install color, unless there is a clear readability issue.
+
+## 4. Timestamp polish
+
+Timestamps should be visible but secondary.
+
+They should not overpower the log text.
+
+If needed, adjust timestamp color/opacity slightly.
+
+## 5. Terminal surface polish
+
+The terminal area should feel like part of the same dark sci-fi console system.
+
+Check:
+
+* background depth
+* border definition
+* subtle inner shadow
+* panel edge clarity
+* spacing around logs
+* empty state presentation
+
+Do not make it flashy.
+
+## 6. Copy / Clear controls
+
+Make sure Copy and Clear controls feel polished.
+
+Check:
+
+* alignment
+* hover state
+* disabled state if applicable
+* spacing
+* contrast
+
+Do not add new controls.
+
+## 7. Scrollbar polish
+
+Check the logs panel scrollbar.
+
+It should match the current app style:
+
+* dark track
+* subtle thumb
+* red/dark accent on hover if already used
+* not default browser-looking
+
+Do not change scroll behavior.
+
+## 8. Preserve current visual identity
+
+Keep:
+
+* black/red cinematic mood
+* terminal-console feel
+* restrained glow
+* readable monospace logs
+* current dashboard structure
+
+## 9. Only fix visible issues
+
+If something already looks good, leave it alone.
+
+Do not make unnecessary changes.
+
+## Acceptance criteria
+
+After this pass:
+
+1. Logs panel is easier to scan.
+2. Source labels are readable and consistent.
+3. Timestamps feel secondary but visible.
+4. Log messages remain readable.
+5. Empty state looks intentional.
+6. Copy / Clear controls feel aligned and polished.
+7. Scrollbar matches the app style.
+8. No log behavior or app functionality is changed.
