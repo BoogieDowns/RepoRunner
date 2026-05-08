@@ -61,16 +61,6 @@ interface RippleDef {
   op:       number;    // opacity scalar
 }
 
-interface FragmentDef {
-  id:       number;
-  left:     number;    // % from left edge
-  dividerY: number;    // px anchor (where the divider line is)
-  offsetY:  number;    // px below divider to start
-  driftX:   number;    // horizontal px offset from left%
-  op:       number;    // max opacity
-  size:     number;    // px square side
-  dur:      number;    // animation seconds
-}
 
 /**
  * A single meteor streak.
@@ -159,7 +149,6 @@ function AmbientBackground({
 }) {
   const [meteors,   setMeteors]   = useState<MeteorDef[]>([]);
   const [ripples,   setRipples]   = useState<RippleDef[]>([]);
-  const [fragments, setFragments] = useState<FragmentDef[]>([]);
   const spawnerRef     = useRef<ReturnType<typeof setInterval> | null>(null);
   const idRef          = useRef(0);
   const wasRunningRef  = useRef(false);
@@ -186,25 +175,6 @@ function AmbientBackground({
     setRipples(prev => [...prev, { id: rippleId, left, dividerY, op }]);
     setTimeout(() => setRipples(prev => prev.filter(r => r.id !== rippleId)), 1300);
 
-    /* Pixel fragments — delayed so the line ripple reads first, then the
-     * pixelation appears as a clearly separate second beat below the divider. */
-    const count = layer === 2 ? 12 : 7;
-    setTimeout(() => {
-      const newFrags: FragmentDef[] = Array.from({ length: count }, () => ({
-        id:      ++idRef.current,
-        left,
-        dividerY,
-        offsetY: 8 + Math.random() * 18,    // start clearly below the divider line
-        driftX:  (Math.random() - 0.5) * 64,
-        op:      op * (layer === 2 ? 0.88 : 0.68) * (0.55 + Math.random() * 0.45),
-        size:    Math.random() < 0.35 ? 14 : Math.random() < 0.65 ? 10 : 8,
-        dur:     1.1 + Math.random() * 0.8,
-      }));
-      setFragments(prev => [...prev, ...newFrags]);
-      newFrags.forEach(f =>
-        setTimeout(() => setFragments(prev => prev.filter(fr => fr.id !== f.id)), (f.dur + 0.25) * 1000)
-      );
-    }, 110);
   }, []);
   triggerImpactRef.current = triggerImpact;
 
@@ -457,25 +427,6 @@ function AmbientBackground({
         />,
       ])}
 
-      {/* Pixel fragments — digital dissolve in the terminal zone */}
-      {fragments.map(f => (
-        <div
-          key={f.id}
-          style={{
-            position:  "absolute",
-            top:       `${f.dividerY + f.offsetY}px`,
-            left:      `calc(${f.left}% + ${f.driftX}px)`,
-            width:     `${f.size}px`,
-            height:    `${f.size}px`,
-            background: `rgba(196,36,36,${f.op})`,
-            pointerEvents:   "none",
-            animationName:        "rr-fragment-fall",
-            animationDuration:    `${f.dur}s`,
-            animationTimingFunction: "ease-in",
-            animationFillMode:    "forwards",
-          }}
-        />
-      ))}
     </div>
     </>
   );
