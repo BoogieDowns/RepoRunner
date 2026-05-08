@@ -570,7 +570,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
   const bothStopped =
     statuses.frontend === "stopped" && statuses.backend === "stopped";
 
-  const getStatusDisplay = (status: string) => {
+  const getStatusDisplay = (status: string, lightKey: string) => {
     /*
       Two-element structure:
         housing  — stable bezel/frame with outer shadow, never animates
@@ -621,7 +621,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
     switch (status) {
       case "running":
         return (
-          <span style={{
+          <span key={lightKey} style={{
             ...housing,
             background: "linear-gradient(180deg, #1e0c0c 0%, #070202 100%)",
             border: "1px solid rgba(60,14,14,0.95)",
@@ -648,7 +648,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
 
       case "starting":
         return (
-          <span style={{
+          <span key={lightKey} style={{
             ...housing,
             background: "linear-gradient(180deg, #1e0c0c 0%, #070202 100%)",
             border: "1px solid rgba(60,14,14,0.95)",
@@ -673,7 +673,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
 
       case "stopping":
         return (
-          <span style={{
+          <span key={lightKey} style={{
             ...housing,
             background: "linear-gradient(180deg, #1e0c0c 0%, #070202 100%)",
             border: "1px solid rgba(60,14,14,0.95)",
@@ -716,7 +716,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
 
       case "failed":
         return (
-          <span style={{
+          <span key={lightKey} style={{
             ...housing,
             background: "linear-gradient(180deg, #1e0c0c 0%, #070202 100%)",
             border: "1px solid rgba(60,14,14,0.95)",
@@ -740,7 +740,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
 
       case "unknown":
         return (
-          <span style={{
+          <span key={lightKey} style={{
             ...housing,
             background: "linear-gradient(180deg, #111111 0%, #060606 100%)",
             border: "1px solid rgba(34,34,34,0.92)",
@@ -764,7 +764,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
       case "stopped":
       default:
         return (
-          <span style={{
+          <span key={lightKey} style={{
             ...housing,
             background: "linear-gradient(180deg, #150808 0%, #060202 100%)",
             border: "1px solid rgba(48,10,10,0.94)",
@@ -988,7 +988,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                       </p>
                     )}
                   </div>
-                  {getStatusDisplay(statuses.frontend)}
+                  {getStatusDisplay(statuses.frontend, `fe-${statuses.frontend}`)}
                 </div>
                 <Separator style={{ background: "#161616" }} />
                 <div className="flex items-center justify-between gap-3">
@@ -1002,7 +1002,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                       </p>
                     )}
                   </div>
-                  {getStatusDisplay(statuses.backend)}
+                  {getStatusDisplay(statuses.backend, `be-${statuses.backend}`)}
                 </div>
               </CardContent>
             </Card>
