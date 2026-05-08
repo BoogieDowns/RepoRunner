@@ -479,7 +479,7 @@ function InstallStackIcon({ className, strokeWidth = 1.5 }: { className?: string
   );
 }
 
-/* ─── Open icon (comet: solid circle head + 3 graded parallel 45° tail strokes) ─*/
+/* ─── Open icon (comet: stroked circle head + 3 graded parallel 45° tail strokes) ─*/
 
 function OpenCometIcon({ className }: { className?: string }) {
   return (
@@ -492,16 +492,18 @@ function OpenCometIcon({ className }: { className?: string }) {
       strokeLinecap="round"
       aria-hidden="true"
     >
-      {/* Circle head — upper right quadrant, r=4 */}
+      {/* Circle head — upper right, r=4 */}
       <circle cx="15" cy="7.5" r="4" />
       {/*
-        Three parallel tail strokes, all at exactly 45° (direction: lower-left).
-        Graded lengths: long → medium → short, fanning away from the circle.
-        Start points verified outside circle (dist from (15,7.5) > 4).
+        Three parallel 45° tail strokes all going lower-left (direction -1,+1).
+        Stroke 1 starts at the circle's exact lower-left edge (135° in SVG = lower-left):
+          (15 + 4*cos(135°_svg), 7.5 + 4*sin(135°_svg)) = (15−2.83, 7.5+2.83) = (12.2, 10.3)
+        → no gap between stroke and circle.
+        Strokes 2 & 3 fan progressively away, graded shorter.
       */}
-      <line x1="10.5" y1="5"    x2="3.5"  y2="12"  />  {/* long   — dist≈5.6 ✓ */}
-      <line x1="11.5" y1="10"   x2="7"    y2="14.5" />  {/* medium — dist≈4.6 ✓ */}
-      <line x1="13.5" y1="14"   x2="9.5"  y2="18"  />  {/* short  — dist≈6.7 ✓ */}
+      <line x1="12.2" y1="10.3" x2="6.2"  y2="16.3" />  {/* long  — starts at circle edge */}
+      <line x1="10.5" y1="13.5" x2="7"    y2="17"   />  {/* med   — dist≈7.8 from center */}
+      <line x1="9"    y1="16"   x2="7"    y2="18"   />  {/* short — dist≈10.8 from center */}
     </svg>
   );
 }
