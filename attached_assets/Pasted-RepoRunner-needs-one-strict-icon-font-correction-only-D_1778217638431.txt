@@ -1,0 +1,103 @@
+RepoRunner needs one **strict icon-font correction** only.
+
+Do **not** redesign the UI.
+Do **not** change layout.
+Do **not** change functionality.
+Do **not** change button labels, button sizing, button styling, engine lights, logs, meteors, setup modal, IPC, process logic, or product flow.
+
+This is only about correcting the **Stop Engine button icon**.
+
+## Current issue
+
+The Stop Engine icon was changed, but Replit did **not** use the LunaObscura font glyph.
+
+It looks like a generic icon was used instead.
+
+That is not what I want.
+
+## Required fix
+
+Use the matching circle-with-X glyph from the LunaObscura font file.
+
+Font location:
+
+```text
+artifacts/reporunner/src/assets/fonts/hs_lunaobscura Font
+```
+
+Please inspect the exact font file and available glyphs.
+
+Do not use:
+
+* Lucide icon
+* SVG icon
+* generic icon library
+* CSS-drawn icon
+* emoji
+* fallback symbol from another font
+
+Use the actual glyph from the LunaObscura font if it exists.
+
+## What the icon should look like
+
+The icon should match the reference:
+
+```text
+circle with an X/cross inside it
+```
+
+It should feel like part of the same LunaObscura visual system as the button lettering.
+
+## Implementation direction
+
+Please verify that the LunaObscura font is properly loaded via `@font-face`.
+
+Then render the Stop Engine icon using that font family.
+
+If needed:
+
+* inspect the character map / glyphs
+* find the correct glyph character
+* use that glyph as the Stop Engine icon
+* ensure the icon element explicitly uses the LunaObscura font family
+
+The icon should not fall back to another font.
+
+## Scope
+
+Apply this only to:
+
+```text
+Stop Engine
+```
+
+Do not change icons for:
+
+* Start Frontend
+* Start Backend
+* Pull
+* Install
+* Restart
+* Open
+
+## Visual requirements
+
+The Stop Engine icon should:
+
+* use the LunaObscura glyph
+* be properly centered
+* match the button text style
+* have the same red/disabled color behavior as the current icon
+* not resize the button
+* not alter button spacing
+
+## Acceptance criteria
+
+After this change:
+
+1. The Stop Engine icon uses the LunaObscura font glyph.
+2. It no longer looks like a generic icon-library symbol.
+3. The icon matches the circle-with-X reference.
+4. The icon is centered and correctly sized.
+5. No other icons are changed.
+6. No layout or functionality changes are made.

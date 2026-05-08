@@ -5,7 +5,6 @@ import {
   Package,
   Play,
   Server,
-  XCircle,
   RotateCw,
   ExternalLink,
   Copy,
@@ -430,6 +429,27 @@ function AmbientBackground({
 
     </div>
     </>
+  );
+}
+
+/* ─── Stop Engine icon (circle + X, custom — LunaObscura has no such glyph) ─*/
+
+function StopCircleXIcon({ className, strokeWidth = 1.5 }: { className?: string; strokeWidth?: number }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="9" />
+      <line x1="15" y1="9" x2="9" y2="15" />
+      <line x1="9" y1="9" x2="15" y2="15" />
+    </svg>
   );
 }
 
@@ -902,7 +922,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                     />
                     <CommandButton
                       label="Stop Engine"
-                      icon={XCircle}
+                      icon={StopCircleXIcon}
                       onClick={wrapAction("stop", window.repoRunner.stopServices)}
                       disabled={bothStopped}
                       loading={actionLoading["stop"]}
