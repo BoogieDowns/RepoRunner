@@ -32,13 +32,13 @@ import { Separator } from "@/components/ui/separator";
  * y=12 aligns with the physical divider line so undisturbed tails sit on it.
  */
 const WAVE_PATH = (() => {
-  // Narrower span (±180 px), higher amplitude (9 px), tighter decay (τ=46 px)
-  const A = 9, omega = 0.055, tau = 46;
+  // Span ±230 px (460 px total), amplitude 16 px, decay τ=52 px
+  const A = 16, omega = 0.053, tau = 52;
   const pts: string[] = [];
-  for (let x = -180; x <= 180; x += 2) {
+  for (let x = -230; x <= 230; x += 2) {
     const env = Math.exp(-Math.abs(x) / tau);
-    const y   = 12 + A * Math.cos(omega * x) * env;
-    pts.push(`${x === -180 ? "M" : "L"}${(x + 180).toFixed(1)},${y.toFixed(2)}`);
+    const y   = 18 + A * Math.cos(omega * x) * env;
+    pts.push(`${x === -230 ? "M" : "L"}${(x + 230).toFixed(1)},${y.toFixed(2)}`);
   }
   return pts.join(" ");
 })();
@@ -390,40 +390,40 @@ function AmbientBackground({
         <svg
           key={`wave-${r.id}`}
           aria-hidden="true"
-          width="360"
-          height="24"
-          viewBox="0 0 360 24"
+          width="460"
+          height="36"
+          viewBox="0 0 460 36"
           style={{
             position:  "absolute",
-            top:       `${r.dividerY - 12}px`,
+            top:       `${r.dividerY - 18}px`,
             left:      `${r.left}%`,
             transform: "translateX(-50%)",
             overflow:  "hidden",
             pointerEvents: "none",
-            filter:    `drop-shadow(0 0 4px rgba(210,44,44,${r.op * 0.75}))`,
-            /* Radial mask: full opacity at center, feathers to transparent at edges */
-            WebkitMaskImage: "radial-gradient(ellipse 90% 200% at 50% 50%, black 18%, rgba(0,0,0,0.55) 52%, rgba(0,0,0,0.10) 78%, transparent 100%)",
-            maskImage:        "radial-gradient(ellipse 90% 200% at 50% 50%, black 18%, rgba(0,0,0,0.55) 52%, rgba(0,0,0,0.10) 78%, transparent 100%)",
+            filter:    `drop-shadow(0 0 6px rgba(210,44,44,${r.op * 0.90}))`,
+            /* Radial mask: strong center, feathered edges */
+            WebkitMaskImage: "radial-gradient(ellipse 90% 200% at 50% 50%, black 22%, rgba(0,0,0,0.60) 55%, rgba(0,0,0,0.12) 80%, transparent 100%)",
+            maskImage:        "radial-gradient(ellipse 90% 200% at 50% 50%, black 22%, rgba(0,0,0,0.60) 55%, rgba(0,0,0,0.12) 80%, transparent 100%)",
             animationName:        "rr-wave-expand",
             animationDuration:    "1.05s",
             animationTimingFunction: "ease-out",
             animationFillMode:    "forwards",
           }}
         >
-          {/* Outer glow — softened stroke for warm diffuse halo */}
+          {/* Outer glow — wide diffuse halo */}
           <path
             d={WAVE_PATH}
             fill="none"
-            stroke={`rgba(204,40,40,${r.op * 0.32})`}
-            strokeWidth="6"
+            stroke={`rgba(204,40,40,${r.op * 0.50})`}
+            strokeWidth="8"
             strokeLinecap="round"
           />
           {/* Bright core — narrow, vivid */}
           <path
             d={WAVE_PATH}
             fill="none"
-            stroke={`rgba(252,72,72,${r.op * 0.92})`}
-            strokeWidth="1.5"
+            stroke={`rgba(252,72,72,${r.op * 1.00})`}
+            strokeWidth="2"
             strokeLinecap="round"
           />
         </svg>,
