@@ -533,11 +533,11 @@ input[type="number"] {
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.20) 10%,
-    rgba(255, 255, 255, 0.72) 38%,
-    rgba(255, 255, 255, 0.88) 50%,
-    rgba(255, 255, 255, 0.72) 62%,
-    rgba(255, 255, 255, 0.20) 90%,
+    rgba(255, 255, 255, 0.16) 12%,
+    rgba(255, 255, 255, 0.64) 38%,
+    rgba(255, 255, 255, 0.76) 50%,
+    rgba(255, 255, 255, 0.64) 62%,
+    rgba(255, 255, 255, 0.16) 88%,
     transparent 100%
   );
   z-index: 2;
@@ -606,8 +606,8 @@ input[type="number"] {
     inset 1px 0 0 rgba(255, 255, 255, 0.12),
     inset -1px 0 0 rgba(255, 255, 255, 0.08),
     inset 0 -1px 0 rgba(0, 0, 0, 0.84),
-    inset 0 -5px 16px rgba(0, 0, 0, 0.58),
-    inset 0 -12px 28px rgba(0, 0, 0, 0.28);
+    inset 0 -5px 16px rgba(0, 0, 0, 0.56),
+    inset 0 -14px 34px rgba(0, 0, 0, 0.20);
   color: #aca8a6;
 }
 .btn-glass-secondary:hover:not(:disabled) {
@@ -647,8 +647,9 @@ input[type="number"] {
     inset 0 5px 24px rgba(255, 255, 255, 0.13),
     inset 1px 0 0 rgba(255, 255, 255, 0.11),
     inset -1px 0 0 rgba(255, 255, 255, 0.06),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.74),
-    inset 0 -5px 16px rgba(0, 0, 0, 0.56);
+    inset 0 -1px 0 rgba(0, 0, 0, 0.84),
+    inset 0 -5px 16px rgba(0, 0, 0, 0.56),
+    inset 0 -14px 34px rgba(0, 0, 0, 0.16);
   color: #beb8b6;
 }
 .btn-glass-secondary:active:not(:disabled) {
@@ -659,9 +660,11 @@ input[type="number"] {
   );
   border-color: rgba(80, 65, 65, 0.36);
   box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.64),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    inset 0 5px 12px rgba(0, 0, 0, 0.66);
+    0 1px 2px rgba(0, 0, 0, 0.60),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    inset 0 3px 10px rgba(0, 0, 0, 0.58),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.70),
+    inset 0 -4px 10px rgba(0, 0, 0, 0.42);
   color: #6e6a68;
 }
 
@@ -709,8 +712,8 @@ input[type="number"] {
     inset 1px 0 0 rgba(255, 120, 120, 0.10),
     inset -1px 0 0 rgba(255, 80, 80, 0.06),
     inset 0 -1px 0 rgba(0, 0, 0, 0.80),
-    inset 0 -5px 16px rgba(0, 0, 0, 0.54),
-    inset 0 -12px 28px rgba(0, 0, 0, 0.26);
+    inset 0 -5px 16px rgba(0, 0, 0, 0.52),
+    inset 0 -14px 34px rgba(0, 0, 0, 0.20);
   color: #d23838;
 }
 .btn-glass-primary:hover:not(:disabled) {
@@ -750,8 +753,9 @@ input[type="number"] {
     inset 0 5px 24px rgba(255, 60, 60, 0.11),
     inset 1px 0 0 rgba(255, 120, 120, 0.09),
     inset -1px 0 0 rgba(255, 80, 80, 0.05),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.68),
-    inset 0 -5px 14px rgba(0, 0, 0, 0.42);
+    inset 0 -1px 0 rgba(0, 0, 0, 0.80),
+    inset 0 -5px 16px rgba(0, 0, 0, 0.52),
+    inset 0 -14px 34px rgba(0, 0, 0, 0.16);
   color: #e03838;
 }
 .btn-glass-primary:active:not(:disabled) {
@@ -762,10 +766,12 @@ input[type="number"] {
   );
   border-color: rgba(204, 34, 34, 0.26);
   box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.64),
-    0 0 6px rgba(204, 34, 34, 0.08),
-    inset 0 1px 0 rgba(255, 110, 110, 0.06),
-    inset 0 5px 12px rgba(0, 0, 0, 0.66);
+    0 1px 2px rgba(0, 0, 0, 0.60),
+    0 0 5px rgba(204, 34, 34, 0.07),
+    inset 0 1px 0 rgba(255, 110, 110, 0.05),
+    inset 0 3px 10px rgba(0, 0, 0, 0.60),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.72),
+    inset 0 -4px 10px rgba(0, 0, 0, 0.38);
   color: #a82828;
 }
 
@@ -813,8 +819,8 @@ input[type="number"] {
     inset 1px 0 0 rgba(255, 120, 120, 0.11),
     inset -1px 0 0 rgba(255, 80, 80, 0.07),
     inset 0 -1px 0 rgba(0, 0, 0, 0.82),
-    inset 0 -5px 16px rgba(0, 0, 0, 0.54),
-    inset 0 -12px 28px rgba(0, 0, 0, 0.26);
+    inset 0 -5px 16px rgba(0, 0, 0, 0.52),
+    inset 0 -14px 34px rgba(0, 0, 0, 0.20);
   color: #d83636;
 }
 .btn-glass-danger:hover:not(:disabled) {
@@ -854,8 +860,9 @@ input[type="number"] {
     inset 0 5px 24px rgba(255, 60, 60, 0.15),
     inset 1px 0 0 rgba(255, 120, 120, 0.10),
     inset -1px 0 0 rgba(255, 80, 80, 0.06),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.68),
-    inset 0 -5px 14px rgba(0, 0, 0, 0.42);
+    inset 0 -1px 0 rgba(0, 0, 0, 0.82),
+    inset 0 -5px 16px rgba(0, 0, 0, 0.52),
+    inset 0 -14px 34px rgba(0, 0, 0, 0.16);
   color: #ea3a3a;
 }
 .btn-glass-danger:active:not(:disabled) {
@@ -866,9 +873,11 @@ input[type="number"] {
   );
   border-color: rgba(204, 34, 34, 0.54);
   box-shadow:
-    0 1px 4px rgba(0, 0, 0, 0.68),
-    0 0 12px rgba(204, 34, 34, 0.16),
-    inset 0 1px 0 rgba(255, 130, 130, 0.07),
-    inset 0 5px 12px rgba(0, 0, 0, 0.66);
+    0 1px 2px rgba(0, 0, 0, 0.64),
+    0 0 8px rgba(204, 34, 34, 0.12),
+    inset 0 1px 0 rgba(255, 130, 130, 0.06),
+    inset 0 3px 10px rgba(0, 0, 0, 0.60),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.76),
+    inset 0 -4px 10px rgba(0, 0, 0, 0.42);
   color: #a82828;
 }

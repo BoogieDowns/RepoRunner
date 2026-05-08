@@ -1,0 +1,207 @@
+RepoRunner needs one more **restrained Quick Actions button surface polish pass** only.
+
+Do **not** redesign the UI.
+Do **not** change layout.
+Do **not** change button order.
+Do **not** change button labels.
+Do **not** change icon SVG geometry.
+Do **not** change icon size.
+Do **not** change functionality.
+Do **not** change engine lights, logs, meteors, setup modal, header, IPC, process logic, or product flow.
+
+This is only about refining the existing Quick Actions button material.
+
+## Current state
+
+The last pass improved the buttons:
+
+* narrower reflection ellipse
+* better top rim catchlight
+* deeper bottom mass
+* stronger side/bottom edge definition
+
+That was the right direction.
+
+Now please do one more polish pass focused on **subtle realism and balance**, not more brightness.
+
+## Important instruction
+
+Do **not** simply brighten the buttons again.
+
+The next improvement should come from:
+
+* cleaner highlight falloff
+* better balance between top shine and lower shadow
+* more realistic glass surface layering
+* better hover/idle consistency
+* cleaner red/neutral material separation
+
+---
+
+## 1. Balance the reflection intensity
+
+The reflection shape is better now.
+
+Please check whether the top reflection / catchlight feels too sharp, too centered, or too visually separate from the button body.
+
+Refine it so it feels:
+
+* integrated into the glass
+* softly blended
+* polished
+* not like a separate white stripe
+* not like a painted line
+
+Do not remove the reflection.
+
+Just make it more elegant.
+
+---
+
+## 2. Refine the lower shadow so it feels like depth, not dirt
+
+The new lower mass shadow is good, but make sure it does not make the button feel muddy.
+
+Please tune the lower shadow so it creates:
+
+* thickness
+* depth
+* physical body
+* subtle bevel compression
+
+without making the button face feel dirty or overly dark.
+
+If needed, soften or redistribute the lower shadow rather than increasing it.
+
+---
+
+## 3. Improve hover state consistency
+
+Please check hover states for both:
+
+```text
+red buttons
+neutral buttons
+```
+
+The hover state should feel like the same material becoming slightly more alive.
+
+It should not jump too bright or change character.
+
+Hover should add:
+
+* slight glass lift
+* slightly clearer reflection
+* controlled glow
+
+Not:
+
+* harsh brightness
+* flat color shift
+* washed-out highlight
+
+---
+
+## 4. Improve active/press feel if present
+
+If there is an active/pressed state, make sure it feels physical.
+
+Pressed should feel like:
+
+* button depresses slightly
+* highlight compresses
+* shadow tightens
+* glow reduces slightly
+
+Do not add large motion or layout shift.
+
+This can be subtle.
+
+---
+
+## 5. Neutral buttons should stay smoked-glass
+
+For:
+
+```text
+Pull
+Install
+Restart
+Open
+```
+
+Keep the smoked-glass look.
+
+Do not make them silver chrome.
+
+Refine only:
+
+* internal shading
+* surface reflection
+* edge depth
+* text/icon readability
+
+They should feel premium and dark.
+
+---
+
+## 6. Red buttons should stay controlled
+
+For:
+
+```text
+Start Frontend
+Start Backend
+Stop Engine
+```
+
+Keep the red glass look controlled.
+
+Do not make them neon.
+
+Refine only:
+
+* richness
+* glass depth
+* edge glow
+* lower dark red body
+
+They should feel powerful but restrained.
+
+---
+
+## 7. Preserve disabled states
+
+Disabled buttons must remain clearly disabled.
+
+If any material polish affects disabled buttons, keep disabled styling separate and subdued.
+
+Disabled buttons should not look clickable.
+
+---
+
+## 8. Final visual check
+
+Before finishing, visually inspect the Quick Actions panel as a whole.
+
+The buttons should feel:
+
+* more finished
+* more dimensional
+* more cohesive
+* less CSS-gradient-like
+* still clean and restrained
+
+Do not change anything else.
+
+## Acceptance criteria
+
+After this pass:
+
+1. Button highlights feel more integrated and less artificial.
+2. Lower shadows create depth without muddying the buttons.
+3. Hover states feel consistent with the idle material.
+4. Neutral buttons remain dark smoked glass.
+5. Red buttons remain rich but controlled.
+6. Disabled buttons still clearly read as inactive.
+7. No layout, icon, text, or functionality changes are made.
