@@ -1,0 +1,162 @@
+RepoRunner needs one **focused button content alignment pass** only.
+
+Do **not** redesign the app.
+Do **not** change functionality.
+Do **not** change button labels.
+Do **not** change button order.
+Do **not** change button sizes unless absolutely necessary for internal alignment.
+Do **not** change engine lights, logs, meteors, setup modal, header, IPC, process logic, or product flow.
+
+This is only about aligning the **icons and text inside the Quick Actions buttons**.
+
+## Scope
+
+Apply this only to the Quick Actions buttons:
+
+* Start Frontend
+* Start Backend
+* Stop Engine
+* Pull
+* Install
+* Restart
+* Open
+
+## Current issue
+
+The buttons are close, but the icon/text content still needs optical alignment.
+
+Some icon + label pairs may feel slightly off-center, uneven, or not perfectly balanced inside the button.
+
+## Goal
+
+Make every button’s internal content feel:
+
+* centered
+* balanced
+* symmetrical
+* clean
+* consistent
+* premium
+
+The button group should feel like a disciplined control panel.
+
+## Required checks
+
+### 1. Icon and text vertical alignment
+
+For every button, ensure:
+
+* icon is vertically centered
+* text is vertically centered
+* icon and text sit on a clean shared centerline
+* no icon appears too high or too low
+* no label appears too high or too low
+
+### 2. Icon-to-text spacing
+
+Standardize the gap between icon and text.
+
+The gap should feel visually identical across all buttons.
+
+No button should feel:
+
+* too cramped
+* too loose
+* uneven compared to the others
+
+### 3. Content group centering
+
+The combined icon + label group should sit optically centered inside each button.
+
+Check each button individually:
+
+* Start Frontend
+* Start Backend
+* Stop Engine
+* Pull
+* Install
+* Restart
+* Open
+
+The content should not look shifted left or right.
+
+### 4. Icon optical alignment
+
+Some custom icons have different shapes, so align them optically, not just mathematically.
+
+Check especially:
+
+* Pull
+* Restart
+* Open
+* Stop Engine
+
+If one icon visually feels too high, too low, too far left, or too far right, apply a tiny icon-specific transform/offset.
+
+Use small adjustments only.
+
+Suggested limit:
+
+```text
+translateX/translateY adjustments should usually be within 1px–2px
+```
+
+### 5. Text baseline consistency
+
+Make sure all button labels sit consistently.
+
+The LunaObscura-style font can look optically uneven, so check the text baseline and vertical centering carefully.
+
+If needed, make a small shared adjustment to the button label line-height or translateY.
+
+## Important restraint
+
+Do not restyle the buttons.
+
+Do not change:
+
+* glass material
+* color system
+* hover states
+* disabled logic
+* font family
+* button labels
+* button layout
+* icon concepts
+
+This is alignment only.
+
+## Implementation guidance
+
+If helpful, create a shared internal button content structure like:
+
+```text
+button
+  content wrapper
+    icon wrapper
+    label
+```
+
+Then standardize:
+
+* content wrapper display
+* align-items
+* justify-content
+* gap
+* icon box size
+* line-height
+* label alignment
+
+Use icon-specific offsets only where necessary.
+
+## Acceptance criteria
+
+After this pass:
+
+1. All icons are vertically centered with their labels.
+2. All icon/text gaps feel consistent.
+3. The icon + label group is centered inside each button.
+4. Pull, Restart, Open, and Stop Engine icons feel optically aligned.
+5. Button text baselines feel consistent.
+6. No button looks internally shifted or awkward.
+7. No unrelated UI or functionality changes are made.

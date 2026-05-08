@@ -475,7 +475,7 @@ function OpenCometIcon({ className }: { className?: string }) {
   return (
     <svg
       className={className}
-      viewBox="0 0 24 24"
+      viewBox="0 -1.5 24 24"
       fill="none"
       aria-hidden="true"
     >
@@ -501,9 +501,9 @@ function PullRingsIcon({ className, strokeWidth = 1.5 }: { className?: string; s
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      <ellipse cx="12" cy="7.5"  rx="7.5" ry="2.5" />
-      <ellipse cx="12" cy="12"   rx="5"   ry="1.8" />
-      <ellipse cx="12" cy="15.5" rx="2.8" ry="1.3" />
+      <ellipse cx="12" cy="8"    rx="7.5" ry="2.5" />
+      <ellipse cx="12" cy="12.5" rx="5"   ry="1.8" />
+      <ellipse cx="12" cy="16"   rx="2.8" ry="1.3" />
     </svg>
   );
 }
