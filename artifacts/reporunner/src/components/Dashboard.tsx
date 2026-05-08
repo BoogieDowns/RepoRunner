@@ -442,9 +442,9 @@ function RestartOrbitIcon({ className, strokeWidth = 1.5 }: { className?: string
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      <path d="M5,7 C1,10 8,13 12,12 C16,11 20,17 19,18" />
-      <path d="M19,7 C23,10 16,13 12,12 C8,11 4,17 5,18" />
-      <ellipse cx="12" cy="12" rx="2.5" ry="1.5" />
+      <path d="M4,6 C1,9 9,13 12,12 C15,11 20,16 20,18" />
+      <path d="M20,6 C23,9 15,13 12,12 C9,11 4,16 4,18" />
+      <ellipse cx="12" cy="12" rx="3" ry="2" />
     </svg>
   );
 }
@@ -484,9 +484,9 @@ function OpenLaunchIcon({ className, strokeWidth = 1.5 }: { className?: string; 
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      <circle cx="15" cy="8" r="3" />
-      <line x1="12" y1="11" x2="7"  y2="16" />
-      <line x1="14" y1="12" x2="9"  y2="17" />
+      <circle cx="15" cy="8" r="3.5" />
+      <line x1="11.5" y1="11" x2="6"  y2="16.5" />
+      <line x1="13.5" y1="12" x2="8"  y2="17.5" />
     </svg>
   );
 }

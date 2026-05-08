@@ -1,0 +1,118 @@
+RepoRunner needs one **very small icon correction pass** only.
+
+Do **not** redesign the UI.
+Do **not** change layout.
+Do **not** change button positions.
+Do **not** change button text.
+Do **not** change button sizes.
+Do **not** change glass styling.
+Do **not** change the other icons if they already look good.
+
+This pass is only for the **Restart** and **Open** buttons.
+
+## Current problem
+
+All the buttons now look good **except**:
+
+* `Restart`
+* `Open`
+
+These two still feel off compared with the rest.
+
+### Restart problem
+
+The Restart icon is not reading clearly enough.
+It feels a bit too thin / too small / too fussy.
+
+### Open problem
+
+The Open icon is too small and too delicate.
+It does not feel visually strong enough beside the other icons.
+
+## Goal
+
+Make only the `Restart` and `Open` icons:
+
+* clearer
+* slightly larger
+* more readable
+* better centered
+* better matched to the strength of the other icons
+
+Important:
+
+```text
+clarity first
+```
+
+Do not over-compress them.
+
+## 1. Restart icon fix
+
+Please refine the `Restart` icon so it reads more clearly at a glance.
+
+Desired direction:
+
+* slightly larger active drawing area
+* slightly stronger visual presence
+* slightly clearer central crossing / loop shape
+* slightly cleaner curve balance
+* keep it futuristic and premium
+* keep it in the same icon family as the others
+
+Do not make it tiny or overly delicate.
+
+## 2. Open icon fix
+
+Please refine the `Open` icon so it is easier to read.
+
+Desired direction:
+
+* increase its visual size
+* make the symbol more obvious
+* improve centering
+* slightly strengthen the stroke / structure if needed
+* keep it elegant, not bulky
+
+Right now it feels too faint and too small.
+
+## 3. Matching guidance
+
+Match these two icons to the rest of the button row by **optical weight**, not just by box size.
+
+They should feel consistent with:
+
+* Pull
+* Install
+* Start Frontend
+* Start Backend
+* Stop Engine
+
+## 4. Preserve everything else
+
+Do not change:
+
+* Start Frontend icon
+* Start Backend icon
+* Pull icon
+* Install icon
+* Stop Engine icon
+* button labels
+* button sizes
+* spacing
+* layout
+* functionality
+* engine panel
+* logs
+* meteors
+* modal
+
+## Acceptance criteria
+
+After this pass:
+
+1. `Restart` is clearer and easier to recognise.
+2. `Open` is clearer and easier to recognise.
+3. Both icons are slightly larger / stronger than they are now.
+4. Both icons feel balanced with the rest of the button row.
+5. No unrelated UI or functionality changes are made.
