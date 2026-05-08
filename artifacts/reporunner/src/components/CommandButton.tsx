@@ -46,8 +46,8 @@ export function CommandButton({
       )}
       <span style={{
         fontFamily: "'HS LunaObscura', sans-serif",
-        fontSize: "0.74rem",
-        letterSpacing: "0.06em",
+        fontSize: "0.63rem",
+        letterSpacing: "0.03em",
         lineHeight: 1,
       }}>{label}</span>
     </button>

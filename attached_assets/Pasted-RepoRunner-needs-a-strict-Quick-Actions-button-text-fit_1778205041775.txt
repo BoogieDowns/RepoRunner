@@ -1,0 +1,166 @@
+RepoRunner needs a **strict Quick Actions button text-fit fix**.
+
+The current button text still does not fit properly inside the button boxes. This needs to be fixed in one pass.
+
+Do **not** redesign the UI.
+Do **not** change functionality.
+Do **not** change button labels.
+Do **not** change button icons unless absolutely required for fit.
+Do **not** change the engine panel, logs, setup modal, meteors, IPC, process logic, or product flow.
+
+This is only about making **all Quick Actions button labels fit cleanly inside their buttons**.
+
+## Problem
+
+The LunaObscura-style font is too wide at the current size and the buttons are still too cramped.
+
+Visible problems:
+
+* text is clipped or nearly clipped
+* text touches the button edges
+* icons collide visually with labels
+* labels do not have enough internal padding
+* some labels extend beyond their boxes
+* the button group looks broken
+
+This must be solved for **every Quick Actions button**, not one at a time.
+
+## Buttons that must be fixed
+
+All of these must fit cleanly:
+
+* Pull Latest
+* Install
+* Start Frontend
+* Start Backend
+* Stop Engine
+* Restart All
+* Open Preview
+
+## Hard requirements
+
+### 1. Reduce the button label font size
+
+Decrease the Quick Actions button label font size enough that all labels fit comfortably.
+
+Use a smaller font size for these button labels.
+
+The current size is too large.
+
+Suggested direction:
+
+* reduce by at least `10–18%`
+* prioritize clean fit over large typography
+
+Do not leave the font at the current size if any label still feels cramped.
+
+### 2. Adjust letter spacing
+
+The current uppercase sci-fi font appears wide.
+
+Reduce tracking / letter spacing if needed.
+
+Suggested direction:
+
+* use tighter letter spacing than now
+* avoid exaggerated wide tracking inside buttons
+
+The text should still feel branded, but it must fit.
+
+### 3. Increase or normalize button widths
+
+Make button widths wide enough for their labels.
+
+Use clear width classes if needed:
+
+```text
+small: Pull Latest, Install
+medium: Stop Engine, Restart All, Open Preview
+large: Start Frontend, Start Backend
+```
+
+But make sure each label fits.
+
+### 4. Add enough internal padding
+
+Every button needs safe internal padding.
+
+There must be clear space:
+
+* between icon and text
+* between text and right edge
+* between icon and left edge
+
+No text should touch or nearly touch the border.
+
+### 5. Preserve the two-row layout
+
+Keep this grouping:
+
+Row 1:
+
+* Pull Latest
+* Install
+* Start Frontend
+* Start Backend
+
+Row 2:
+
+* Stop Engine
+* Restart All
+* Open Preview
+
+But adjust widths, font size, and spacing so it actually works.
+
+### 6. Verify fit visually for every button
+
+Before finishing, inspect every Quick Actions button and confirm:
+
+* no clipped text
+* no overflowing text
+* no text touching borders
+* no icon/text collision
+* no label too close to the edge
+
+If any button still does not fit, keep adjusting until it does.
+
+## Important: do not solve this partially
+
+Do not only fix one or two buttons.
+
+The acceptance criteria applies to **all seven buttons**.
+
+If the layout needs slightly more horizontal room inside the Quick Actions card, adjust the internal button group layout carefully.
+
+If the font size needs to be smaller, make it smaller.
+
+If the spacing needs to be cleaner, fix it.
+
+## Preserve styling
+
+Keep:
+
+* LunaObscura-style button font
+* glossy glass button material
+* current color logic
+* current button shape
+* current hover/disabled states as much as possible
+
+Do not flatten or restyle the buttons.
+
+## Acceptance criteria
+
+After this pass:
+
+1. `PULL LATEST` fits cleanly inside its button.
+2. `INSTALL` fits cleanly inside its button.
+3. `START FRONTEND` fits cleanly inside its button.
+4. `START BACKEND` fits cleanly inside its button.
+5. `STOP ENGINE` fits cleanly inside its button.
+6. `RESTART ALL` fits cleanly inside its button.
+7. `OPEN PREVIEW` fits cleanly inside its button.
+8. No button text is clipped.
+9. No button text touches the button edge.
+10. Icons and text have comfortable spacing.
+11. The two-row layout remains visually balanced.
+12. No unrelated UI or functionality changes are made.
