@@ -1,0 +1,100 @@
+Replit, the last header logo resize overcorrected and broke the top-left header composition.
+
+Please do one **strict header branding correction pass** only.
+
+Do **not** redesign the app.
+Do **not** change functionality.
+Do **not** change dashboard cards, buttons, engine lights, logs, meteors, setup modal, IPC, process logic, or product flow.
+
+This is only about fixing the **top-left header logo layout**.
+
+## Current problem
+
+The RR logo is now too large / badly positioned / visually disconnected from the header layout.
+
+It looks wrong because:
+
+* the logo is floating awkwardly
+* the divider/project block no longer feels properly aligned with it
+* the header brand area feels broken
+* the logo is not integrated cleanly into the top bar
+
+## Required fix
+
+Keep the RR logo larger than before, but place it properly inside a clean header brand block.
+
+The logo should be:
+
+* visible
+* strong
+* properly sized
+* vertically centered
+* aligned with the project name block
+* not floating
+* not oversized
+* not awkwardly cropped
+* not detached from the header
+
+## Use a specific target size
+
+Set the RR logo to a controlled size.
+
+Use something like:
+
+```text
+logo height: 32px–38px
+```
+
+Do **not** exceed this unless the header height is also intentionally adjusted.
+
+The logo should feel bigger than the original tiny version, but not ridiculous.
+
+## Header layout target
+
+The top-left header should look like this:
+
+```text
+[ RR logo ]  |  [ my-app ]
+                 [ /Users/you/projects/my-app ]
+```
+
+The logo, divider, and project block should all sit on the same visual baseline/centerline.
+
+## Spacing rules
+
+Please use clean, fixed spacing:
+
+* reasonable left padding
+* reasonable space after logo
+* divider close enough to feel related
+* project name/path close enough to divider to feel connected
+* no giant empty gap between logo and project name
+* no floating logo above/below the project text
+
+## Important
+
+Do **not** bring the wordmark back.
+
+Use only the RR logo.
+
+Do **not** make the logo tiny again.
+
+Do **not** make the logo massive.
+
+The correct result is:
+
+* larger than the old tiny logo
+* smaller and cleaner than the current broken oversized version
+* properly aligned inside the header
+
+## Acceptance criteria
+
+After this fix:
+
+1. Only the RR logo remains in the branding area.
+2. The RR logo is around 32–38px tall.
+3. The logo is vertically centered in the header.
+4. The divider and project name/path align cleanly with the logo.
+5. The header feels intentional and balanced.
+6. The logo no longer looks like it is floating or breaking the layout.
+7. No unrelated UI or functionality changes are made.

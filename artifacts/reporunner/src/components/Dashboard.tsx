@@ -444,11 +444,11 @@ function RepoRunnerLogo() {
    * the transparent padding with an overflow-hidden container sized to the mark.
    * Mark at 222px → width≈130px, height≈52px; top padding≈110px, left≈52px.
    */
-  const IMG  = 222;
-  const MARK_W = Math.round(IMG * 0.587);  // ≈130
-  const MARK_H = Math.round(IMG * 0.234);  // ≈52
-  const MARK_TOP  = Math.round(IMG * 0.495); // ≈110
-  const MARK_LEFT = Math.round(IMG * 0.187); // ≈42
+  const IMG  = 154;                          // → mark renders at 36px tall
+  const MARK_W = Math.round(IMG * 0.587);  // ≈90
+  const MARK_H = Math.round(IMG * 0.234);  // ≈36
+  const MARK_TOP  = Math.round(IMG * 0.495); // ≈76
+  const MARK_LEFT = Math.round(IMG * 0.187); // ≈29
   return (
     <div
       aria-hidden="true"
