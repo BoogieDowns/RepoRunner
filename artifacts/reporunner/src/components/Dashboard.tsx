@@ -479,7 +479,7 @@ function InstallStackIcon({ className, strokeWidth = 1.5 }: { className?: string
   );
 }
 
-/* ─── Open icon (comet: 2 parallel 45° lines + stroked circle drawn on top) ──*/
+/* ─── Open icon (4-corner expand arrows — matches reference) ─────────────────*/
 
 function OpenCometIcon({ className }: { className?: string }) {
   return (
@@ -490,22 +490,21 @@ function OpenCometIcon({ className }: { className?: string }) {
       stroke="currentColor"
       strokeWidth={1.5}
       strokeLinecap="round"
+      strokeLinejoin="round"
       aria-hidden="true"
     >
       {/*
-        DRAW ORDER: lines first, circle last.
-        The circle's opaque stroke ring is painted on top of line 1's endpoint,
-        covering it completely — seamless connection, zero gap, no fill required.
-
-        Both lines travel at exactly 45° (dx = −dy in screen coords).
-        Line 1 ends at (12.17, 10.33) = circle's lower-left boundary point
-          (cx − r/√2, cy + r/√2) = (15 − 2.83, 7.5 + 2.83).
-        Line 2 is a parallel trail offset 2 units perpendicular (upper-left direction).
+        Four corner arrows pointing outward.
+        Each arrow = L-bracket at corner + diagonal shaft toward center.
+        Shafts stop at (11,11)/(13,11)/(11,13)/(13,13) leaving a clean gap at center.
+        Single path — all 8 subpaths in one element for consistency.
       */}
-      <line x1="7.2" y1="15.3" x2="12.2" y2="10.3" />  {/* long  — end at circle edge */}
-      <line x1="5.8" y1="13.9" x2="10.8" y2="8.9"  />  {/* short — parallel trail    */}
-      {/* Circle painted last — ring covers line 1 endpoint, seamless */}
-      <circle cx="15" cy="7.5" r="4" />
+      <path d="
+        M6,9  L6,6  L9,6  M6,6  L11,11
+        M18,9 L18,6 L15,6 M18,6 L13,11
+        M6,15 L6,18 L9,18 M6,18 L11,13
+        M18,15 L18,18 L15,18 M18,18 L13,13
+      " />
     </svg>
   );
 }
