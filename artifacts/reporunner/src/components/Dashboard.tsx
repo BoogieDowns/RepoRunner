@@ -5,7 +5,6 @@ import {
   Play,
   Server,
   RotateCw,
-  ExternalLink,
   Copy,
   Trash2,
   Settings2,
@@ -428,6 +427,27 @@ function AmbientBackground({
 
     </div>
     </>
+  );
+}
+
+/* ─── Open icon (circle upper-right + two parallel diagonal trailing lines) ──*/
+
+function OpenLaunchIcon({ className, strokeWidth = 1.5 }: { className?: string; strokeWidth?: number }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="15" cy="8" r="3" />
+      <line x1="12" y1="11" x2="7"  y2="16" />
+      <line x1="14" y1="12" x2="9"  y2="17" />
+    </svg>
   );
 }
 
@@ -979,7 +999,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                     />
                     <CommandButton
                       label="Open"
-                      icon={ExternalLink}
+                      icon={OpenLaunchIcon}
                       onClick={wrapAction("preview", window.repoRunner.openPreview)}
                       loading={actionLoading["preview"]}
                       variant="outline"

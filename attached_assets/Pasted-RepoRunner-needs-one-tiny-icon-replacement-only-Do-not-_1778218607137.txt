@@ -1,0 +1,95 @@
+RepoRunner needs one **tiny icon replacement** only.
+
+Do **not** redesign the UI.
+Do **not** change layout.
+Do **not** change functionality.
+Do **not** change button labels, button sizing, button styling, engine lights, logs, meteors, setup modal, IPC, process logic, or product flow.
+
+This is only about replacing the **Open** button icon.
+
+## Requested change
+
+Replace the current `Open` button icon with a custom icon matching the uploaded/reference symbol.
+
+The reference looks like:
+
+```text
+a circular loop / ring at the upper-right,
+with two angled trailing strokes extending down-left,
+like a sleek futuristic launch / open / outbound mark
+```
+
+## Important
+
+Do not use a generic icon library icon if it does not closely match the reference.
+
+Use a **custom SVG icon** if needed, the same way the Stop Engine and Pull icons were handled.
+
+## Scope
+
+Apply this only to:
+
+```text
+Open
+```
+
+Do not change icons for:
+
+```text
+Start Frontend
+Start Backend
+Stop Engine
+Pull
+Install
+Restart
+```
+
+## Visual requirements
+
+The new Open icon should:
+
+* match the reference shape as closely as practical
+* have a circular ring / loop head
+* have two clean angled trailing strokes
+* feel sleek, minimal, and slightly sci-fi
+* use `currentColor`
+* match the stroke weight of the other button icons
+* sit in the same icon position as the current Open icon
+* be vertically centered with the text
+* be visually balanced with the LunaObscura button font
+* work in enabled/disabled states
+* not resize the button
+* not alter button spacing
+
+## Implementation direction
+
+Create a small custom SVG component if needed.
+
+Suggested style:
+
+* no fill
+* thin stroke
+* rounded stroke caps/joins
+* clean geometric shape
+* same visual weight as the other custom button icons
+
+## Preserve everything else
+
+Do not change:
+
+* Open text
+* Open click behavior
+* Open functionality
+* button styling
+* layout
+* any other app behavior
+
+## Acceptance criteria
+
+After this change:
+
+1. The `Open` button no longer uses the old icon.
+2. It uses a custom symbol matching the circular-loop-with-trailing-lines reference.
+3. The icon is clean, centered, and properly sized.
+4. No other button icons are changed.
+5. No layout or functionality changes are made.
