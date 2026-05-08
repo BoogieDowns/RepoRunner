@@ -905,7 +905,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                   {/* Row 2 — Pull Latest, Install, Restart All, Open Preview (4 equal) */}
                   <div style={{ display: "flex", gap: "0.625rem" }}>
                     <CommandButton
-                      label="Pull Latest"
+                      label="Pull"
                       icon={Download}
                       onClick={wrapAction("pull", window.repoRunner.pullLatest)}
                       loading={actionLoading["pull"]}
@@ -921,7 +921,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                       style={{ flex: "1 1 0", justifyContent: "center", padding: "0 1rem" }}
                     />
                     <CommandButton
-                      label="Restart All"
+                      label="Restart"
                       icon={RotateCw}
                       onClick={wrapAction("restart", window.repoRunner.restartAll)}
                       loading={actionLoading["restart"]}
@@ -929,7 +929,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                       style={{ flex: "1 1 0", justifyContent: "center", padding: "0 1rem" }}
                     />
                     <CommandButton
-                      label="Open Preview"
+                      label="Open"
                       icon={ExternalLink}
                       onClick={wrapAction("preview", window.repoRunner.openPreview)}
                       loading={actionLoading["preview"]}
