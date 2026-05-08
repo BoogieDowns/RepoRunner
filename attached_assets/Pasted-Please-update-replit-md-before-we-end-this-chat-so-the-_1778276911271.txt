@@ -1,0 +1,139 @@
+Please update `replit.md` before we end this chat so the next Replit session has a clean source of truth.
+
+Do not edit the app code.
+Do not change UI.
+Do not change functionality.
+Only update `replit.md`.
+
+Please add a clear “Current RepoRunner UI Direction / Preservation Notes” section with the following:
+
+## Product purpose
+
+RepoRunner is a desktop-style app for running local repos with saved setup and button-based actions.
+
+It helps users:
+- import a local repo once
+- save setup once
+- pull latest code
+- run install
+- start frontend
+- start backend
+- stop services
+- restart
+- open preview
+- view/copy logs
+
+It is not an IDE, deployment tool, or AI debugging tool.
+
+## Current visual direction
+
+RepoRunner should keep the current dark sci-fi control-panel direction:
+
+- black / near-black background
+- premium dark crimson glass buttons
+- smoked-glass neutral buttons
+- RR logo in the top-left header
+- cinematic red/crimson meteor background effects
+- technical terminal/log panel
+- square red plastic/ribbed engine lights
+- no generic SaaS styling
+
+## Preserve dashboard layout
+
+Preserve the current dashboard structure.
+
+Quick Actions layout:
+
+Top row:
+- Start Frontend
+- Start Backend
+- Stop Engine
+
+Bottom row:
+- Pull
+- Install
+- Restart
+- Open
+
+Do not change labels, order, sizing, or layout unless explicitly requested.
+
+## Preserve button system
+
+Quick Actions buttons use a glossy physical glass material.
+
+Red buttons:
+- dark crimson/ruby glass
+- premium reflective surface
+- not flat, not neon, not generic red
+
+Neutral buttons:
+- smoked grey glass
+- readable but still dark and restrained
+
+Preserve current custom icons unless specifically requested.
+
+## Preserve engine lights
+
+Engine status lights are square red plastic/ribbed lens modules.
+
+Important behavior:
+- stopped state is blank/dark but same size and shell as running
+- active/transition states visually show `RUNNING` only
+- no `STARTING`, `STOPPING`, or `STOPPED` text inside the light
+- no spinner
+- no pulse
+- preserve fade-on/fade-off behavior
+- preserve final shutdown flicker
+- do not change status/service logic
+
+## Preserve setup modal
+
+Setup modal heading is:
+
+`RepoRunner Setup`
+
+Preserve the current Setup modal structure:
+
+- Project Name and Local Repository Folder on top row
+- Preview URL gets its own wide row
+- Install / Frontend / Backend command fields grouped together
+- Frontend Port / Backend Port grouped compactly
+- Save Configuration button matches the crimson glass button system
+
+## Preserve logs styling
+
+Logs should keep the current terminal style.
+
+Current source label colors:
+- `[SYSTEM]` = very light grey / off-white
+- `[GIT]` = neon green
+- `[INSTALL]` = saturated peach / amber
+- `[BACKEND]` = maroon / purple-red
+- `[FRONTEND]` = crimson/red
+
+Do not change log behavior while doing visual polish.
+
+## Preserve meteor/ripple system
+
+Preserve the current meteor background behavior:
+
+- red/crimson meteors
+- divider impact ripple
+- terminal pixelation behavior if currently present
+- current speed/density unless explicitly requested
+
+Do not rework this system without explicit instruction.
+
+## Future edit rules
+
+For future UI work:
+
+- make narrow, targeted changes only
+- inspect the live preview before editing where possible
+- do not redesign large areas unless explicitly asked
+- do not change functionality during visual polish
+- preserve working behavior
+- avoid broad refactors during small UI tasks
+- do not “improve” completed areas unless specifically requested
+
+Please write this clearly into `replit.md` so a fresh Replit chat can continue cleanly.
