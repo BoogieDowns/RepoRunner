@@ -448,7 +448,7 @@ function RestartOrbitIcon({ className, strokeWidth = 1.5 }: { className?: string
   );
 }
 
-/* ─── Install icon (two crossing sine-wave curves / interwoven signal mark) ──*/
+/* ─── Install icon (three stacked horizontal oval rings / database-stack) ────*/
 
 function InstallStackIcon({ className, strokeWidth = 1.5 }: { className?: string; strokeWidth?: number }) {
   return (
@@ -462,10 +462,9 @@ function InstallStackIcon({ className, strokeWidth = 1.5 }: { className?: string
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      {/* Wave 1: rises from lower-left, crosses center, continues lower-right */}
-      <path d="M 3,11 C 6,5 10,5 12,12 C 14,19 18,19 21,13" />
-      {/* Wave 2: mirror — falls from upper-left, crosses center, continues upper-right */}
-      <path d="M 3,13 C 6,19 10,19 12,12 C 14,5 18,5 21,11" />
+      <ellipse cx="12" cy="7.5"  rx="7.5" ry="2.8" />
+      <ellipse cx="12" cy="12"   rx="7.5" ry="2.8" />
+      <ellipse cx="12" cy="16.5" rx="7.5" ry="2.8" />
     </svg>
   );
 }
