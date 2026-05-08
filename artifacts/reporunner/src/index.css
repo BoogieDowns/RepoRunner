@@ -609,7 +609,7 @@ input[type="number"] {
     inset 0 -1px 0 rgba(0, 0, 0, 0.84),
     inset 0 -5px 16px rgba(0, 0, 0, 0.56),
     inset 0 -14px 34px rgba(0, 0, 0, 0.20);
-  color: #b4b0ae;
+  color: #bdbab7;
 }
 .btn-glass-secondary:hover:not(:disabled) {
   background:
@@ -652,7 +652,7 @@ input[type="number"] {
     inset 0 -1px 0 rgba(0, 0, 0, 0.84),
     inset 0 -5px 16px rgba(0, 0, 0, 0.56),
     inset 0 -14px 34px rgba(0, 0, 0, 0.16);
-  color: #c6c0be;
+  color: #cec8c5;
 }
 .btn-glass-secondary:active:not(:disabled) {
   background: linear-gradient(
