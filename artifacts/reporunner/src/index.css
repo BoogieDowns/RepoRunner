@@ -592,8 +592,9 @@ input[type="number"] {
       180deg,
       rgba(148, 120, 120, 0.93) 0%,
       rgba(88, 68, 68, 0.94) 12%,
-      rgba(26, 20, 20, 0.97) 38%,
-      rgba(6, 5, 5, 0.99) 68%,
+      rgba(50, 38, 38, 0.96) 25%,
+      rgba(20, 16, 16, 0.97) 40%,
+      rgba(7, 5, 5, 0.99) 66%,
       rgba(10, 8, 8, 1.00) 100%
     );
   border: 1px solid rgba(148, 120, 120, 0.58);
@@ -608,7 +609,7 @@ input[type="number"] {
     inset 0 -1px 0 rgba(0, 0, 0, 0.84),
     inset 0 -5px 16px rgba(0, 0, 0, 0.56),
     inset 0 -14px 34px rgba(0, 0, 0, 0.20);
-  color: #aca8a6;
+  color: #b4b0ae;
 }
 .btn-glass-secondary:hover:not(:disabled) {
   background:
@@ -634,8 +635,9 @@ input[type="number"] {
       180deg,
       rgba(158, 128, 128, 0.95) 0%,
       rgba(104, 80, 80, 0.96) 12%,
-      rgba(32, 24, 24, 0.97) 38%,
-      rgba(8, 6, 6, 1.00) 68%,
+      rgba(58, 44, 44, 0.97) 25%,
+      rgba(24, 18, 18, 0.97) 40%,
+      rgba(8, 6, 6, 1.00) 66%,
       rgba(12, 10, 10, 1.00) 100%
     );
   border-color: rgba(180, 148, 148, 0.74);
@@ -650,7 +652,7 @@ input[type="number"] {
     inset 0 -1px 0 rgba(0, 0, 0, 0.84),
     inset 0 -5px 16px rgba(0, 0, 0, 0.56),
     inset 0 -14px 34px rgba(0, 0, 0, 0.16);
-  color: #beb8b6;
+  color: #c6c0be;
 }
 .btn-glass-secondary:active:not(:disabled) {
   background: linear-gradient(
@@ -698,8 +700,9 @@ input[type="number"] {
       180deg,
       rgba(198, 50, 50, 0.93) 0%,
       rgba(128, 28, 28, 0.94) 12%,
-      rgba(26, 8, 8, 0.97) 38%,
-      rgba(6, 2, 2, 0.99) 68%,
+      rgba(62, 12, 12, 0.96) 25%,
+      rgba(20, 6, 6, 0.97) 40%,
+      rgba(6, 2, 2, 0.99) 66%,
       rgba(10, 4, 4, 1.00) 100%
     );
   border: 1px solid rgba(204, 34, 34, 0.52);
@@ -740,8 +743,9 @@ input[type="number"] {
       180deg,
       rgba(216, 52, 52, 0.95) 0%,
       rgba(148, 32, 32, 0.96) 12%,
-      rgba(32, 10, 10, 0.97) 38%,
-      rgba(8, 3, 3, 1.00) 68%,
+      rgba(68, 14, 14, 0.97) 25%,
+      rgba(24, 8, 8, 0.97) 40%,
+      rgba(8, 3, 3, 1.00) 66%,
       rgba(12, 5, 5, 1.00) 100%
     );
   border-color: rgba(204, 34, 34, 0.72);
@@ -805,8 +809,9 @@ input[type="number"] {
       180deg,
       rgba(230, 34, 34, 0.90) 0%,
       rgba(164, 22, 22, 0.93) 12%,
-      rgba(52, 8, 8, 0.96) 38%,
-      rgba(14, 3, 3, 0.99) 68%,
+      rgba(82, 12, 12, 0.95) 25%,
+      rgba(38, 7, 7, 0.97) 40%,
+      rgba(14, 3, 3, 0.99) 66%,
       rgba(20, 5, 5, 1.00) 100%
     );
   border: 1px solid rgba(204, 34, 34, 0.82);
@@ -847,8 +852,9 @@ input[type="number"] {
       180deg,
       rgba(252, 40, 40, 0.93) 0%,
       rgba(190, 26, 26, 0.95) 12%,
-      rgba(66, 10, 10, 0.97) 38%,
-      rgba(18, 4, 4, 1.00) 68%,
+      rgba(96, 14, 14, 0.96) 25%,
+      rgba(44, 8, 8, 0.97) 40%,
+      rgba(18, 4, 4, 1.00) 66%,
       rgba(26, 6, 6, 1.00) 100%
     );
   border-color: rgba(204, 34, 34, 0.96);
