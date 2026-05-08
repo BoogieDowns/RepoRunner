@@ -462,32 +462,32 @@ input[type="number"] {
   border-radius: inherit;
   pointer-events: none;
   background: radial-gradient(
-    ellipse 105% 90% at 50% -15%,
-    rgba(255, 255, 255, 0.72) 0%,
-    rgba(255, 255, 255, 0.48) 22%,
-    rgba(255, 255, 255, 0.20) 46%,
-    rgba(255, 255, 255, 0.04) 64%,
-    transparent 76%
+    ellipse 120% 105% at 50% -18%,
+    rgba(255, 255, 255, 0.42) 0%,
+    rgba(255, 255, 255, 0.24) 24%,
+    rgba(255, 255, 255, 0.09) 48%,
+    rgba(255, 255, 255, 0.02) 66%,
+    transparent 78%
   );
   z-index: 0;
   transition: background 0.15s ease;
 }
 .btn-glass:hover:not(:disabled)::before {
   background: radial-gradient(
-    ellipse 105% 90% at 50% -15%,
-    rgba(255, 255, 255, 0.86) 0%,
-    rgba(255, 255, 255, 0.60) 22%,
-    rgba(255, 255, 255, 0.26) 46%,
-    rgba(255, 255, 255, 0.06) 64%,
-    transparent 76%
+    ellipse 120% 105% at 50% -18%,
+    rgba(255, 255, 255, 0.54) 0%,
+    rgba(255, 255, 255, 0.32) 24%,
+    rgba(255, 255, 255, 0.13) 48%,
+    rgba(255, 255, 255, 0.03) 66%,
+    transparent 78%
   );
 }
 .btn-glass:active:not(:disabled)::before {
   background: radial-gradient(
-    ellipse 105% 90% at 50% -15%,
-    rgba(255, 255, 255, 0.14) 0%,
-    rgba(255, 255, 255, 0.06) 40%,
-    transparent 62%
+    ellipse 120% 105% at 50% -18%,
+    rgba(255, 255, 255, 0.10) 0%,
+    rgba(255, 255, 255, 0.04) 42%,
+    transparent 64%
   );
 }
 
@@ -509,9 +509,9 @@ input[type="number"] {
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.75) 20%,
-    rgba(255, 255, 255, 1.00) 50%,
-    rgba(255, 255, 255, 0.75) 80%,
+    rgba(255, 255, 255, 0.52) 18%,
+    rgba(255, 255, 255, 0.76) 50%,
+    rgba(255, 255, 255, 0.52) 82%,
     transparent 100%
   );
   z-index: 2;
@@ -541,17 +541,27 @@ input[type="number"] {
 */
 .btn-glass-secondary {
   background:
-    /* secondary internal reflection — faint bounce band in lower-mid */
+    /* glass mid-body shimmer — light passing through slab */
+    linear-gradient(
+      180deg,
+      transparent 0%,
+      transparent 24%,
+      rgba(255, 255, 255, 0.045) 34%,
+      rgba(255, 255, 255, 0.07) 44%,
+      rgba(255, 255, 255, 0.025) 54%,
+      transparent 63%
+    ),
+    /* lower bounce reflection */
     linear-gradient(
       180deg,
       transparent 0%,
       transparent 58%,
-      rgba(255, 255, 255, 0.03) 64%,
-      rgba(255, 255, 255, 0.06) 70%,
-      rgba(255, 255, 255, 0.02) 78%,
-      transparent 86%
+      rgba(255, 255, 255, 0.04) 65%,
+      rgba(255, 255, 255, 0.07) 72%,
+      rgba(255, 255, 255, 0.02) 80%,
+      transparent 88%
     ),
-    /* main body — bright top, sharp drop, near-black lower half */
+    /* main body */
     linear-gradient(
       180deg,
       rgba(130, 106, 106, 0.92) 0%,
@@ -564,11 +574,13 @@ input[type="number"] {
   box-shadow:
     0 4px 14px rgba(0, 0, 0, 0.76),
     0 1px 4px rgba(0, 0, 0, 0.54),
-    inset 0 1px 0 rgba(255, 255, 255, 0.40),
-    inset 0 2px 0 rgba(255, 255, 255, 0.10),
-    inset 0 4px 16px rgba(255, 255, 255, 0.05),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.62),
-    inset 0 -4px 10px rgba(0, 0, 0, 0.36);
+    inset 0 1px 0 rgba(255, 255, 255, 0.38),
+    inset 0 2px 1px rgba(255, 255, 255, 0.09),
+    inset 0 5px 22px rgba(255, 255, 255, 0.07),
+    inset 1px 0 0 rgba(255, 255, 255, 0.07),
+    inset -1px 0 0 rgba(255, 255, 255, 0.04),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.64),
+    inset 0 -5px 14px rgba(0, 0, 0, 0.38);
   color: #8c8482;
 }
 .btn-glass-secondary:hover:not(:disabled) {
@@ -576,11 +588,20 @@ input[type="number"] {
     linear-gradient(
       180deg,
       transparent 0%,
+      transparent 24%,
+      rgba(255, 255, 255, 0.06) 34%,
+      rgba(255, 255, 255, 0.09) 44%,
+      rgba(255, 255, 255, 0.03) 54%,
+      transparent 63%
+    ),
+    linear-gradient(
+      180deg,
+      transparent 0%,
       transparent 58%,
-      rgba(255, 255, 255, 0.04) 64%,
-      rgba(255, 255, 255, 0.08) 70%,
-      rgba(255, 255, 255, 0.03) 78%,
-      transparent 86%
+      rgba(255, 255, 255, 0.05) 65%,
+      rgba(255, 255, 255, 0.09) 72%,
+      rgba(255, 255, 255, 0.03) 80%,
+      transparent 88%
     ),
     linear-gradient(
       180deg,
@@ -594,11 +615,13 @@ input[type="number"] {
   box-shadow:
     0 6px 18px rgba(0, 0, 0, 0.80),
     0 2px 5px rgba(0, 0, 0, 0.56),
-    inset 0 1px 0 rgba(255, 255, 255, 0.52),
-    inset 0 2px 0 rgba(255, 255, 255, 0.13),
-    inset 0 4px 18px rgba(255, 255, 255, 0.07),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.66),
-    inset 0 -4px 10px rgba(0, 0, 0, 0.40);
+    inset 0 1px 0 rgba(255, 255, 255, 0.50),
+    inset 0 2px 1px rgba(255, 255, 255, 0.12),
+    inset 0 5px 24px rgba(255, 255, 255, 0.09),
+    inset 1px 0 0 rgba(255, 255, 255, 0.09),
+    inset -1px 0 0 rgba(255, 255, 255, 0.05),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.68),
+    inset 0 -5px 14px rgba(0, 0, 0, 0.42);
   color: #b0a8a6;
 }
 .btn-glass-secondary:active:not(:disabled) {
@@ -620,15 +643,25 @@ input[type="number"] {
 */
 .btn-glass-primary {
   background:
-    /* secondary internal reflection — faint red-tinted bounce */
+    /* glass mid-body shimmer — red-tinted light through slab */
+    linear-gradient(
+      180deg,
+      transparent 0%,
+      transparent 24%,
+      rgba(255, 100, 100, 0.04) 34%,
+      rgba(255, 80, 80, 0.065) 44%,
+      rgba(255, 60, 60, 0.02) 54%,
+      transparent 63%
+    ),
+    /* lower red bounce reflection */
     linear-gradient(
       180deg,
       transparent 0%,
       transparent 58%,
-      rgba(255, 120, 120, 0.04) 64%,
-      rgba(255, 100, 100, 0.07) 70%,
-      rgba(255, 80, 80, 0.02) 78%,
-      transparent 86%
+      rgba(255, 120, 120, 0.05) 65%,
+      rgba(255, 100, 100, 0.08) 72%,
+      rgba(255, 80, 80, 0.02) 80%,
+      transparent 88%
     ),
     /* main body */
     linear-gradient(
@@ -643,11 +676,13 @@ input[type="number"] {
   box-shadow:
     0 4px 14px rgba(0, 0, 0, 0.76),
     0 0 16px rgba(204, 34, 34, 0.15),
-    inset 0 1px 0 rgba(255, 178, 178, 0.52),
-    inset 0 2px 0 rgba(255, 140, 140, 0.12),
-    inset 0 4px 16px rgba(255, 60, 60, 0.07),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.62),
-    inset 0 -4px 10px rgba(0, 0, 0, 0.36);
+    inset 0 1px 0 rgba(255, 178, 178, 0.48),
+    inset 0 2px 1px rgba(255, 140, 140, 0.11),
+    inset 0 5px 22px rgba(255, 60, 60, 0.09),
+    inset 1px 0 0 rgba(255, 120, 120, 0.07),
+    inset -1px 0 0 rgba(255, 80, 80, 0.04),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.64),
+    inset 0 -5px 14px rgba(0, 0, 0, 0.38);
   color: #c83535;
 }
 .btn-glass-primary:hover:not(:disabled) {
@@ -655,11 +690,20 @@ input[type="number"] {
     linear-gradient(
       180deg,
       transparent 0%,
+      transparent 24%,
+      rgba(255, 100, 100, 0.055) 34%,
+      rgba(255, 80, 80, 0.085) 44%,
+      rgba(255, 60, 60, 0.03) 54%,
+      transparent 63%
+    ),
+    linear-gradient(
+      180deg,
+      transparent 0%,
       transparent 58%,
-      rgba(255, 120, 120, 0.05) 64%,
-      rgba(255, 100, 100, 0.09) 70%,
-      rgba(255, 80, 80, 0.03) 78%,
-      transparent 86%
+      rgba(255, 120, 120, 0.06) 65%,
+      rgba(255, 100, 100, 0.10) 72%,
+      rgba(255, 80, 80, 0.03) 80%,
+      transparent 88%
     ),
     linear-gradient(
       180deg,
@@ -673,11 +717,13 @@ input[type="number"] {
   box-shadow:
     0 6px 18px rgba(0, 0, 0, 0.80),
     0 0 26px rgba(204, 34, 34, 0.30),
-    inset 0 1px 0 rgba(255, 178, 178, 0.64),
-    inset 0 2px 0 rgba(255, 140, 140, 0.16),
-    inset 0 4px 18px rgba(255, 60, 60, 0.09),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.66),
-    inset 0 -4px 10px rgba(0, 0, 0, 0.40);
+    inset 0 1px 0 rgba(255, 178, 178, 0.60),
+    inset 0 2px 1px rgba(255, 140, 140, 0.15),
+    inset 0 5px 24px rgba(255, 60, 60, 0.11),
+    inset 1px 0 0 rgba(255, 120, 120, 0.09),
+    inset -1px 0 0 rgba(255, 80, 80, 0.05),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.68),
+    inset 0 -5px 14px rgba(0, 0, 0, 0.42);
   color: #e03838;
 }
 .btn-glass-primary:active:not(:disabled) {
@@ -700,15 +746,25 @@ input[type="number"] {
 */
 .btn-glass-danger {
   background:
-    /* secondary internal reflection — stronger red bounce */
+    /* glass mid-body shimmer — deeper red through slab */
+    linear-gradient(
+      180deg,
+      transparent 0%,
+      transparent 24%,
+      rgba(255, 80, 80, 0.05) 34%,
+      rgba(255, 60, 60, 0.08) 44%,
+      rgba(255, 40, 40, 0.025) 54%,
+      transparent 63%
+    ),
+    /* lower bounce reflection */
     linear-gradient(
       180deg,
       transparent 0%,
       transparent 56%,
-      rgba(255, 100, 100, 0.05) 62%,
-      rgba(255, 80, 80, 0.09) 68%,
-      rgba(255, 60, 60, 0.03) 76%,
-      transparent 84%
+      rgba(255, 100, 100, 0.06) 63%,
+      rgba(255, 80, 80, 0.10) 70%,
+      rgba(255, 60, 60, 0.03) 78%,
+      transparent 86%
     ),
     /* main body */
     linear-gradient(
@@ -723,11 +779,13 @@ input[type="number"] {
   box-shadow:
     0 4px 14px rgba(0, 0, 0, 0.76),
     0 0 22px rgba(204, 34, 34, 0.30),
-    inset 0 1px 0 rgba(255, 188, 188, 0.58),
-    inset 0 2px 0 rgba(255, 150, 150, 0.14),
-    inset 0 4px 16px rgba(255, 60, 60, 0.10),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.62),
-    inset 0 -4px 10px rgba(0, 0, 0, 0.36);
+    inset 0 1px 0 rgba(255, 188, 188, 0.54),
+    inset 0 2px 1px rgba(255, 150, 150, 0.13),
+    inset 0 5px 22px rgba(255, 60, 60, 0.12),
+    inset 1px 0 0 rgba(255, 120, 120, 0.08),
+    inset -1px 0 0 rgba(255, 80, 80, 0.05),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.64),
+    inset 0 -5px 14px rgba(0, 0, 0, 0.38);
   color: #d03232;
 }
 .btn-glass-danger:hover:not(:disabled) {
@@ -735,11 +793,20 @@ input[type="number"] {
     linear-gradient(
       180deg,
       transparent 0%,
+      transparent 24%,
+      rgba(255, 80, 80, 0.065) 34%,
+      rgba(255, 60, 60, 0.10) 44%,
+      rgba(255, 40, 40, 0.03) 54%,
+      transparent 63%
+    ),
+    linear-gradient(
+      180deg,
+      transparent 0%,
       transparent 56%,
-      rgba(255, 100, 100, 0.07) 62%,
-      rgba(255, 80, 80, 0.12) 68%,
-      rgba(255, 60, 60, 0.04) 76%,
-      transparent 84%
+      rgba(255, 100, 100, 0.08) 63%,
+      rgba(255, 80, 80, 0.13) 70%,
+      rgba(255, 60, 60, 0.04) 78%,
+      transparent 86%
     ),
     linear-gradient(
       180deg,
@@ -753,11 +820,13 @@ input[type="number"] {
   box-shadow:
     0 6px 18px rgba(0, 0, 0, 0.82),
     0 0 36px rgba(204, 34, 34, 0.46),
-    inset 0 1px 0 rgba(255, 188, 188, 0.72),
-    inset 0 2px 0 rgba(255, 150, 150, 0.18),
-    inset 0 4px 18px rgba(255, 60, 60, 0.13),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.66),
-    inset 0 -4px 10px rgba(0, 0, 0, 0.40);
+    inset 0 1px 0 rgba(255, 188, 188, 0.68),
+    inset 0 2px 1px rgba(255, 150, 150, 0.17),
+    inset 0 5px 24px rgba(255, 60, 60, 0.15),
+    inset 1px 0 0 rgba(255, 120, 120, 0.10),
+    inset -1px 0 0 rgba(255, 80, 80, 0.06),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.68),
+    inset 0 -5px 14px rgba(0, 0, 0, 0.42);
   color: #ea3a3a;
 }
 .btn-glass-danger:active:not(:disabled) {
