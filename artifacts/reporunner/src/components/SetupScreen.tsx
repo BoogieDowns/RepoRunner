@@ -172,7 +172,7 @@ export function SetupScreen({
             className="text-xl font-semibold tracking-tight"
             style={{ color: "#dedad5", letterSpacing: "-0.01em" }}
           >
-            Setup RepoRunner
+            RepoRunner Setup
           </CardTitle>
           <CardDescription className="text-xs" style={{ color: "#525050" }}>
             Save your local app setup once. Run it with buttons after that.
@@ -338,30 +338,20 @@ export function SetupScreen({
               </div>
 
               <div className="pt-5 mt-1" style={{ borderTop: "1px solid #161616" }}>
-                <Button
+                <button
                   type="submit"
-                  size="lg"
-                  className="w-full font-semibold tracking-wide text-sm"
-                  style={{
-                    background: "linear-gradient(180deg, #d42626 0%, #b81e1e 100%)",
-                    border: "1px solid rgba(220,50,50,0.45)",
-                    color: "#f5f5f5",
-                    boxShadow: "0 0 18px rgba(204,34,34,0.22), inset 0 1px 0 rgba(255,180,180,0.18)",
-                    height: "40px",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "linear-gradient(180deg, #dc2c2c 0%, #c42020 100%)";
-                    e.currentTarget.style.boxShadow = "0 0 28px rgba(204,34,34,0.36), inset 0 1px 0 rgba(255,180,180,0.22)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "linear-gradient(180deg, #d42626 0%, #b81e1e 100%)";
-                    e.currentTarget.style.boxShadow = "0 0 18px rgba(204,34,34,0.22), inset 0 1px 0 rgba(255,180,180,0.18)";
-                  }}
+                  className="btn-glass btn-glass-primary w-full hover:-translate-y-px active:translate-y-0 active:scale-[0.99]"
+                  style={{ height: "40px" }}
                 >
-                  <Save className="w-3.5 h-3.5 mr-2" />
-                  Save Configuration
-                  <ArrowRight className="w-3.5 h-3.5 ml-2" />
-                </Button>
+                  <Save className="h-4 w-4 flex-none" strokeWidth={1.5} />
+                  <span style={{
+                    fontFamily: "'HS LunaObscura', sans-serif",
+                    fontSize: "0.63rem",
+                    letterSpacing: "0.03em",
+                    lineHeight: 1,
+                  }}>Save Configuration</span>
+                  <ArrowRight className="h-4 w-4 flex-none" strokeWidth={1.5} />
+                </button>
               </div>
 
             </form>
