@@ -638,7 +638,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                 color: "rgba(255,226,222,0.98)",
                 textShadow: "0 0 10px rgba(255,95,85,0.92)",
                 boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18), 0 0 15px rgba(204,34,34,0.82), 0 0 5px rgba(204,34,34,0.56)",
-                animation: "rr-lens-on 1.2s ease-in forwards",
+                animation: "rr-lens-running 1.2s ease-in forwards",
               }}
             >
               Running
@@ -664,7 +664,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
               color: "rgba(255,226,222,0.98)",
               textShadow: "0 0 10px rgba(255,95,85,0.92)",
               boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18), 0 0 15px rgba(204,34,34,0.82), 0 0 5px rgba(204,34,34,0.56)",
-              animation: "rr-lens-on 2.8s ease-in forwards",
+              animation: "rr-lens-starting 2.8s ease-in forwards",
             }}>
               Starting
             </span>
@@ -681,17 +681,35 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
           }}>
             <span style={{
               ...lens,
-              background: [
-                ribs(0.26),
-                specular(255, 230, 225, 0.28),
-                "radial-gradient(ellipse at 50% 58%, rgba(255,180,164,0.96) 0%, rgba(232,52,52,0.98) 24%, rgba(178,18,18,0.98) 58%, rgba(62,4,4,0.99) 100%)",
-              ].join(", "),
-              color: "rgba(255,226,222,0.98)",
-              textShadow: "0 0 10px rgba(255,95,85,0.92)",
-              boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18), 0 0 15px rgba(204,34,34,0.82), 0 0 5px rgba(204,34,34,0.56)",
-              animation: "rr-lens-off 0.7s ease-out forwards",
+              position: "relative",
+              overflow: "hidden",
+              background: "none",
+              /* inset shadows only — give the lens physical depth without affecting the glow layer */
+              boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18)",
             }}>
-              Stopping
+              {/* Glow layer — receives filter:brightness flicker; text is a sibling so it's immune */}
+              <span style={{
+                position: "absolute",
+                inset: 0,
+                borderRadius: "1px",
+                background: [
+                  ribs(0.26),
+                  specular(255, 230, 225, 0.28),
+                  "radial-gradient(ellipse at 50% 58%, rgba(255,180,164,0.96) 0%, rgba(232,52,52,0.98) 24%, rgba(178,18,18,0.98) 58%, rgba(62,4,4,0.99) 100%)",
+                ].join(", "),
+                boxShadow: "0 0 15px rgba(204,34,34,0.82), 0 0 5px rgba(204,34,34,0.56)",
+                animation: "rr-lens-off 0.7s ease-out forwards",
+                zIndex: 0,
+              }} />
+              {/* Text layer — above the glow, never touched by filter */}
+              <span style={{
+                position: "relative",
+                zIndex: 1,
+                color: "rgba(255,226,222,0.98)",
+                textShadow: "0 0 10px rgba(255,95,85,0.92)",
+              }}>
+                Stopping
+              </span>
             </span>
           </span>
         );
@@ -761,7 +779,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
               ].join(", "),
               color: "rgba(60,42,42,0.82)",
               boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18)",
-              animation: "rr-lens-on 0.08s ease-out forwards",
+              animation: "rr-lens-stopped 0.08s ease-out forwards",
             }}>
               Stopped
             </span>

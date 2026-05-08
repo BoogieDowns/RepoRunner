@@ -1,0 +1,184 @@
+RepoRunner needs one **focused engine/status light animation correction** only.
+
+Do **not** redesign the UI.
+Do **not** change layout.
+Do **not** change functionality.
+Do **not** change service logic, mock timing, process management, IPC, setup behavior, logs, buttons, meteors, or product flow.
+
+This is only about fixing two issues in the **Frontend / Backend engine/status lights**:
+
+1. the `STOPPED` text flashes white during the final shutdown flicker
+2. the startup fade-on is inconsistent / not smooth, especially when starting one service after the other
+
+---
+
+## Issue 1: Stop the text from flashing white
+
+When the light shuts down and does its final red flicker, the status text is flashing white.
+
+I do **not** want the text to flash.
+
+The final flicker should affect only:
+
+* red lens brightness
+* red internal glow
+* red outer glow
+* red illumination layer
+
+It should **not** affect:
+
+* text color
+* text opacity
+* text brightness
+* text shadow
+
+## Required fix
+
+Please separate the text styling from the light/lens flicker styling.
+
+If the flicker animation is currently applied to the whole indicator element, move it so it applies only to a lens/background pseudo-element or inner glow layer.
+
+For example:
+
+```text
+status indicator container
+  lens/background layer = can flicker red
+  text layer = does not flicker
+```
+
+The text should remain stable and readable throughout:
+
+```text
+STOPPING → STOPPED
+```
+
+No white flash.
+
+---
+
+## Issue 2: Make startup fade-on smooth and consistent
+
+The startup illumination still feels inconsistent.
+
+Sometimes one light starts smoothly, but if I start one service, wait a few seconds, then start the other service, the second light seems to illuminate too quickly.
+
+I want each light to independently fade on smoothly every time it enters `STARTING`.
+
+## Desired STARTING behavior
+
+Whenever either Frontend or Backend changes to:
+
+```text
+STARTING
+```
+
+that specific light should start from a low/dark illumination state and smoothly fade up.
+
+It should not inherit brightness/timing from the other light.
+
+It should not skip to bright quickly.
+
+It should not be affected by another service already running.
+
+## Required implementation direction
+
+Please make the startup fade-on deterministic per service instance.
+
+Good approaches:
+
+* use a per-service animation key / run id so the animation restarts cleanly every time that service enters `STARTING`
+* ensure Frontend and Backend lights do not share animation state incorrectly
+* avoid relying on global/shared CSS state that causes the second light to start midway through an animation
+* make sure the `STARTING` animation starts at 0% opacity/glow for that service each time
+
+## Important
+
+The two lights must animate independently.
+
+Example:
+
+```text
+Frontend STARTING → Frontend fades on smoothly
+Frontend RUNNING
+Backend STARTING later → Backend also fades on smoothly from low glow
+Backend RUNNING
+```
+
+The Backend light should not snap on quickly just because Frontend is already running.
+
+---
+
+## Startup fade-on timing
+
+Keep the startup fade-on slow and smooth.
+
+Use approximately:
+
+```text
+2.6s–3.0s
+```
+
+Suggested target:
+
+```text
+2.8s
+```
+
+The light should feel like an old physical plastic indicator warming up.
+
+---
+
+## Preserve shutdown behavior, but fix text flash
+
+Keep the shutdown concept:
+
+```text
+STOPPING → red light fades down → final red flicker → STOPPED dark
+```
+
+But:
+
+* the red lens can flicker
+* the text must not flicker white
+* the light should end dark/unlit
+
+---
+
+## Preserve everything else
+
+Keep:
+
+* no pulsing
+* no spinner
+* active/transition lights stay red
+* same status light size
+* same plastic/ribbed lens style
+* same words inside the lights
+* same stopped dark/unlit style
+* same layout
+
+Do not change:
+
+* actual service start/stop behavior
+* status logic
+* buttons
+* logs
+* meteors
+* setup modal
+* app functionality
+
+---
+
+## Acceptance criteria
+
+After this fix:
+
+1. The final shutdown flicker affects only the red light/lens, not the text.
+2. `STOPPED` text no longer flashes white.
+3. Frontend `STARTING` fade-on is smooth every time.
+4. Backend `STARTING` fade-on is smooth every time.
+5. Starting one service after the other does not make the second light snap on quickly.
+6. Each light animation is independent per service.
+7. Startup fade-on remains slow and physical, around `2.8s`.
+8. No pulsing or spinner is reintroduced.
+9. No unrelated UI or functionality changes are made.
