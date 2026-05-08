@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import rrLogoMark from "../assets/rr-logo-mark.png";
 import {
-  Package,
   Play,
   Server,
   RotateCw,
@@ -427,6 +426,27 @@ function AmbientBackground({
 
     </div>
     </>
+  );
+}
+
+/* ─── Install icon (three stacked horizontal oval rings / database-stack) ────*/
+
+function InstallStackIcon({ className, strokeWidth = 1.5 }: { className?: string; strokeWidth?: number }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <ellipse cx="12" cy="8"  rx="7" ry="2.2" />
+      <ellipse cx="12" cy="12" rx="7" ry="2.2" />
+      <ellipse cx="12" cy="16" rx="7" ry="2.2" />
+    </svg>
   );
 }
 
@@ -983,7 +1003,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                     />
                     <CommandButton
                       label="Install"
-                      icon={Package}
+                      icon={InstallStackIcon}
                       onClick={wrapAction("install", window.repoRunner.runInstall)}
                       loading={actionLoading["install"]}
                       variant="outline"

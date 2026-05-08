@@ -1,0 +1,105 @@
+RepoRunner needs one **tiny icon replacement** only.
+
+Do **not** redesign the UI.
+Do **not** change layout.
+Do **not** change functionality.
+Do **not** change button labels, button sizing, button styling, engine lights, logs, meteors, setup modal, IPC, process logic, or product flow.
+
+This is only about replacing the **Install** button icon.
+
+## Requested change
+
+Replace the current `Install` button icon with a custom icon matching the uploaded/reference symbol.
+
+The reference looks like:
+
+```text
+three stacked horizontal oval rings,
+like a compact layered disk / database / stacked-loop symbol
+```
+
+## Important
+
+Do not use a generic icon library icon if it does not closely match the reference.
+
+Use a **custom SVG icon** if needed, the same way the Stop Engine, Pull, and Open icons were handled.
+
+Do **not** waste time trying to pull this from the font unless you can explicitly verify the exact glyph exists and matches the reference.
+If not, build the SVG directly.
+
+## Scope
+
+Apply this only to:
+
+```text
+Install
+```
+
+Do not change icons for:
+
+```text
+Start Frontend
+Start Backend
+Stop Engine
+Pull
+Restart
+Open
+```
+
+## Visual requirements
+
+The new Install icon should:
+
+* match the reference shape as closely as practical
+* show **three stacked oval rings**
+* feel clean, minimal, and slightly sci-fi
+* use `currentColor`
+* match the stroke weight of the other button icons
+* sit in the same icon position as the current Install icon
+* be vertically centered with the text
+* be visually balanced with the LunaObscura button font
+* work in enabled/disabled states
+* not resize the button
+* not alter button spacing
+
+## Implementation direction
+
+Create a small custom SVG component.
+
+Suggested style:
+
+* no fill
+* thin stroke
+* rounded stroke caps/joins
+* three horizontal elliptical loops
+* evenly spaced vertical stacking
+* same visual weight as the other custom button icons
+
+A good implementation direction would be:
+
+* top oval ring
+* middle oval ring
+* bottom oval ring
+* each with the same width
+* slight vertical overlap / close spacing so it reads as one compact stacked symbol
+
+## Preserve everything else
+
+Do not change:
+
+* Install text
+* Install click behavior
+* Install functionality
+* button styling
+* layout
+* any other app behavior
+
+## Acceptance criteria
+
+After this change:
+
+1. The `Install` button no longer uses the old icon.
+2. It uses a custom symbol matching the three-stacked-oval-rings reference.
+3. The icon is clean, centered, and properly sized.
+4. No other button icons are changed.
+5. No layout or functionality changes are made.
