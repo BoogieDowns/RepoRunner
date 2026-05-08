@@ -19,6 +19,29 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
+/* ─── Damped sine-wave path for the divider ripple ───────────────────────────
+ * Pre-computed once at module load. The wave is a dampened cosine centered at
+ * the impact point (x=0 in screen space, mapped to x=320 in SVG space).
+ *
+ * Formula:  svgY = 12 + A·cos(ω·x)·exp(−|x|/τ)
+ *   A = 5.5 px — visible amplitude without being cartoonish
+ *   ω = 0.052  — ~5 full oscillations across the ±320 px span
+ *   τ = 58 px  — fast envelope decay so the wave dies off past ~150 px
+ *
+ * The SVG element is 640 × 24 px, centered on the impact x-position.
+ * y=12 aligns with the physical divider line so undisturbed tails sit on it.
+ */
+const WAVE_PATH = (() => {
+  const A = 5.5, omega = 0.052, tau = 58;
+  const pts: string[] = [];
+  for (let x = -320; x <= 320; x += 2) {
+    const env = Math.exp(-Math.abs(x) / tau);
+    const y   = 12 + A * Math.cos(omega * x) * env;
+    pts.push(`${x === -320 ? "M" : "L"}${(x + 320).toFixed(1)},${y.toFixed(2)}`);
+  }
+  return pts.join(" ");
+})();
+
 /* ─── Ambient Background ──────────────────────────────────────────────────── */
 
 interface MeteorDef {
@@ -157,10 +180,10 @@ function AmbientBackground({
    */
   const triggerImpactRef = useRef<(left: number, op: number, layer: 1 | 2, dividerY: number) => void>(() => {});
   const triggerImpact = useCallback((left: number, op: number, layer: 1 | 2, dividerY: number) => {
-    /* Ripple */
+    /* Wave ripple — keep alive for the full wave animation duration */
     const rippleId = ++idRef.current;
     setRipples(prev => [...prev, { id: rippleId, left, dividerY, op }]);
-    setTimeout(() => setRipples(prev => prev.filter(r => r.id !== rippleId)), 780);
+    setTimeout(() => setRipples(prev => prev.filter(r => r.id !== rippleId)), 1300);
 
     /* Pixel fragments — delayed so the line ripple reads first, then the
      * pixelation appears as a clearly separate second beat below the divider. */
@@ -170,11 +193,11 @@ function AmbientBackground({
         id:      ++idRef.current,
         left,
         dividerY,
-        offsetY: 10 + Math.random() * 14,   // start clearly below the divider line
-        driftX:  (Math.random() - 0.5) * 56,
-        op:      op * (layer === 2 ? 0.80 : 0.58) * (0.5 + Math.random() * 0.5),
-        size:    Math.random() < 0.45 ? 6 : Math.random() < 0.7 ? 5 : 4,
-        dur:     1.0 + Math.random() * 0.9,
+        offsetY: 8 + Math.random() * 18,    // start clearly below the divider line
+        driftX:  (Math.random() - 0.5) * 64,
+        op:      op * (layer === 2 ? 0.88 : 0.68) * (0.55 + Math.random() * 0.45),
+        size:    Math.random() < 0.35 ? 14 : Math.random() < 0.65 ? 10 : 8,
+        dur:     1.1 + Math.random() * 0.8,
       }));
       setFragments(prev => [...prev, ...newFrags]);
       newFrags.forEach(f =>
@@ -355,78 +378,76 @@ function AmbientBackground({
       aria-hidden="true"
       style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none", zIndex: 0 }}
     >
-      {/* Impact ripples — three overlaid elements, all anchored to the divider line */}
+      {/* Impact ripples — SVG dampened-sine wave + circular contact flash */}
       {ripples.flatMap(r => [
-        /* 1. Wide glow halo — energy spreading 460px along the wire */
-        <div
-          key={`rbar-${r.id}`}
+        /*
+         * 1. SVG wave — the divider line itself deforming outward from the hit.
+         *    Two strokes stacked: wide dim outer (glow) + narrow bright inner (core).
+         *    clip-path expands symmetrically from center via rr-wave-expand keyframe.
+         *    Position: top = dividerY - 12 so y=12 in SVG space sits on the line.
+         */
+        <svg
+          key={`wave-${r.id}`}
+          aria-hidden="true"
+          width="640"
+          height="24"
+          viewBox="0 0 640 24"
           style={{
             position:  "absolute",
-            top:       `${r.dividerY}px`,
+            top:       `${r.dividerY - 12}px`,
             left:      `${r.left}%`,
-            width:     "460px",
-            height:    "3px",
             transform: "translateX(-50%)",
-            background: `linear-gradient(90deg,
-              transparent 0%,
-              rgba(200,36,36,${r.op * 0.08}) 4%,
-              rgba(214,44,44,${r.op * 0.55}) 20%,
-              rgba(236,58,58,${r.op * 0.90}) 40%,
-              rgba(252,72,72,${r.op * 1.00}) 50%,
-              rgba(236,58,58,${r.op * 0.90}) 60%,
-              rgba(214,44,44,${r.op * 0.55}) 80%,
-              rgba(200,36,36,${r.op * 0.08}) 96%,
-              transparent 100%
-            )`,
-            boxShadow:       `0 0 14px 4px rgba(214,44,44,${r.op * 0.70})`,
-            pointerEvents:   "none",
-            animationName:        "rr-ripple-pulse",
-            animationDuration:    "1.00s",
+            overflow:  "hidden",
+            pointerEvents: "none",
+            filter:    `drop-shadow(0 0 5px rgba(210,44,44,${r.op * 0.80}))`,
+            animationName:        "rr-wave-expand",
+            animationDuration:    "1.15s",
             animationTimingFunction: "ease-out",
             animationFillMode:    "forwards",
           }}
-        />,
-        /* 2. Bright lit-line segment — shorter, 1px, fires and fades fast */
+        >
+          {/* Outer glow — wide, semi-transparent stroke */}
+          <path
+            d={WAVE_PATH}
+            fill="none"
+            stroke={`rgba(204,40,40,${r.op * 0.55})`}
+            strokeWidth="5"
+            strokeLinecap="round"
+          />
+          {/* Bright core — narrow, vivid */}
+          <path
+            d={WAVE_PATH}
+            fill="none"
+            stroke={`rgba(252,72,72,${r.op * 1.00})`}
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          />
+        </svg>,
+
+        /*
+         * 2. Contact flash — a circular energy bloom at the exact impact point.
+         *    Appears at t=0, expands and fades via rr-flash-burst keyframe.
+         *    Centered vertically on the divider line (top = dividerY - 4 for 8px element).
+         */
         <div
-          key={`rhot-${r.id}`}
+          key={`flash-${r.id}`}
           style={{
-            position:  "absolute",
-            top:       `${r.dividerY}px`,
-            left:      `${r.left}%`,
-            width:     "200px",
-            height:    "1px",
-            transform: "translateX(-50%)",
-            background: `linear-gradient(90deg,
-              transparent 0%,
-              rgba(250,80,80,${r.op * 0.70}) 22%,
-              rgba(255,115,115,${r.op * 1.00}) 50%,
-              rgba(250,80,80,${r.op * 0.70}) 78%,
-              transparent 100%
-            )`,
-            boxShadow:       `0 0 5px 2px rgba(255,100,100,${r.op * 0.80})`,
+            position:     "absolute",
+            top:          `${r.dividerY - 4}px`,
+            left:         `${r.left}%`,
+            width:        "8px",
+            height:       "8px",
+            borderRadius: "50%",
+            transform:    "translateX(-50%)",
+            background:   `rgba(255,210,210,${r.op * 1.00})`,
+            boxShadow: [
+              `0 0  5px 2px rgba(255, 90, 90,${r.op * 0.95})`,
+              `0 0 12px 5px rgba(220, 50, 50,${r.op * 0.80})`,
+              `0 0 26px 9px rgba(180, 28, 28,${r.op * 0.50})`,
+            ].join(", "),
             pointerEvents:   "none",
-            animationName:        "rr-ripple-pulse",
-            animationDuration:    "0.60s",
-            animationTimingFunction: "ease-out",
-            animationFillMode:    "forwards",
-          }}
-        />,
-        /* 3. Contact flash — small bright vertical strike at the exact impact point */
-        <div
-          key={`rflash-${r.id}`}
-          style={{
-            position:  "absolute",
-            top:       `${r.dividerY - 3}px`,
-            left:      `${r.left}%`,
-            width:     "4px",
-            height:    "7px",
-            transform: "translateX(-50%)",
-            background: `rgba(255,140,140,${r.op * 0.95})`,
-            boxShadow: `0 0 10px 4px rgba(240,64,64,${r.op * 0.85}), 0 0 22px 8px rgba(200,36,36,${r.op * 0.45})`,
-            borderRadius: "1px",
-            pointerEvents:   "none",
-            animationName:        "rr-ripple-pulse",
-            animationDuration:    "0.38s",
+            animationName:        "rr-flash-burst",
+            animationDuration:    "0.48s",
             animationTimingFunction: "ease-out",
             animationFillMode:    "forwards",
           }}

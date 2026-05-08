@@ -239,18 +239,35 @@
   100% { transform: translateY(175vh); }
 }
 
-/* Divider impact: ripple expands symmetrically outward from center, then fades */
+/* Divider impact: ripple expands symmetrically outward from center, then fades
+   (retained for compatibility — active effect now uses rr-wave-expand below) */
 @keyframes rr-ripple-pulse {
   0%   { clip-path: inset(0 50% 0 50%); opacity: 0; }
   8%   { opacity: 1; }
   100% { clip-path: inset(0 0% 0 0%);  opacity: 0; }
 }
 
-/* Digital fragment: tiny square drifts downward and fades into the terminal zone */
+/* SVG sine-wave ripple: expand from center outward, hold briefly, then fade */
+@keyframes rr-wave-expand {
+  0%   { clip-path: inset(0 50% 0 50%); opacity: 0; }
+  7%   { opacity: 1; }
+  72%  { opacity: 1; }
+  100% { clip-path: inset(0 0% 0 0%);   opacity: 0; }
+}
+
+/* Impact flash: bloom from a point, expand outward, fade */
+@keyframes rr-flash-burst {
+  0%   { opacity: 0;   transform: translateX(-50%) scale(0.2); }
+  14%  { opacity: 1;   transform: translateX(-50%) scale(1.0); }
+  60%  { opacity: 0.7; transform: translateX(-50%) scale(1.4); }
+  100% { opacity: 0;   transform: translateX(-50%) scale(2.2); }
+}
+
+/* Digital fragment: pixel block drifts down into terminal zone and fades */
 @keyframes rr-fragment-fall {
   0%   { transform: translateY(0px);  opacity: 1; }
-  22%  { opacity: 1; }
-  100% { transform: translateY(38px); opacity: 0; }
+  18%  { opacity: 1; }
+  100% { transform: translateY(55px); opacity: 0; }
 }
 
 @keyframes rr-scrim-in {
