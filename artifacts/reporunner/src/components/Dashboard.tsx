@@ -761,6 +761,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
               ].join(", "),
               color: "rgba(60,42,42,0.82)",
               boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18)",
+              animation: "rr-lens-on 0.08s ease-out forwards",
             }}>
               Stopped
             </span>
