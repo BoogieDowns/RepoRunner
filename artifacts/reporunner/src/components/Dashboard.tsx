@@ -631,11 +631,11 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                 background: [
                   ribs(0.26),
                   specular(255, 230, 225, 0.28),
-                  "radial-gradient(ellipse at 50% 58%, rgba(255,155,138,0.86) 0%, rgba(215,32,32,0.92) 24%, rgba(150,10,10,0.94) 58%, rgba(48,2,2,0.98) 100%)",
+                  "radial-gradient(ellipse at 50% 58%, rgba(255,168,152,0.92) 0%, rgba(225,42,42,0.96) 24%, rgba(165,14,14,0.96) 58%, rgba(55,3,3,0.99) 100%)",
                 ].join(", "),
-                color: "rgba(255,214,210,0.95)",
-                textShadow: "0 0 8px rgba(255,95,85,0.72)",
-                boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18), 0 0 10px rgba(204,34,34,0.62), 0 0 3px rgba(204,34,34,0.40)",
+                color: "rgba(255,222,218,0.97)",
+                textShadow: "0 0 9px rgba(255,95,85,0.86)",
+                boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18), 0 0 13px rgba(204,34,34,0.75), 0 0 4px rgba(204,34,34,0.50)",
               }}
             >
               Running
@@ -656,11 +656,11 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
               background: [
                 ribs(0.28),
                 specular(242, 184, 160, 0.22),
-                "radial-gradient(ellipse at 50% 58%, rgba(178,98,60,0.74) 0%, rgba(110,45,18,0.88) 40%, rgba(48,15,5,0.95) 100%)",
+                "radial-gradient(ellipse at 50% 58%, rgba(198,112,72,0.88) 0%, rgba(128,54,22,0.94) 40%, rgba(58,18,6,0.97) 100%)",
               ].join(", "),
-              color: "rgba(242,184,160,0.92)",
-              textShadow: "0 0 7px rgba(242,184,160,0.48)",
-              boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18), 0 0 9px rgba(242,184,160,0.42), 0 0 3px rgba(242,184,160,0.26)",
+              color: "rgba(246,196,174,0.96)",
+              textShadow: "0 0 8px rgba(242,184,160,0.62)",
+              boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18), 0 0 11px rgba(242,184,160,0.52), 0 0 4px rgba(242,184,160,0.32)",
             }}>
               <Loader2 className="w-[9px] h-[9px] animate-spin flex-none" />
               Starting
@@ -681,11 +681,11 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
               background: [
                 ribs(0.30),
                 specular(200, 148, 115, 0.15),
-                "radial-gradient(ellipse at 50% 58%, rgba(148,78,48,0.62) 0%, rgba(90,38,14,0.82) 44%, rgba(36,12,4,0.95) 100%)",
+                "radial-gradient(ellipse at 50% 58%, rgba(170,92,56,0.74) 0%, rgba(108,46,17,0.90) 44%, rgba(44,15,5,0.97) 100%)",
               ].join(", "),
-              color: "rgba(200,150,118,0.84)",
-              textShadow: "0 0 6px rgba(200,148,115,0.36)",
-              boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18), 0 0 8px rgba(200,148,115,0.36), 0 0 3px rgba(200,148,115,0.22)",
+              color: "rgba(214,162,130,0.92)",
+              textShadow: "0 0 7px rgba(200,148,115,0.48)",
+              boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18), 0 0 10px rgba(200,148,115,0.44), 0 0 4px rgba(200,148,115,0.28)",
             }}>
               <Loader2 className="w-[9px] h-[9px] animate-spin flex-none" />
               Stopping
