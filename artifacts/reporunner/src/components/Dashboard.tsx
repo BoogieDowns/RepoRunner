@@ -626,7 +626,6 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
             boxShadow: "0 2px 7px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,110,110,0.05), inset 0 -1px 0 rgba(0,0,0,0.40)",
           }}>
             <span
-              className="rr-indicator-running"
               style={{
                 ...lens,
                 background: [
@@ -652,7 +651,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
             border: "1px solid rgba(52,28,10,0.92)",
             boxShadow: "0 2px 7px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.65)",
           }}>
-            <span className="rr-indicator-transitioning" style={{
+            <span style={{
               ...lens,
               background: [
                 ribs(0.28),
@@ -677,7 +676,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
             border: "1px solid rgba(44,24,8,0.88)",
             boxShadow: "0 2px 7px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.65)",
           }}>
-            <span className="rr-indicator-transitioning" style={{
+            <span style={{
               ...lens,
               background: [
                 ribs(0.30),
