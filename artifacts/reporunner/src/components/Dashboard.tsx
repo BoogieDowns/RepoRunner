@@ -420,7 +420,7 @@ function AmbientBackground({
             ].join(", "),
             pointerEvents:   "none",
             animationName:        "rr-flash-burst",
-            animationDuration:    "0.22s",
+            animationDuration:    "0.09s",
             animationTimingFunction: "ease-out",
             animationFillMode:    "forwards",
           }}
