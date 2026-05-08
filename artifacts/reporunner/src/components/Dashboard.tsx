@@ -428,7 +428,7 @@ function AmbientBackground({
   );
 }
 
-/* ─── Restart icon (two mirrored S-curves crossing through a central oval) ───*/
+/* ─── Restart icon (two crossing sine-wave curves, mirrored left/right) ─────*/
 
 function RestartOrbitIcon({ className, strokeWidth = 1.5 }: { className?: string; strokeWidth?: number }) {
   return (
@@ -442,8 +442,10 @@ function RestartOrbitIcon({ className, strokeWidth = 1.5 }: { className?: string
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      <path d="M9,6 C3,9 21,15 15,18" />
-      <path d="M15,6 C21,9 3,15 9,18" />
+      {/* Upper-left → lower-right: bows up in first half, down in second */}
+      <path d="M3,8 C9,4 15,20 21,16" />
+      {/* Mirror: upper-right → lower-left */}
+      <path d="M21,8 C15,4 9,20 3,16" />
     </svg>
   );
 }
