@@ -162,22 +162,25 @@ function AmbientBackground({
     setRipples(prev => [...prev, { id: rippleId, left, dividerY, op }]);
     setTimeout(() => setRipples(prev => prev.filter(r => r.id !== rippleId)), 780);
 
-    /* Pixel fragments — more for fg, fewer for mid */
+    /* Pixel fragments — delayed so the line ripple reads first, then the
+     * pixelation appears as a clearly separate second beat below the divider. */
     const count = layer === 2 ? 12 : 7;
-    const newFrags: FragmentDef[] = Array.from({ length: count }, () => ({
-      id:      ++idRef.current,
-      left,
-      dividerY,
-      offsetY: Math.random() * 6,
-      driftX:  (Math.random() - 0.5) * 56,
-      op:      op * (layer === 2 ? 0.80 : 0.58) * (0.5 + Math.random() * 0.5),
-      size:    Math.random() < 0.45 ? 6 : Math.random() < 0.7 ? 5 : 4,
-      dur:     1.0 + Math.random() * 0.9,
-    }));
-    setFragments(prev => [...prev, ...newFrags]);
-    newFrags.forEach(f =>
-      setTimeout(() => setFragments(prev => prev.filter(fr => fr.id !== f.id)), (f.dur + 0.25) * 1000)
-    );
+    setTimeout(() => {
+      const newFrags: FragmentDef[] = Array.from({ length: count }, () => ({
+        id:      ++idRef.current,
+        left,
+        dividerY,
+        offsetY: 10 + Math.random() * 14,   // start clearly below the divider line
+        driftX:  (Math.random() - 0.5) * 56,
+        op:      op * (layer === 2 ? 0.80 : 0.58) * (0.5 + Math.random() * 0.5),
+        size:    Math.random() < 0.45 ? 6 : Math.random() < 0.7 ? 5 : 4,
+        dur:     1.0 + Math.random() * 0.9,
+      }));
+      setFragments(prev => [...prev, ...newFrags]);
+      newFrags.forEach(f =>
+        setTimeout(() => setFragments(prev => prev.filter(fr => fr.id !== f.id)), (f.dur + 0.25) * 1000)
+      );
+    }, 110);
   }, []);
   triggerImpactRef.current = triggerImpact;
 
@@ -339,30 +342,30 @@ function AmbientBackground({
         <MeteorLine key={m.id} {...m} onDone={removeMeteor} />
       ))}
 
-      {/* Divider impact ripples — horizontal pulse + center flare per impact */}
+      {/* Divider impact ripples — two line-anchored elements per hit */}
       {ripples.flatMap(r => [
-        /* Wide spreading bar — soft cosine-like fade toward ends */
+        /* 1. Wide glow halo — energy spreading along the wire */
         <div
           key={`rbar-${r.id}`}
           style={{
             position:        "absolute",
-            top:             `${r.dividerY - 1}px`,
+            top:             `${r.dividerY}px`,
             left:            `${r.left}%`,
             width:           "460px",
             height:          "3px",
             transform:       "translateX(-50%)",
             background:      `linear-gradient(90deg,
               transparent 0%,
-              rgba(200,38,38,${r.op * 0.06}) 4%,
-              rgba(210,42,42,${r.op * 0.42}) 18%,
-              rgba(232,56,56,${r.op * 0.88}) 38%,
+              rgba(200,38,38,${r.op * 0.05}) 4%,
+              rgba(210,42,42,${r.op * 0.40}) 18%,
+              rgba(232,56,56,${r.op * 0.85}) 38%,
               rgba(248,68,68,${r.op * 1.00}) 50%,
-              rgba(232,56,56,${r.op * 0.88}) 62%,
-              rgba(210,42,42,${r.op * 0.42}) 82%,
-              rgba(200,38,38,${r.op * 0.06}) 96%,
+              rgba(232,56,56,${r.op * 0.85}) 62%,
+              rgba(210,42,42,${r.op * 0.40}) 82%,
+              rgba(200,38,38,${r.op * 0.05}) 96%,
               transparent 100%
             )`,
-            boxShadow:       `0 0 12px 4px rgba(210,44,44,${r.op * 0.60})`,
+            boxShadow:       `0 0 11px 3px rgba(210,44,44,${r.op * 0.58})`,
             pointerEvents:   "none",
             animationName:       "rr-ripple-pulse",
             animationDuration:   "0.95s",
@@ -370,23 +373,27 @@ function AmbientBackground({
             animationFillMode:   "forwards",
           }}
         />,
-        /* Center impact flare — bright hot spark at the contact point */
+        /* 2. Bright lit-line segment — the hot spot sitting exactly on the line */
         <div
-          key={`rflare-${r.id}`}
+          key={`rhot-${r.id}`}
           style={{
             position:        "absolute",
-            top:             `${r.dividerY - 4}px`,
+            top:             `${r.dividerY}px`,
             left:            `${r.left}%`,
-            width:           "28px",
-            height:          "9px",
+            width:           "160px",
+            height:          "1px",
             transform:       "translateX(-50%)",
-            background:      `rgba(255,88,88,${r.op * 0.92})`,
-            borderRadius:    "2px",
-            filter:          `blur(3px)`,
-            boxShadow:       `0 0 14px 5px rgba(230,55,55,${r.op * 0.78})`,
+            background:      `linear-gradient(90deg,
+              transparent 0%,
+              rgba(240,60,60,${r.op * 0.60}) 20%,
+              rgba(255,100,100,${r.op * 1.00}) 50%,
+              rgba(240,60,60,${r.op * 0.60}) 80%,
+              transparent 100%
+            )`,
+            boxShadow:       `0 0 4px 1px rgba(255,90,90,${r.op * 0.70})`,
             pointerEvents:   "none",
             animationName:       "rr-ripple-pulse",
-            animationDuration:   "0.58s",
+            animationDuration:   "0.62s",
             animationTimingFunction: "ease-out",
             animationFillMode:   "forwards",
           }}
