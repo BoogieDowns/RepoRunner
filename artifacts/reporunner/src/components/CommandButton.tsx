@@ -41,7 +41,12 @@ export function CommandButton({
       ) : (
         <Icon className="h-4 w-4 flex-none" strokeWidth={1.5} />
       )}
-      <span>{label}</span>
+      <span style={{
+        fontFamily: "'HS LunaObscura', sans-serif",
+        fontSize: "0.74rem",
+        letterSpacing: "0.06em",
+        lineHeight: 1,
+      }}>{label}</span>
     </button>
   );
 }

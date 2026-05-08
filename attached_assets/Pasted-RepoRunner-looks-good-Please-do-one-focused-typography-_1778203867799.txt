@@ -1,0 +1,114 @@
+RepoRunner looks good. Please do one **focused typography change only**.
+
+Do **not** redesign the UI.
+Do **not** change layout.
+Do **not** change functionality.
+Do **not** change buttons, cards, logs, modal, engine lights, meteors, IPC, process logic, or product flow.
+
+This is only about changing the **Quick Actions button font**.
+
+## Requested change
+
+Use the local LunaObscura font for the text labels inside the Quick Actions buttons.
+
+The font file is in the project here:
+
+```text
+src/assets/fonts/hs_lunaobscura Font
+```
+
+Replit file tree link:
+
+```text
+https://replit.com/@BoogieDowns/Repo-Runner#artifacts/reporunner/src/assets/fonts/hs_lunaobscura%20Font
+```
+
+Please inspect the exact file name/extension in the file tree and wire it up properly with `@font-face`.
+
+Do not guess the extension if it is `.ttf`, `.otf`, `.woff`, or another format.
+
+## Buttons in scope
+
+Apply the font only to the main Quick Actions button labels:
+
+* Pull Latest
+* Install
+* Start Frontend
+* Start Backend
+* Stop Engine
+* Restart All
+* Open Preview
+
+## Typography direction
+
+The buttons should feel more:
+
+* sci-fi
+* branded
+* sharp
+* technical
+* premium
+* consistent with the RepoRunner wordmark
+
+Please tune the button text so it remains readable.
+
+You may adjust slightly:
+
+* letter spacing
+* font size
+* font weight if applicable
+* vertical alignment
+
+But keep the button dimensions and layout essentially unchanged.
+
+## Important readability guardrails
+
+Do not make the button text:
+
+* too small
+* too wide
+* too tightly spaced
+* hard to read
+* visually cramped
+
+If the LunaObscura font is too wide at the current size, slightly reduce font size or tracking only enough to fit cleanly.
+
+## Do not apply this font to
+
+Do not change fonts for:
+
+* logs
+* service/engine labels
+* setup modal fields
+* project name
+* repo path
+* section headings
+* status indicators
+* body text
+* form labels
+
+This change is only for the Quick Actions button labels.
+
+## Preserve everything else
+
+Do not change:
+
+* button labels
+* button icons
+* button order
+* button click behavior
+* disabled logic
+* glass button styling
+* hover/active states except minor typography alignment if needed
+* layout
+* functionality
+
+## Acceptance criteria
+
+After this change:
+
+1. Quick Actions button labels use the local LunaObscura font.
+2. Button labels remain readable.
+3. Button sizing and layout remain stable.
+4. No other text in the app is unintentionally changed.
+5. No functionality changes are made.
