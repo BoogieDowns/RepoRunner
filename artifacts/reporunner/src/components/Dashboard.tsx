@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import rrLogo from "../assets/rr-logo-nobg.png";
-import rrWordmark from "../assets/rr-wordmark-nobg.png";
+import rrLogoMark from "../assets/rr-logo-mark.png";
 import {
   Download,
   Package,
@@ -437,40 +436,26 @@ function AmbientBackground({
 /* ─── Logo ──────────────────────────────────────────────────────────────────*/
 
 function RepoRunnerLogo() {
-  /*
-   * The PNG canvas is 1254×1254; the RR mark occupies only the centre band:
-   *   X: 235–971 (58.7% wide), Y: 495–788 (23.4% tall), centred at 48.1% / 51.2%
-   * We render the image at 222px so the mark itself is ≈52px tall, then clip
-   * the transparent padding with an overflow-hidden container sized to the mark.
-   * Mark at 222px → width≈130px, height≈52px; top padding≈110px, left≈52px.
-   */
-  const IMG  = 154;                          // → mark renders at 36px tall
-  const MARK_W = Math.round(IMG * 0.587);  // ≈90
-  const MARK_H = Math.round(IMG * 0.234);  // ≈36
-  const MARK_TOP  = Math.round(IMG * 0.495); // ≈76
-  const MARK_LEFT = Math.round(IMG * 0.187); // ≈29
   return (
     <div
-      aria-hidden="true"
       style={{
-        width: MARK_W,
-        height: MARK_H,
-        overflow: "hidden",
+        width: 96,
+        height: 72,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
         flexShrink: 0,
-        filter: "drop-shadow(0 0 10px rgba(204,30,30,0.62))",
       }}
     >
       <img
-        src={rrLogo}
-        alt=""
+        src={rrLogoMark}
+        alt="RepoRunner"
         style={{
-          position: "relative",
-          width: IMG,
-          height: IMG,
-          top: -MARK_TOP,
-          left: -MARK_LEFT,
-          objectFit: "contain",
+          width: 72,
+          height: "auto",
+          maxHeight: 42,
           flexShrink: 0,
+          filter: "drop-shadow(0 0 8px rgba(204,30,30,0.55))",
           display: "block",
         }}
       />
@@ -820,8 +805,8 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
 
   const logSectionRef = useRef<HTMLElement>(null);
 
-  const DIV = "w-px h-4 flex-none hidden sm:block";
-  const DIV_STYLE = { background: "#1e1e1e" };
+  const DIV = "w-px flex-none hidden sm:block";
+  const DIV_STYLE = { background: "#1e1e1e", height: 28, marginLeft: 8, marginRight: 20 };
 
   return (
     <div className="h-screen flex flex-col bg-background text-foreground animate-in fade-in duration-300 relative overflow-hidden">
