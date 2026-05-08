@@ -942,7 +942,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                 animation: "rr-glow-flicker 0.7s ease-out forwards",
                 zIndex: 0,
               }} />
-              <StatusTextFade text="Stopped" color="rgba(78,52,52,0.90)" />
+              <span style={{ position: "relative", zIndex: 1 }} />
             </span>
           </span>
         );

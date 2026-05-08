@@ -1,0 +1,98 @@
+RepoRunner needs one **tiny engine/status light text cleanup** only.
+
+Do **not** redesign the UI.
+Do **not** change layout.
+Do **not** change engine/service logic.
+Do **not** change start/stop timing.
+Do **not** change button behavior.
+Do **not** change logs, meteors, setup modal, header, IPC, process logic, or product flow.
+
+This is only about removing the remaining `STOPPED` text inside the engine status lights.
+
+## Current state
+
+The `STARTING` and `STOPPING` text has been removed visually, which is good.
+
+But the lights still show:
+
+```text
+STOPPED
+```
+
+when the service is stopped.
+
+I want that removed too.
+
+## Requested change
+
+When the service is stopped, the light should be dark/unlit and show **no text**.
+
+So visually:
+
+```text
+STOPPED = blank dark light
+```
+
+Not:
+
+```text
+STOPPED = dark light with STOPPED text
+```
+
+## Visual display mapping
+
+Internally, the app can still track all statuses:
+
+```text
+STARTING
+RUNNING
+STOPPING
+STOPPED
+```
+
+But visually inside the status light:
+
+```text
+STARTING → RUNNING
+RUNNING  → RUNNING
+STOPPING → RUNNING
+STOPPED  → blank / no text
+```
+
+## Preserve light behavior
+
+Keep:
+
+* startup fade-on
+* running steady illumination
+* stopping fade-out
+* final shutdown flicker
+* red plastic/ribbed lens styling
+* dark/unlit stopped light
+* same light size
+* no spinner
+* no pulsing
+* independent Frontend / Backend behavior
+
+## Important
+
+Do **not** remove the light module itself.
+
+The stopped light should still appear as the same physical plastic lens, just dark and blank.
+
+Do **not** collapse its size.
+Do **not** change alignment.
+Do **not** remove the status light container.
+
+Only hide the `STOPPED` text.
+
+## Acceptance criteria
+
+After this change:
+
+1. Stopped lights show no text.
+2. Stopped lights remain dark/unlit.
+3. Active and transitioning lights show `RUNNING`.
+4. Light size and layout stay unchanged.
+5. Existing light animations remain unchanged.
+6. No functionality or unrelated UI changes are made.
