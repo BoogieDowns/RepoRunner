@@ -1,0 +1,148 @@
+RepoRunner needs a **strict Quick Actions button layout + spacing correction pass**.
+
+Do **not** redesign the app.
+Do **not** change functionality.
+Do **not** change button labels.
+Do **not** change button states or behavior.
+Do **not** change the engine panel, logs, meteors, setup modal, IPC, or product flow.
+
+This task is only about **restructuring the Quick Actions buttons so the layout is visually balanced and all icon/text spacing is clean, even, and symmetrical**.
+
+## Required new layout
+
+Rebuild the Quick Actions button group into **two clean rows**.
+
+### Top row
+
+These three buttons only:
+
+* Start Frontend
+* Start Backend
+* Stop Engine
+
+These must be:
+
+* on the **top row**
+* **equal width**
+* **equal height**
+* evenly spaced
+* visually aligned as a clean three-button row
+
+### Bottom row
+
+These four buttons only:
+
+* Pull Latest
+* Install
+* Restart All
+* Open Preview
+
+These must be:
+
+* on the **bottom row**
+* **equal width**
+* **equal height**
+* evenly spaced
+* visually aligned as a clean four-button row
+
+## Hard requirements
+
+### 1. Equal sizing by row
+
+Top row:
+
+* all 3 buttons must be exactly the same width
+
+Bottom row:
+
+* all 4 buttons must be exactly the same width
+
+Each row should feel intentional and balanced.
+
+Do not leave buttons at random widths.
+
+### 2. Text must fit comfortably inside every button
+
+Every label must fit cleanly inside its button with comfortable padding.
+
+No label should:
+
+* clip
+* overflow
+* touch the border
+* look cramped
+* collide with the icon
+
+If needed:
+
+* reduce font size slightly
+* tighten letter spacing slightly
+* adjust horizontal padding
+* rebalance icon gap
+
+But keep the current overall visual style.
+
+### 3. Icon + label spacing must be even
+
+For every button:
+
+* icon and text must have the same visual relationship
+* left padding should feel consistent
+* icon-to-text gap should feel consistent
+* text should sit cleanly inside the button
+* buttons should feel symmetrical as a group
+
+Do not let some buttons feel crowded and others loose.
+
+### 4. Vertical alignment must be clean
+
+Inside each button:
+
+* icon and text must be vertically centered
+* text baseline should feel consistent across all buttons
+* icon size should be visually balanced across the whole set
+
+### 5. Preserve the button style
+
+Keep:
+
+* current glossy / glassy button style
+* current color styling
+* current hover / disabled / active behavior
+* current LunaObscura-style button font
+* current general dark premium aesthetic
+
+Do not flatten or restyle the buttons.
+
+## Layout intent
+
+The result should feel:
+
+* cleaner
+* more symmetrical
+* more structured
+* easier to scan
+* less cramped
+* more premium
+
+Think:
+
+**“disciplined control panel layout”**
+
+not
+
+**“buttons placed wherever they happen to fit.”**
+
+## Acceptance criteria
+
+After this pass:
+
+1. Top row contains only `Start Frontend`, `Start Backend`, and `Stop Engine`.
+2. Those 3 top-row buttons are equal width.
+3. Bottom row contains only `Pull Latest`, `Install`, `Restart All`, and `Open Preview`.
+4. Those 4 bottom-row buttons are equal width.
+5. All button labels fit comfortably inside their boxes.
+6. No label is clipped or too close to the edge.
+7. Icon/text spacing is even and consistent across all buttons.
+8. The whole Quick Actions area looks symmetrical, tidy, and visually balanced.
+9. No unrelated UI or functionality changes are made.

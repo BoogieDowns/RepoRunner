@@ -871,24 +871,8 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
               </CardHeader>
               <CardContent className="p-5">
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-                  {/* Row 1 — proportional flex so long labels get more room */}
+                  {/* Row 1 — Start Frontend, Start Backend, Stop Engine (3 equal) */}
                   <div style={{ display: "flex", gap: "0.625rem" }}>
-                    <CommandButton
-                      label="Pull Latest"
-                      icon={Download}
-                      onClick={wrapAction("pull", window.repoRunner.pullLatest)}
-                      loading={actionLoading["pull"]}
-                      variant="outline"
-                      style={{ flex: "1 1 0", justifyContent: "center", padding: "0 1.1rem" }}
-                    />
-                    <CommandButton
-                      label="Install"
-                      icon={Package}
-                      onClick={wrapAction("install", window.repoRunner.runInstall)}
-                      loading={actionLoading["install"]}
-                      variant="outline"
-                      style={{ flex: "0.7 1 0", justifyContent: "center", padding: "0 1.1rem" }}
-                    />
                     <CommandButton
                       label="Start Frontend"
                       icon={Play}
@@ -896,7 +880,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                       disabled={statuses.frontend === "running" || statuses.frontend === "starting"}
                       loading={actionLoading["startFront"]}
                       variant="default"
-                      style={{ flex: "1.35 1 0", justifyContent: "center", padding: "0 1.1rem" }}
+                      style={{ flex: "1 1 0", justifyContent: "center", padding: "0 1rem" }}
                     />
                     <CommandButton
                       label="Start Backend"
@@ -905,12 +889,8 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                       disabled={statuses.backend === "running" || statuses.backend === "starting"}
                       loading={actionLoading["startBack"]}
                       variant="default"
-                      style={{ flex: "1.3 1 0", justifyContent: "center", padding: "0 1.1rem" }}
+                      style={{ flex: "1 1 0", justifyContent: "center", padding: "0 1rem" }}
                     />
-                  </div>
-
-                  {/* Row 2 — three equal columns spanning full width */}
-                  <div style={{ display: "flex", gap: "0.625rem" }}>
                     <CommandButton
                       label="Stop Engine"
                       icon={SquareSquare}
@@ -918,7 +898,27 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                       disabled={bothStopped}
                       loading={actionLoading["stop"]}
                       variant="destructive"
-                      style={{ flex: "1 1 0", justifyContent: "center", padding: "0 1.1rem" }}
+                      style={{ flex: "1 1 0", justifyContent: "center", padding: "0 1rem" }}
+                    />
+                  </div>
+
+                  {/* Row 2 — Pull Latest, Install, Restart All, Open Preview (4 equal) */}
+                  <div style={{ display: "flex", gap: "0.625rem" }}>
+                    <CommandButton
+                      label="Pull Latest"
+                      icon={Download}
+                      onClick={wrapAction("pull", window.repoRunner.pullLatest)}
+                      loading={actionLoading["pull"]}
+                      variant="outline"
+                      style={{ flex: "1 1 0", justifyContent: "center", padding: "0 1rem" }}
+                    />
+                    <CommandButton
+                      label="Install"
+                      icon={Package}
+                      onClick={wrapAction("install", window.repoRunner.runInstall)}
+                      loading={actionLoading["install"]}
+                      variant="outline"
+                      style={{ flex: "1 1 0", justifyContent: "center", padding: "0 1rem" }}
                     />
                     <CommandButton
                       label="Restart All"
@@ -926,7 +926,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                       onClick={wrapAction("restart", window.repoRunner.restartAll)}
                       loading={actionLoading["restart"]}
                       variant="outline"
-                      style={{ flex: "1 1 0", justifyContent: "center", padding: "0 1.1rem" }}
+                      style={{ flex: "1 1 0", justifyContent: "center", padding: "0 1rem" }}
                     />
                     <CommandButton
                       label="Open Preview"
@@ -934,7 +934,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                       onClick={wrapAction("preview", window.repoRunner.openPreview)}
                       loading={actionLoading["preview"]}
                       variant="outline"
-                      style={{ flex: "1 1 0", justifyContent: "center", padding: "0 1.1rem" }}
+                      style={{ flex: "1 1 0", justifyContent: "center", padding: "0 1rem" }}
                     />
                   </div>
                 </div>
