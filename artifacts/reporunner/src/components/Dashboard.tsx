@@ -469,24 +469,22 @@ function InstallStackIcon({ className, strokeWidth = 1.5 }: { className?: string
   );
 }
 
-/* ─── Open icon (circle upper-right + two parallel diagonal trailing lines) ──*/
+/* ─── Open icon (comet: circle head + 3 parallel diagonal trailing strokes) ──*/
 
-function OpenLaunchIcon({ className, strokeWidth = 1.5 }: { className?: string; strokeWidth?: number }) {
+function OpenCometIcon({ className }: { className?: string }) {
   return (
     <svg
       className={className}
+      width="18"
+      height="18"
       viewBox="0 0 24 24"
       fill="none"
-      stroke="currentColor"
-      strokeWidth={strokeWidth}
-      strokeLinecap="round"
-      strokeLinejoin="round"
       aria-hidden="true"
     >
-      <circle cx="15" cy="8" r="4" />
-      <line x1="10.5" y1="6.5" x2="7.5" y2="9.5"  />
-      <line x1="12"   y1="11.5" x2="6"  y2="17.5" />
-      <line x1="14"   y1="13.5" x2="8"  y2="19.5" />
+      <circle cx="15.5" cy="7.5" r="4.5" stroke="currentColor" strokeWidth="1.9" />
+      <path d="M10.8 6.3 L7.4 9.7"   stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+      <path d="M12.2 11.2 L6.2 17.2" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+      <path d="M14.1 13.6 L8.1 19.6" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
     </svg>
   );
 }
@@ -1039,7 +1037,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                     />
                     <CommandButton
                       label="Open"
-                      icon={OpenLaunchIcon}
+                      icon={OpenCometIcon}
                       onClick={wrapAction("preview", window.repoRunner.openPreview)}
                       loading={actionLoading["preview"]}
                       variant="outline"

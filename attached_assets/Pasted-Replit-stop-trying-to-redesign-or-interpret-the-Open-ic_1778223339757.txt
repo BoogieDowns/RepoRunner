@@ -1,0 +1,134 @@
+Replit, stop trying to redesign or interpret the `Open` icon.
+
+The current attempts are not working.
+
+Please replace the `Open` icon with this exact custom SVG component.
+
+Do **not** change anything else.
+
+Do **not** redesign the UI.
+Do **not** change layout.
+Do **not** change button sizes.
+Do **not** change button text.
+Do **not** change button spacing.
+Do **not** change any other icons.
+Do **not** touch engine lights, logs, meteors, setup modal, header, IPC, process logic, or product flow.
+
+This is only about replacing the `Open` button icon.
+
+## Exact icon component to use
+
+Create or replace the current `Open` icon component with this:
+
+```tsx
+function OpenCometIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      {/* circular head */}
+      <circle
+        cx="15.5"
+        cy="7.5"
+        r="4.5"
+        stroke="currentColor"
+        strokeWidth="1.9"
+      />
+
+      {/* short upper trailing stroke */}
+      <path
+        d="M10.8 6.3 L7.4 9.7"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+      />
+
+      {/* middle trailing stroke */}
+      <path
+        d="M12.2 11.2 L6.2 17.2"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+      />
+
+      {/* lower trailing stroke */}
+      <path
+        d="M14.1 13.6 L8.1 19.6"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+```
+
+## Use this icon only for the Open button
+
+Replace the current `Open` button icon with:
+
+```tsx
+OpenCometIcon
+```
+
+Do not change any other button icon.
+
+## Why this exact SVG
+
+This icon is intentionally built from four simple parts:
+
+1. one circular head
+2. one short upper diagonal stroke
+3. one longer middle diagonal stroke
+4. one longer lower diagonal stroke
+
+That matches the reference much more directly than the previous attempts.
+
+## Visual requirements
+
+After adding this SVG, check that:
+
+* the circle is clearly visible
+* the short upper stroke is visible
+* the two longer lower strokes are visible
+* all three strokes are separate
+* the icon does not look like a magnifying glass
+* the icon does not look like a generic external-link icon
+* the icon remains centered beside `OPEN`
+* the icon uses `currentColor`
+* the icon matches enabled/disabled color states
+
+## If it appears too small
+
+Do not redesign it.
+
+Only adjust the SVG `width` and `height` from:
+
+```tsx
+width="18"
+height="18"
+```
+
+to:
+
+```tsx
+width="19"
+height="19"
+```
+
+Do not change the geometry unless absolutely necessary.
+
+## Acceptance criteria
+
+After this change:
+
+1. The `Open` button uses the exact `OpenCometIcon` SVG above.
+2. The icon clearly has one circle and three diagonal trailing strokes.
+3. It is readable at button size.
+4. No other icons are changed.
+5. No unrelated UI or functionality changes are made.
