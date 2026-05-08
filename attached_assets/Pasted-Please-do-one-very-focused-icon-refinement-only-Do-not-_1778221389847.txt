@@ -1,0 +1,95 @@
+Please do one **very focused icon refinement** only.
+
+Do **not** redesign the UI.
+Do **not** change layout.
+Do **not** change button sizes.
+Do **not** change fonts.
+Do **not** change glass styling.
+Do **not** change spacing outside this one icon.
+Do **not** change any other button icon.
+
+This pass is only for the **RESTART** button icon.
+
+## Goal
+
+Replace/refine the current **Restart** icon so it matches the reference image I’m pasting in.
+
+Use the pasted reference image as the visual source of truth.
+
+## Important direction
+
+The current Restart icon is not clear enough.
+
+I want the Restart icon to look like the reference:
+- a clean, symmetrical, stylized mark
+- two mirrored curved strokes
+- crossing/interlocking in the middle
+- clear central loop/crossing structure
+- smooth linework
+- compact and readable at small size
+
+It should feel:
+- sharp
+- clean
+- intentional
+- premium
+- easy to read inside the button
+
+## Implementation guidance
+
+Please create this as a **custom SVG icon** rather than guessing with a font glyph.
+
+Requirements:
+- use `currentColor`
+- use stroke, not filled blobs
+- rounded line caps / joins if that helps match the reference
+- keep line weight visually consistent with the other button icons
+- make the icon optically centered
+- make it clearly legible at button size
+- size it so it matches the visual scale of the other action icons
+
+## Match the other button icons
+
+The Restart icon should align visually with the rest of the button icon system:
+- same overall icon box size
+- same visual weight
+- same vertical alignment
+- same spacing between icon and the word `RESTART`
+
+It should not look:
+- too tiny
+- too thin
+- too faint
+- too complicated
+- off-center
+- stretched
+
+## Scope restraint
+
+Only change:
+- the **Restart** icon SVG / component
+- any tiny icon-specific sizing/alignment needed for the Restart button only
+
+Do not change:
+- Pull icon
+- Install icon
+- Open icon
+- Start icons
+- Stop icon
+- button text
+- button layout
+- panel layout
+- engine lights
+- logs
+- meteors
+- header
+
+## Acceptance criteria
+
+After this change:
+
+1. The **Restart** icon clearly matches the pasted reference image.
+2. The icon is more readable and visually cleaner than the current version.
+3. It feels consistent with the other action button icons.
+4. It is centered and properly sized inside the Restart button.
+5. No unrelated UI changes are made.
