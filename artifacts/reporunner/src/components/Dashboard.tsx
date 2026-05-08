@@ -479,7 +479,7 @@ function InstallStackIcon({ className, strokeWidth = 1.5 }: { className?: string
   );
 }
 
-/* ─── Open icon (comet: stroked circle head + 3 graded parallel 45° tail strokes) ─*/
+/* ─── Open icon (comet: filled circle head + 3 graded parallel 45° tail strokes) ─*/
 
 function OpenCometIcon({ className }: { className?: string }) {
   return (
@@ -492,18 +492,20 @@ function OpenCometIcon({ className }: { className?: string }) {
       strokeLinecap="round"
       aria-hidden="true"
     >
-      {/* Circle head — upper right, r=4 */}
-      <circle cx="15" cy="7.5" r="4" />
       {/*
-        Three parallel 45° tail strokes all going lower-left (direction -1,+1).
-        Stroke 1 starts at the circle's exact lower-left edge (135° in SVG = lower-left):
-          (15 + 4*cos(135°_svg), 7.5 + 4*sin(135°_svg)) = (15−2.83, 7.5+2.83) = (12.2, 10.3)
-        → no gap between stroke and circle.
-        Strokes 2 & 3 fan progressively away, graded shorter.
+        Filled circle: fill="currentColor" means tail strokes can start inside
+        the circle boundary. The filled area hides the overlap, so the visible
+        portion of stroke 1 emerges cleanly at the circle edge — zero gap possible.
       */}
-      <line x1="12.2" y1="10.3" x2="6.2"  y2="16.3" />  {/* long  — starts at circle edge */}
-      <line x1="10.5" y1="13.5" x2="7"    y2="17"   />  {/* med   — dist≈7.8 from center */}
-      <line x1="9"    y1="16"   x2="7"    y2="18"   />  {/* short — dist≈10.8 from center */}
+      <circle cx="15" cy="7.5" r="4" fill="currentColor" stroke="none" />
+      {/*
+        All three lines at exactly 45° lower-left (direction −1, +1).
+        Stroke 1 starts inside the circle (dist 2.5 < r 4) — hidden by fill,
+        exits cleanly at the lower-left boundary. Strokes 2 & 3 are outside.
+      */}
+      <line x1="13"   y1="9"   x2="5"   y2="17"  />  {/* long  — inside circle, exits at ≈(11.9,10.1) */}
+      <line x1="11"   y1="13"  x2="7.5" y2="16.5" />  {/* med   — outside circle */}
+      <line x1="9.5"  y1="16"  x2="7.5" y2="18"  />  {/* short — outside circle */}
     </svg>
   );
 }
