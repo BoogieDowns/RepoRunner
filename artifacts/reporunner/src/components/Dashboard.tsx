@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import rrLogoMark from "../assets/rr-logo-mark.png";
 import {
-  Download,
   Package,
   Play,
   Server,
@@ -429,6 +428,27 @@ function AmbientBackground({
 
     </div>
     </>
+  );
+}
+
+/* ─── Pull icon (three stacked ellipses / ripple-bowl shape) ────────────────*/
+
+function PullRingsIcon({ className, strokeWidth = 1.5 }: { className?: string; strokeWidth?: number }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <ellipse cx="12" cy="7"   rx="8"   ry="2.8" />
+      <ellipse cx="12" cy="12"  rx="5.5" ry="2"   />
+      <ellipse cx="12" cy="16"  rx="3"   ry="1.4" />
+    </svg>
   );
 }
 
@@ -935,7 +955,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                   <div style={{ display: "flex", gap: "0.625rem" }}>
                     <CommandButton
                       label="Pull"
-                      icon={Download}
+                      icon={PullRingsIcon}
                       onClick={wrapAction("pull", window.repoRunner.pullLatest)}
                       loading={actionLoading["pull"]}
                       variant="outline"
