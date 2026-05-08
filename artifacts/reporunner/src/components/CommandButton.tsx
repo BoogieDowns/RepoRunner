@@ -8,6 +8,7 @@ interface CommandButtonProps {
   disabled?: boolean;
   variant?: "default" | "destructive" | "secondary" | "ghost" | "outline";
   loading?: boolean;
+  style?: React.CSSProperties;
 }
 
 export function CommandButton({
@@ -17,6 +18,7 @@ export function CommandButton({
   disabled = false,
   variant = "default",
   loading = false,
+  style,
 }: CommandButtonProps) {
   const glassClass =
     variant === "destructive"
@@ -35,6 +37,7 @@ export function CommandButton({
         glassClass,
         "hover:-translate-y-px active:translate-y-0 active:scale-[0.99]",
       )}
+      style={style}
     >
       {loading ? (
         <Loader2 className="h-4 w-4 animate-spin flex-none" />

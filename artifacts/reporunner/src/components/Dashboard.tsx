@@ -870,68 +870,73 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-5">
-                <div className="flex flex-wrap items-center gap-2">
-                  <CommandButton
-                    label="Pull Latest"
-                    icon={Download}
-                    onClick={wrapAction("pull", window.repoRunner.pullLatest)}
-                    loading={actionLoading["pull"]}
-                    variant="outline"
-                  />
-                  <CommandButton
-                    label="Install"
-                    icon={Package}
-                    onClick={wrapAction("install", window.repoRunner.runInstall)}
-                    loading={actionLoading["install"]}
-                    variant="outline"
-                  />
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                  {/* Row 1 — Pull, Install, Start Frontend, Start Backend */}
+                  <div style={{ display: "flex", gap: "0.5rem" }}>
+                    <CommandButton
+                      label="Pull Latest"
+                      icon={Download}
+                      onClick={wrapAction("pull", window.repoRunner.pullLatest)}
+                      loading={actionLoading["pull"]}
+                      variant="outline"
+                      style={{ flex: 1, justifyContent: "center" }}
+                    />
+                    <CommandButton
+                      label="Install"
+                      icon={Package}
+                      onClick={wrapAction("install", window.repoRunner.runInstall)}
+                      loading={actionLoading["install"]}
+                      variant="outline"
+                      style={{ flex: 1, justifyContent: "center" }}
+                    />
+                    <CommandButton
+                      label="Start Frontend"
+                      icon={Play}
+                      onClick={wrapAction("startFront", window.repoRunner.startFrontend)}
+                      disabled={statuses.frontend === "running" || statuses.frontend === "starting"}
+                      loading={actionLoading["startFront"]}
+                      variant="default"
+                      style={{ flex: 1, justifyContent: "center" }}
+                    />
+                    <CommandButton
+                      label="Start Backend"
+                      icon={Play}
+                      onClick={wrapAction("startBack", window.repoRunner.startBackend)}
+                      disabled={statuses.backend === "running" || statuses.backend === "starting"}
+                      loading={actionLoading["startBack"]}
+                      variant="default"
+                      style={{ flex: 1, justifyContent: "center" }}
+                    />
+                  </div>
 
-                  <div className={DIV} style={DIV_STYLE} />
-
-                  <CommandButton
-                    label="Start Frontend"
-                    icon={Play}
-                    onClick={wrapAction("startFront", window.repoRunner.startFrontend)}
-                    disabled={statuses.frontend === "running" || statuses.frontend === "starting"}
-                    loading={actionLoading["startFront"]}
-                    variant="default"
-                  />
-                  <CommandButton
-                    label="Start Backend"
-                    icon={Play}
-                    onClick={wrapAction("startBack", window.repoRunner.startBackend)}
-                    disabled={statuses.backend === "running" || statuses.backend === "starting"}
-                    loading={actionLoading["startBack"]}
-                    variant="default"
-                  />
-
-                  <div className={DIV} style={DIV_STYLE} />
-
-                  <CommandButton
-                    label="Stop Engine"
-                    icon={SquareSquare}
-                    onClick={wrapAction("stop", window.repoRunner.stopServices)}
-                    disabled={bothStopped}
-                    loading={actionLoading["stop"]}
-                    variant="destructive"
-                  />
-
-                  <div className={DIV} style={DIV_STYLE} />
-
-                  <CommandButton
-                    label="Restart All"
-                    icon={RotateCw}
-                    onClick={wrapAction("restart", window.repoRunner.restartAll)}
-                    loading={actionLoading["restart"]}
-                    variant="outline"
-                  />
-                  <CommandButton
-                    label="Open Preview"
-                    icon={ExternalLink}
-                    onClick={wrapAction("preview", window.repoRunner.openPreview)}
-                    loading={actionLoading["preview"]}
-                    variant="outline"
-                  />
+                  {/* Row 2 — Stop Engine, Restart All, Open Preview (centered under row 1) */}
+                  <div style={{ display: "flex", gap: "0.5rem", justifyContent: "center" }}>
+                    <CommandButton
+                      label="Stop Engine"
+                      icon={SquareSquare}
+                      onClick={wrapAction("stop", window.repoRunner.stopServices)}
+                      disabled={bothStopped}
+                      loading={actionLoading["stop"]}
+                      variant="destructive"
+                      style={{ width: "calc((100% - 1.5rem) / 4)", justifyContent: "center" }}
+                    />
+                    <CommandButton
+                      label="Restart All"
+                      icon={RotateCw}
+                      onClick={wrapAction("restart", window.repoRunner.restartAll)}
+                      loading={actionLoading["restart"]}
+                      variant="outline"
+                      style={{ width: "calc((100% - 1.5rem) / 4)", justifyContent: "center" }}
+                    />
+                    <CommandButton
+                      label="Open Preview"
+                      icon={ExternalLink}
+                      onClick={wrapAction("preview", window.repoRunner.openPreview)}
+                      loading={actionLoading["preview"]}
+                      variant="outline"
+                      style={{ width: "calc((100% - 1.5rem) / 4)", justifyContent: "center" }}
+                    />
+                  </div>
                 </div>
               </CardContent>
             </Card>

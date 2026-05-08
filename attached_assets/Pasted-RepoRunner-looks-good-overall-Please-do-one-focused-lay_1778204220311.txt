@@ -1,0 +1,147 @@
+RepoRunner looks good overall. Please do one **focused layout polish pass** on the **Quick Actions button group only**.
+
+Do **not** redesign the app.
+Do **not** change functionality.
+Do **not** change button behaviors.
+Do **not** change the engine card, logs, modal, meteors, typography outside the buttons, IPC, or process logic.
+
+This is only about making the **Quick Actions buttons feel more visually structured and pleasing**.
+
+## Problem
+
+The current Quick Actions buttons look good stylistically, but the overall arrangement feels a bit awkward / uneven.
+
+The issue is not the visual theme — it is the **composition and structure** of the button layout.
+
+I want the Quick Actions area to feel:
+
+* cleaner
+* more intentional
+* better balanced
+* easier to scan
+* more premium
+
+## Requested change
+
+Please **restructure the button layout** inside the Quick Actions panel so the arrangement feels visually pleasing and deliberate.
+
+## Direction
+
+Use a clean, explicit layout rather than a loose wrap.
+
+### Keep these same buttons
+
+* Pull Latest
+* Install
+* Start Frontend
+* Start Backend
+* Stop Engine
+* Restart All
+* Open Preview
+
+Do not rename them.
+Do not remove them.
+Do not change what they do.
+
+## Layout goal
+
+Create a more intentional **two-row composition**.
+
+### Preferred arrangement
+
+Keep the current logical order, but make the layout feel properly designed:
+
+**Row 1**
+
+* Pull Latest
+* Install
+* Start Frontend
+* Start Backend
+
+**Row 2**
+
+* Stop Engine
+* Restart All
+* Open Preview
+
+## Important visual requirements
+
+### 1. Make the rows feel balanced
+
+The second row should not feel like a random leftover row.
+
+It should feel centered / balanced under the first row.
+
+Use spacing, alignment, and width tuning so the whole Quick Actions group feels composed.
+
+### 2. Standardize button rhythm
+
+Please improve:
+
+* horizontal spacing
+* vertical spacing
+* alignment
+* visual rhythm
+* consistent button height
+
+The spacing should feel deliberate and even.
+
+### 3. Improve width balance
+
+The button widths currently feel a bit uneven because of the typography.
+
+Please tune widths so the composition feels better balanced.
+
+Guidance:
+
+* keep all labels on one line
+* avoid awkward extra empty space
+* avoid one button feeling tiny next to oversized ones
+* if needed, use a restrained width system rather than every button sizing itself too freely
+
+### 4. Preserve current styling direction
+
+Keep:
+
+* the current glass / glossy button look
+* current color logic
+* current icon usage
+* current sharp-ish corner treatment
+* current font direction already applied to button text
+
+Do not flatten or restyle the buttons.
+This is a **layout polish**, not a visual redesign.
+
+## Implementation suggestion
+
+If useful, switch the Quick Actions buttons to a more explicit layout system such as:
+
+* CSS grid
+* a structured flex layout with controlled row grouping
+
+Instead of letting the buttons feel loosely wrapped.
+
+## Do not change
+
+Do not change:
+
+* button text
+* button icons
+* button click behavior
+* disabled states
+* hover / active logic
+* glass effect
+* panel size unless a tiny adjustment is needed for cleaner balance
+* app functionality
+
+## Acceptance criteria
+
+After this pass:
+
+1. The Quick Actions buttons are arranged in a more visually pleasing way.
+2. The layout feels intentional rather than loosely wrapped.
+3. Row 1 and Row 2 feel balanced.
+4. Spacing and alignment are cleaner.
+5. Button widths feel more harmonious.
+6. The existing visual style is preserved.
+7. No functionality changes are made.
