@@ -1,0 +1,124 @@
+Do one precise correction pass only.
+
+The OPEN button icon is still wrong.
+
+It does not match the pasted reference closely enough.
+Do not approximate it.
+Do not “interpret” it.
+Do not use a generic link / external / magnifier / launch icon.
+
+This task is ONLY about the OPEN button icon.
+
+Do not redesign the UI.
+Do not change layout.
+Do not change button sizes.
+Do not change button text.
+Do not change fonts.
+Do not change glass styling.
+Do not change spacing for other buttons.
+Do not touch any other icon.
+Do not touch any other component.
+
+## Goal
+
+Replace the current OPEN icon with a custom SVG that matches the pasted reference image closely and clearly.
+
+## Source of truth
+
+Use the pasted reference image as the exact visual target.
+
+The icon should be:
+- a circular ring in the upper-right area
+- with two separate parallel diagonal trailing lines extending down-left
+- simple
+- clean
+- technical
+- highly readable
+
+## What is wrong with the current version
+
+The current OPEN icon is still off because:
+- it does not match the proportions closely enough
+- the circle / ring is not reading strongly enough
+- the two trailing lines are not reading clearly enough
+- the whole icon does not yet look like the reference
+
+## What the icon must look like
+
+The OPEN icon must contain exactly:
+
+1. One clear stroked circle
+2. Two separate parallel diagonal line segments trailing down-left from the circle
+
+Important:
+- the circle must be visually dominant
+- the two lines must be clearly distinct from each other
+- the lines must be parallel
+- the lines must angle down-left
+- the icon must NOT look like a magnifying glass
+- the icon must NOT look like a generic external-link icon
+- the icon must NOT have an arrowhead
+- the icon must NOT have a box
+- the icon must NOT have extra shapes
+
+## Construction guidance
+
+Build it as a custom SVG icon.
+
+Use:
+- stroke only
+- no fill
+- `currentColor`
+- rounded line caps
+- rounded line joins
+
+The icon should be centered in the same icon box used by the other buttons.
+
+## Precise visual direction
+
+Match the reference much more literally:
+
+- Place the circle in the upper-right portion of the icon
+- Make the circle large enough to clearly read at button size
+- The upper trailing line should begin near the lower-left side of the circle and extend diagonally down-left
+- The lower trailing line should sit below it, parallel to it, and slightly separated
+- Both lines should be long enough to read clearly
+- The total shape should feel like a sleek comet / signal glyph
+
+## Sizing / weight requirements
+
+Make the OPEN icon visually comparable to the other button icons.
+
+Requirements:
+- readable at a glance
+- not tiny
+- not faint
+- not overly thin
+- not overly delicate
+- optically balanced with Pull / Install / Restart
+
+Target:
+- stroke weight around 1.9 to 2.1 if needed
+- icon visual area should be slightly larger than the current failed attempt
+- keep icon/text spacing tidy and centered
+
+## Hard acceptance criteria
+
+Before finishing, visually compare the result to the pasted reference.
+
+The result is only acceptable if all of these are true:
+
+1. It clearly matches the pasted reference image.
+2. It has one obvious circular ring.
+3. It has two obvious separate parallel diagonal lines.
+4. It does not resemble a magnifying glass or generic external-link icon.
+5. The icon is crisp and readable at button size.
+6. It is visually balanced with the other button icons.
+7. No unrelated UI changes are made.
+
+## Important instruction
+
+If your first SVG adjustment still does not visually match the reference, revise it again immediately in the same pass before finishing.
+
+Do not stop at “technically updated.”
+Stop only when it visually matches the reference properly.

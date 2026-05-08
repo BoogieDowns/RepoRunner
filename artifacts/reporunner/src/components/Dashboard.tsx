@@ -483,9 +483,9 @@ function OpenLaunchIcon({ className, strokeWidth = 1.5 }: { className?: string; 
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      <circle cx="15" cy="8" r="4" />
+      <circle cx="15" cy="8" r="4.5" />
       <line x1="12" y1="11.5" x2="6"   y2="17.5" />
-      <line x1="14" y1="13"   x2="8"   y2="19" />
+      <line x1="14" y1="13.5" x2="8"   y2="19.5" />
     </svg>
   );
 }
