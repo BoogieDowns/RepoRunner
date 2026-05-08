@@ -33,17 +33,17 @@ const MONO: React.CSSProperties = { fontFamily: "'JetBrains Mono', monospace" };
 
 const inputStyle: React.CSSProperties = {
   background: "#060606",
-  border: "1px solid #1e1e1e",
+  border: "1px solid #252220",
   color: "#dedad5",
   height: "36px",
 };
 
 const inputClassName =
   "focus-visible:ring-[#cc2222]/20 focus-visible:border-[#cc2222]/40 " +
-  "focus-visible:shadow-[0_0_10px_rgba(204,34,34,0.10)] transition-shadow placeholder:text-[#303030]";
+  "focus-visible:shadow-[0_0_10px_rgba(204,34,34,0.10)] transition-shadow placeholder:text-[#3e3c3a]";
 
 const labelStyle: React.CSSProperties = {
-  color: "#7a7876",
+  color: "#858280",
   fontSize: "11px",
   letterSpacing: "0.04em",
 };
