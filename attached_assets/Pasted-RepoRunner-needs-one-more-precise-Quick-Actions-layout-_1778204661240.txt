@@ -1,0 +1,138 @@
+RepoRunner needs one more precise Quick Actions layout fix.
+
+Do not redesign the UI.
+Do not change functionality.
+Do not change the button visual style direction.
+Do not change the engine panel, logs, setup modal, meteors, or product flow.
+
+This is only a **button sizing / spacing / fit** correction pass for the Quick Actions area.
+
+## Current problem
+
+The button text is still not fitting properly inside the button boxes.
+
+Visible issues:
+- some labels are too long for their current button widths
+- text feels cramped horizontally
+- some labels visually push into the button edges
+- the row composition still feels too tight
+- the buttons do not have enough internal breathing room
+
+Examples:
+- PULL LATEST
+- START FRONTEND
+- START BACKEND
+- RESTART ALL
+- OPEN PREVIEW
+- STOP ENGINE
+
+## Goal
+
+Make the Quick Actions buttons feel:
+- readable
+- balanced
+- evenly spaced
+- properly padded
+- visually intentional
+- premium
+
+The text should fit comfortably inside every button.
+
+## Required fix
+
+### 1. Increase button widths where needed
+Do not force all buttons to stay too narrow.
+
+Increase button widths so every label fits comfortably.
+
+Important:
+- no label should feel squeezed
+- no label should visually collide with the left icon area
+- no label should sit too close to the right edge
+- all buttons should have proper horizontal breathing room
+
+### 2. Add more internal horizontal padding
+Increase left/right padding inside the buttons slightly.
+
+The text needs more room inside the button, not just between buttons.
+
+### 3. Rebalance the row layout
+Keep the same grouping, but rebuild the layout so it looks intentional.
+
+Use:
+
+Row 1:
+- Pull Latest
+- Install
+- Start Frontend
+- Start Backend
+
+Row 2:
+- Stop Engine
+- Restart All
+- Open Preview
+
+But make the sizing work properly.
+
+### 4. Use a cleaner width strategy
+Use one of these clean approaches:
+
+Option A:
+- small buttons for short labels
+- medium buttons for medium labels
+- long buttons for long labels
+
+or
+
+Option B:
+- define a few consistent width classes
+  - small
+  - medium
+  - large
+
+Either is fine, but the result should feel visually structured.
+
+### 5. Prioritize fit over compression
+Do not solve this by shrinking text more.
+
+Prefer:
+- slightly wider buttons
+- slightly better spacing
+- slightly better row composition
+
+Avoid:
+- over-compressing text
+- tiny font reductions
+- squashing everything into a narrow layout
+
+### 6. Keep the panel balanced
+If needed, slightly adjust the Quick Actions inner layout so the button group sits cleanly within the card.
+
+But do not:
+- enlarge the whole UI dramatically
+- distort the card
+- change the broader page layout
+
+## Important restraint
+
+Do not change:
+- button text
+- button icons
+- glossy / glass styling
+- font family
+- button colors
+- hover states
+- disabled states
+- action behavior
+- anything outside the Quick Actions button layout
+
+## Acceptance criteria
+
+After this pass:
+1. Every button label fits comfortably inside its button.
+2. No text feels cramped or clipped.
+3. Buttons have better internal padding.
+4. Horizontal spacing between buttons feels cleaner.
+5. The two-row layout feels balanced and intentional.
+6. The Quick Actions section looks more polished overall.
+7. No unrelated UI or functionality changes are made.
