@@ -890,10 +890,10 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
 
   const getLogSourceColor = (source: string) => {
     switch (source) {
-      case "git":      return "#4a9878";
-      case "install":  return "#f2b8a0";
+      case "git":      return "#7CFF6B";
+      case "install":  return "#FFB06A";
       case "frontend": return "#cc4444";
-      case "backend":  return "#5080a8";
+      case "backend":  return "#9B3F67";
       case "system":
       default:         return "#575452";
     }

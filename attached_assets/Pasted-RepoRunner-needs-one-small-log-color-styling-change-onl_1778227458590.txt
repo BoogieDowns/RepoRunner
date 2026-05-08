@@ -1,0 +1,136 @@
+RepoRunner needs one **small log color styling change** only.
+
+Do **not** redesign the UI.
+Do **not** change layout.
+Do **not** change log behavior.
+Do **not** change log ordering.
+Do **not** change Copy / Clear behavior.
+Do **not** change dashboard buttons, engine lights, meteors, setup modal, header, IPC, process logic, or product flow.
+
+This is only about changing a few **log source label colors** in the terminal/logs panel.
+
+## Requested color changes
+
+### 1. Make `[GIT]` more neon green
+
+The current `GIT` color should be changed to a more vivid neon green.
+
+Desired feel:
+
+* brighter
+* cleaner
+* more terminal-like
+* clearly green
+* slightly electric / neon
+
+Suggested direction:
+
+```css
+#7CFF6B
+```
+
+or something very close.
+
+It should still sit well in the dark UI and not look cartoonish.
+
+---
+
+### 2. Make `[INSTALL]` a more saturated peach / amber-orange
+
+The current `INSTALL` color should become more saturated and richer.
+
+Desired feel:
+
+* peach
+* slightly amber
+* slightly orange
+* warmer
+* more vivid than the current version
+
+Suggested direction:
+
+```css
+#FFB06A
+```
+
+or
+
+```css
+#FFAA5C
+```
+
+Use best judgment, but keep it in the peach / amber-orange family.
+
+---
+
+### 3. Change `[BACKEND]` from blue to maroon / purple-red
+
+The current `BACKEND` label is blue.
+
+I want that changed to a darker red-purple / maroon tone.
+
+Desired feel:
+
+* maroon
+* wine red
+* purple-red
+* slightly moody
+* richer and darker than the frontend red
+* clearly different from `FRONTEND`
+
+Suggested direction:
+
+```css
+#8E3B5E
+```
+
+or
+
+```css
+#9B3F67
+```
+
+Use best judgment so it feels like a purple-leaning maroon, not bright magenta.
+
+---
+
+## Preserve other log colors
+
+Do **not** change the colors for:
+
+* `[SYSTEM]`
+* `[FRONTEND]`
+* timestamps
+* general log message text
+* empty state text
+
+Only change:
+
+* `[GIT]`
+* `[INSTALL]`
+* `[BACKEND]`
+
+## Important
+
+This is color-only.
+
+Do **not** change:
+
+* font
+* size
+* weight
+* spacing
+* label formatting
+* brackets
+* panel styling
+* log row layout
+
+## Acceptance criteria
+
+After this change:
+
+1. `[GIT]` reads as a brighter neon green.
+2. `[INSTALL]` reads as a more saturated peach / amber-orange.
+3. `[BACKEND]` reads as a maroon / purple-red instead of blue.
+4. Other log colors remain unchanged.
+5. No layout or functionality changes are made.
