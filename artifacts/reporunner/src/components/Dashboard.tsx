@@ -523,12 +523,14 @@ function PullRingsIcon({ className, strokeWidth = 1.5 }: { className?: string; s
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      {/* Wide spread: cy at 6 / 12 / 18 for maximum distinct ring separation */}
-      <ellipse cx="12" cy="6"  rx="8.5" ry="2.5" />
-      <ellipse cx="12" cy="12" rx="5.5" ry="2"   />
-      <ellipse cx="12" cy="18" rx="2.5" ry="1.4" />
-      {/* Focal dot at the convergence point */}
-      <circle  cx="12" cy="21" r="1.2" fill="currentColor" stroke="none" />
+      {/*
+        Bowl / gravity-well shape — 3 ellipses clustered together.
+        Wide rim at top, narrowing downward. Matches reference image.
+        Rings packed tight so they read as a single bowl form, not spread rings.
+      */}
+      <ellipse cx="12" cy="10"  rx="9"   ry="2.5" />   {/* wide rim */}
+      <ellipse cx="12" cy="13.5" rx="6"  ry="2"   />   {/* middle   */}
+      <ellipse cx="12" cy="16.5" rx="3"  ry="1.5" />   {/* bottom   */}
     </svg>
   );
 }
