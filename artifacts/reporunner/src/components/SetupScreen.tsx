@@ -256,7 +256,28 @@ export function SetupScreen({
                 />
               </div>
 
-              {/* Row 2: Install | Frontend | Backend commands */}
+              {/* Row 2: Preview URL — full width */}
+              <FormField
+                control={form.control}
+                name="previewUrl"
+                render={({ field }) => (
+                  <FormItem className="space-y-1.5">
+                    <FormLabel className="font-medium" style={labelStyle}>
+                      Preview URL
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        className={`text-xs ${inputClassName}`}
+                        style={{ ...inputStyle, ...MONO, fontSize: "12px" }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Row 3: Install | Frontend | Backend commands */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                 {(["installCommand", "frontendCommand", "backendCommand"] as const).map((fieldName, i) => {
                   const labels = ["Install Command", "Frontend Command", "Backend Command"];
@@ -285,31 +306,8 @@ export function SetupScreen({
                 })}
               </div>
 
-              {/* Row 3: Preview URL (wide) | Frontend Port | Backend Port */}
-              <div
-                className="grid grid-cols-1 gap-5"
-                style={{ gridTemplateColumns: "minmax(0,2fr) minmax(0,1fr) minmax(0,1fr)" }}
-              >
-                <FormField
-                  control={form.control}
-                  name="previewUrl"
-                  render={({ field }) => (
-                    <FormItem className="space-y-1.5">
-                      <FormLabel className="font-medium" style={labelStyle}>
-                        Preview URL
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          className={`text-xs ${inputClassName}`}
-                          style={{ ...inputStyle, ...MONO, fontSize: "12px" }}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
+              {/* Row 4: Frontend Port | Backend Port */}
+              <div className="grid grid-cols-2 gap-5" style={{ maxWidth: "50%" }}>
                 {(["frontendPort", "backendPort"] as const).map((fieldName, i) => (
                   <FormField
                     key={fieldName}
