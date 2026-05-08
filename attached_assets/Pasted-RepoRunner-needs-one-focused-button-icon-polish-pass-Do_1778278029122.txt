@@ -1,0 +1,145 @@
+RepoRunner needs one **focused button icon polish pass**.
+
+Do **not** redesign the UI.
+Do **not** change functionality.
+Do **not** change layout.
+Do **not** change button order.
+Do **not** change button labels.
+Do **not** change panel structure, engine lights, logs, meteors, setup modal, or product flow.
+
+This pass is only about **button icon clarity, scale, and alignment**, with extra attention on the **Restart** icon.
+
+## Core issue
+
+The buttons are close, but the icons still feel a bit under-polished.
+
+Main problems:
+
+* icons feel slightly too small to read clearly
+* some icons still feel a bit soft / low-detail
+* the **Restart** icon still does not look right
+* icon-to-label presentation needs to feel cleaner and more intentional overall
+
+## Requested changes
+
+### 1. Slightly increase all quick action button icons
+
+Increase the icon size **a little**, just enough to improve clarity and detail.
+
+Target direction:
+
+* increase icon size by roughly **10–15%**
+* keep all icons optically consistent with each other
+* do not let any icon become visually heavy or oversized
+
+The icons should feel:
+
+* cleaner
+* sharper
+* more legible
+* more intentional
+* more polished at a glance
+
+### 2. Keep all icons aligned consistently
+
+Make sure every quick action button icon:
+
+* sits in the same visual box
+* is vertically centered
+* has consistent spacing to the label
+* has consistent optical weight
+
+Buttons to check:
+
+* Start Frontend
+* Start Backend
+* Stop Engine
+* Pull
+* Install
+* Restart
+* Open
+
+The overall content alignment inside each button should feel uniform and tidy.
+
+### 3. Improve icon clarity, not just brightness
+
+Do **not** solve this by simply making icons brighter.
+
+Instead, improve:
+
+* icon geometry
+* scale
+* line clarity
+* optical centering
+* spacing
+* recognizability at button size
+
+The goal is to make them read more clearly while preserving the same design language.
+
+### 4. Focus correction on the Restart icon
+
+The **Restart** icon is still the weakest one.
+
+It should look like:
+
+* **two smooth sine-wave-like strokes**
+* crossing through each other
+* clean
+* symmetrical
+* balanced
+* readable at small size
+
+It should **not** look like:
+
+* a DNA helix
+* a sideways version of the wrong symbol
+* two random curves
+* a messy X
+* an overly compressed shape
+
+Very important:
+
+The Restart icon should feel like **two flowing mirrored wave lines crossing at the center**.
+
+Please refine the actual SVG/path geometry until it reads clearly at button size.
+
+If the earlier reference image is available in chat, use that as the guide and match its character more closely.
+
+### 5. Preserve the rest of the button system
+
+Keep unchanged:
+
+* button materials
+* glass look
+* red/neutral color treatment
+* button sizes
+* button row layout
+* typography
+* labels
+* hover/active logic
+* disabled behavior
+
+This is **not** a full button redesign.
+
+## Important restraint
+
+Do not:
+
+* enlarge icons too much
+* make icons thicker just for the sake of it
+* change labels
+* change button widths/heights
+* change row arrangement
+* restyle the glass buttons
+* touch unrelated UI
+
+## Acceptance criteria
+
+After this pass:
+
+1. All quick action icons are slightly larger and clearer.
+2. Icon-to-label spacing is clean and consistent across all buttons.
+3. All icons feel optically aligned and balanced.
+4. The Restart icon is noticeably improved and reads as two crossing sine-wave-like strokes.
+5. The button system feels more polished overall.
+6. No unrelated UI or functionality changes are made.

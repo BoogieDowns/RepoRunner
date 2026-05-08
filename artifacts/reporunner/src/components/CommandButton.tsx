@@ -39,11 +39,11 @@ export function CommandButton({
       )}
       style={style}
     >
-      {/* Fixed-size icon box — guarantees every icon sits in an identical 18×18 slot */}
-      <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 18, height: 18, flexShrink: 0 }}>
+      {/* Fixed-size icon box — guarantees every icon sits in an identical 20×20 slot */}
+      <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 20, height: 20, flexShrink: 0 }}>
         {loading
-          ? <Loader2 className="h-[18px] w-[18px] animate-spin" />
-          : <Icon className="h-[18px] w-[18px]" strokeWidth={1.5} />
+          ? <Loader2 className="h-[20px] w-[20px] animate-spin" />
+          : <Icon className="h-[20px] w-[20px]" strokeWidth={1.5} />
         }
       </span>
       {/* Label — flex-centered so LunaObscura baseline sits on the shared centerline */}

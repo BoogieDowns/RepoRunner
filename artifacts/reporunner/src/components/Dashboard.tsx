@@ -442,10 +442,10 @@ function RestartOrbitIcon({ className, strokeWidth = 1.5 }: { className?: string
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      {/* Upper-left → lower-right: bows up in first half, down in second */}
-      <path d="M3,8 C9,4 15,20 21,16" />
-      {/* Mirror: upper-right → lower-left */}
-      <path d="M21,8 C15,4 9,20 3,16" />
+      {/* Wave 1: upper-left → lower-right, crossing at center (12,12) */}
+      <path d="M3,9 C8,3 16,21 21,15" />
+      {/* Wave 2: mirror — upper-right → lower-left, crossing at center (12,12) */}
+      <path d="M21,9 C16,3 8,21 3,15" />
     </svg>
   );
 }
