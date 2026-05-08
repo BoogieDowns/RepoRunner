@@ -103,11 +103,11 @@ function MeteorLine({ id, left, dur, h, op, layer, onDone }: MeteorDef & { onDon
           height: "100%",
           background: `linear-gradient(to bottom,
             transparent 0%,
-            rgba(140,10,10,${op * 0.03}) 10%,
-            rgba(158,14,14,${op * 0.12}) 32%,
-            rgba(188,24,24,${op * 0.34}) 58%,
-            rgba(210,38,38,${op * 0.64}) 80%,
-            rgba(224,45,45,${op * 0.88}) 100%
+            rgba(140,8,8,${op * 0.03}) 10%,
+            rgba(158,12,12,${op * 0.12}) 32%,
+            rgba(188,16,16,${op * 0.34}) 58%,
+            rgba(210,20,20,${op * 0.64}) 80%,
+            rgba(220,20,20,${op * 0.88}) 100%
           )`,
         }}
       />
@@ -120,12 +120,12 @@ function MeteorLine({ id, left, dur, h, op, layer, onDone }: MeteorDef & { onDon
           width: `${cW}px`,
           height: `${headH}px`,
           background: `linear-gradient(to bottom,
-            rgba(210,40,40,${op * 0.80}),
-            rgba(255,82,82,${op * 0.97}),
-            rgba(255,115,115,${op * 0.50})
+            rgba(208,20,20,${op * 0.80}),
+            rgba(255,40,40,${op * 0.97}),
+            rgba(255,72,72,${op * 0.50})
           )`,
           boxShadow: glowMul > 0
-            ? `0 0 ${glowPx}px ${glowSpr}px rgba(255,72,72,${op * glowMul})`
+            ? `0 0 ${glowPx}px ${glowSpr}px rgba(255,32,32,${op * glowMul})`
             : "none",
           borderRadius: "1px 1px 2px 2px",
         }}
@@ -261,12 +261,12 @@ function AmbientBackground({
   }, [spawnMeteor]);
 
   const moonBorder = anyRunning
-    ? bothRunning ? "rgba(175,25,25,0.20)" : "rgba(155,20,20,0.13)"
+    ? bothRunning ? "rgba(170,16,16,0.20)" : "rgba(148,14,14,0.13)"
     : "rgba(90,8,8,0.06)";
   const moonGlow = anyRunning
     ? bothRunning
-      ? "0 0 60px rgba(175,25,25,0.18), 0 0 120px rgba(130,12,12,0.10)"
-      : "0 0 40px rgba(155,20,20,0.11)"
+      ? "0 0 60px rgba(170,16,16,0.18), 0 0 120px rgba(128,10,10,0.10)"
+      : "0 0 40px rgba(148,14,14,0.11)"
     : "none";
 
   const grainUrl = `url('data:image/svg+xml,<svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100%25" height="100%25" filter="url(%23n)"/></svg>')`;
@@ -366,7 +366,7 @@ function AmbientBackground({
             transform: "translateX(-50%)",
             overflow:  "hidden",
             pointerEvents: "none",
-            filter:    `drop-shadow(0 0 3px rgba(210,44,44,${r.op * 0.42}))`,
+            filter:    `drop-shadow(0 0 3px rgba(208,20,20,${r.op * 0.42}))`,
             WebkitMaskImage: "radial-gradient(ellipse 80% 200% at 50% 50%, black 20%, rgba(0,0,0,0.40) 55%, transparent 85%)",
             maskImage:        "radial-gradient(ellipse 80% 200% at 50% 50%, black 20%, rgba(0,0,0,0.40) 55%, transparent 85%)",
             animationName:        "rr-wave-expand",
@@ -379,7 +379,7 @@ function AmbientBackground({
           <path
             d={WAVE_PATH}
             fill="none"
-            stroke={`rgba(204,40,40,${r.op * 0.28})`}
+            stroke={`rgba(200,20,20,${r.op * 0.28})`}
             strokeWidth="5"
             strokeLinecap="round"
           />
@@ -387,7 +387,7 @@ function AmbientBackground({
           <path
             d={WAVE_PATH}
             fill="none"
-            stroke={`rgba(240,64,64,${r.op * 0.65})`}
+            stroke={`rgba(234,28,28,${r.op * 0.65})`}
             strokeWidth="1.5"
             strokeLinecap="round"
           />
@@ -408,11 +408,11 @@ function AmbientBackground({
             height:       "8px",
             borderRadius: "50%",
             transform:    "translateX(-50%)",
-            background:   `rgba(255,190,190,${r.op * 0.55})`,
+            background:   `rgba(255,155,155,${r.op * 0.55})`,
             boxShadow: [
-              `0 0  3px 1px rgba(255, 80, 80,${r.op * 0.48})`,
-              `0 0  7px 2px rgba(210, 44, 44,${r.op * 0.30})`,
-              `0 0 13px 4px rgba(170, 24, 24,${r.op * 0.14})`,
+              `0 0  3px 1px rgba(255, 40, 40,${r.op * 0.48})`,
+              `0 0  7px 2px rgba(208, 20, 20,${r.op * 0.30})`,
+              `0 0 13px 4px rgba(168, 14, 14,${r.op * 0.14})`,
             ].join(", "),
             pointerEvents:   "none",
             animationName:        "rr-flash-burst",
@@ -551,7 +551,7 @@ function RepoRunnerLogo() {
           height: "auto",
           maxHeight: 42,
           flexShrink: 0,
-          filter: "drop-shadow(0 0 8px rgba(204,30,30,0.55))",
+          filter: "drop-shadow(0 0 8px rgba(200,18,18,0.55))",
           display: "block",
         }}
       />
@@ -720,7 +720,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
               position: "relative",
               overflow: "hidden",
               animation: "rr-lens-active 2.8s ease-in forwards",
-              boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18), 0 0 15px rgba(204,34,34,0.82), 0 0 5px rgba(204,34,34,0.56)",
+              boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18), 0 0 15px rgba(200,20,20,0.82), 0 0 5px rgba(200,20,20,0.56)",
             }}>
               {/* glow background — no animation; parent opacity handles the fade */}
               <span style={{
@@ -753,7 +753,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
               position: "relative",
               overflow: "hidden",
               animation: "rr-lens-active 2.8s ease-in forwards",
-              boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18), 0 0 15px rgba(204,34,34,0.82), 0 0 5px rgba(204,34,34,0.56)",
+              boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18), 0 0 15px rgba(200,20,20,0.82), 0 0 5px rgba(200,20,20,0.56)",
             }}>
               <span style={{
                 position: "absolute", inset: 0, borderRadius: "1px",
@@ -785,7 +785,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
               position: "relative",
               overflow: "hidden",
               animation: "rr-lens-off-opacity 0.7s ease-out forwards",
-              boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18), 0 0 15px rgba(204,34,34,0.82), 0 0 5px rgba(204,34,34,0.56)",
+              boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18), 0 0 15px rgba(200,20,20,0.82), 0 0 5px rgba(200,20,20,0.56)",
             }}>
               {/* filter:brightness spike on glow child only — text (sibling) is immune */}
               <span style={{
@@ -917,7 +917,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
         {/* Brand */}
         <div
           className="flex items-center gap-2 flex-none"
-          style={{ filter: "drop-shadow(0 0 10px rgba(204,34,34,0.14))" }}
+          style={{ filter: "drop-shadow(0 0 10px rgba(200,20,20,0.14))" }}
         >
           <RepoRunnerLogo />
         </div>
@@ -966,7 +966,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
               style={{
                 background: "rgba(10,10,10,0.85)",
                 border: "1px solid #1c1c1c",
-                boxShadow: "0 4px 24px rgba(0,0,0,0.74), 0 0 0 1px rgba(204,34,34,0.05), inset 0 1px 0 rgba(204,34,34,0.07)",
+                boxShadow: "0 4px 24px rgba(0,0,0,0.74), 0 0 0 1px rgba(200,20,20,0.05), inset 0 1px 0 rgba(200,20,20,0.07)",
               }}
             >
               <CardHeader className="px-5 pt-4 pb-3" style={{ borderBottom: "1px solid #191818" }}>
@@ -1052,7 +1052,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
               style={{
                 background: "rgba(10,10,10,0.85)",
                 border: "1px solid #1c1c1c",
-                boxShadow: "0 4px 24px rgba(0,0,0,0.74), 0 0 0 1px rgba(204,34,34,0.05), inset 0 1px 0 rgba(204,34,34,0.07)",
+                boxShadow: "0 4px 24px rgba(0,0,0,0.74), 0 0 0 1px rgba(200,20,20,0.05), inset 0 1px 0 rgba(200,20,20,0.07)",
               }}
             >
               <CardHeader className="px-5 pt-4 pb-3" style={{ borderBottom: "1px solid #191818" }}>
@@ -1175,7 +1175,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                 <div
                   key={log.id}
                   className="flex gap-3 px-4 py-[4px] transition-colors"
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.background = "rgba(204,34,34,0.025)"; }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.background = "rgba(200,20,20,0.025)"; }}
                   onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.background = "transparent"; }}
                 >
                   <span

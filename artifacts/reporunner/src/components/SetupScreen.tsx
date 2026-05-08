@@ -39,8 +39,8 @@ const inputStyle: React.CSSProperties = {
 };
 
 const inputClassName =
-  "focus-visible:ring-[#cc2222]/20 focus-visible:border-[#cc2222]/40 " +
-  "focus-visible:shadow-[0_0_10px_rgba(204,34,34,0.10)] transition-shadow placeholder:text-[#3e3c3a]";
+  "focus-visible:ring-[#cc1414]/20 focus-visible:border-[#cc1414]/40 " +
+  "focus-visible:shadow-[0_0_10px_rgba(200,20,20,0.10)] transition-shadow placeholder:text-[#3e3c3a]";
 
 const labelStyle: React.CSSProperties = {
   color: "#858280",
@@ -123,8 +123,8 @@ export function SetupScreen({
           background: "#0a0a0a",
           border: overlay ? "1px solid #242020" : "1px solid #1e1e1e",
           boxShadow: overlay
-            ? "0 24px 80px rgba(0,0,0,0.9), 0 0 0 1px rgba(204,34,34,0.10), 0 0 40px rgba(204,34,34,0.06)"
-            : "0 8px 40px rgba(0,0,0,0.8), 0 0 0 1px rgba(204,34,34,0.04), 0 0 60px rgba(204,34,34,0.03)",
+            ? "0 24px 80px rgba(0,0,0,0.9), 0 0 0 1px rgba(200,20,20,0.10), 0 0 40px rgba(200,20,20,0.06)"
+            : "0 8px 40px rgba(0,0,0,0.8), 0 0 0 1px rgba(200,20,20,0.04), 0 0 60px rgba(200,20,20,0.03)",
           zIndex: 1,
         }}
       >
@@ -137,7 +137,7 @@ export function SetupScreen({
             left: 0,
             right: 0,
             height: "1px",
-            background: "linear-gradient(90deg, transparent 0%, rgba(204,34,34,0.55) 30%, rgba(204,34,34,0.70) 50%, rgba(204,34,34,0.55) 70%, transparent 100%)",
+            background: "linear-gradient(90deg, transparent 0%, rgba(200,20,20,0.55) 30%, rgba(200,20,20,0.72) 50%, rgba(200,20,20,0.55) 70%, transparent 100%)",
             zIndex: 2,
           }}
         />
@@ -155,9 +155,9 @@ export function SetupScreen({
                 border: "1px solid #1c1c1c",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.color = "#cc2222";
-                e.currentTarget.style.background = "rgba(204,34,34,0.08)";
-                e.currentTarget.style.borderColor = "rgba(204,34,34,0.28)";
+                e.currentTarget.style.color = "#cc1414";
+                e.currentTarget.style.background = "rgba(200,20,20,0.08)";
+                e.currentTarget.style.borderColor = "rgba(200,20,20,0.28)";
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.color = "#4a4846";
