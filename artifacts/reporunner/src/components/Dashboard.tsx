@@ -606,6 +606,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
       lineHeight: 1,
       whiteSpace: "nowrap",
       userSelect: "none",
+      transition: "box-shadow 1.8s ease-in, background 1.8s ease-in, color 1.8s ease-in",
     };
 
     /* Fine horizontal lens ribs at 2.5px pitch */
@@ -631,11 +632,11 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                 background: [
                   ribs(0.26),
                   specular(255, 230, 225, 0.28),
-                  "radial-gradient(ellipse at 50% 58%, rgba(255,168,152,0.92) 0%, rgba(225,42,42,0.96) 24%, rgba(165,14,14,0.96) 58%, rgba(55,3,3,0.99) 100%)",
+                  "radial-gradient(ellipse at 50% 58%, rgba(255,180,164,0.96) 0%, rgba(232,52,52,0.98) 24%, rgba(178,18,18,0.98) 58%, rgba(62,4,4,0.99) 100%)",
                 ].join(", "),
-                color: "rgba(255,222,218,0.97)",
-                textShadow: "0 0 9px rgba(255,95,85,0.86)",
-                boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18), 0 0 13px rgba(204,34,34,0.75), 0 0 4px rgba(204,34,34,0.50)",
+                color: "rgba(255,226,222,0.98)",
+                textShadow: "0 0 10px rgba(255,95,85,0.92)",
+                boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18), 0 0 15px rgba(204,34,34,0.82), 0 0 5px rgba(204,34,34,0.56)",
               }}
             >
               Running

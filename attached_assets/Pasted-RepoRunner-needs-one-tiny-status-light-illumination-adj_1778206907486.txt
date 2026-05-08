@@ -1,0 +1,108 @@
+RepoRunner needs one **tiny status-light illumination adjustment** only.
+
+Do **not** redesign the UI.
+Do **not** change layout.
+Do **not** change functionality.
+Do **not** change service logic, process management, IPC, setup behavior, logs behavior, meteors, buttons, or product flow.
+
+This is only about the active engine/status light illumination.
+
+## Requested changes
+
+### 1. Make the red `RUNNING` light 10% brighter
+
+The red `RUNNING` plastic light looks good now, but it can be slightly brighter.
+
+Increase only the `RUNNING` red illumination by about:
+
+```text
+10%
+```
+
+Increase its steady:
+
+* internal red glow
+* lens brightness
+* outer red glow
+* illuminated plastic feel
+
+Do **not** re-add pulsing.
+
+### 2. Add a 1.8s illumination ramp-up for active lights
+
+When a status light changes from off/unlit to active/lit, it should take about:
+
+```text
+1.8s
+```
+
+to reach full brightness.
+
+This should apply to both active light types:
+
+* `RUNNING` red light
+* `STARTING` / `STOPPING` peach light
+
+## Desired behavior
+
+The light should transition like this:
+
+```text
+off/unlit → gradually illuminates over 1.8s → stays steadily lit
+```
+
+Not:
+
+```text
+off/unlit → instant full brightness
+```
+
+And not:
+
+```text
+off/unlit → repeated pulse
+```
+
+## Important distinction
+
+This is a **one-time illumination transition**, not a repeating pulse.
+
+After the light reaches full brightness, it should remain steady.
+
+## Preserve
+
+Keep:
+
+* no pulsing
+* current plastic/ribbed lens style
+* current square indicator shape
+* current status text inside the light
+* current stopped/unlit styling
+* current peach brightness unless needed for the ramp-up
+* current layout
+* current behavior
+
+## Do not change
+
+Do not change:
+
+* `STOPPED` light styling
+* status logic
+* status wording
+* button styling
+* logs
+* meteors
+* setup modal
+* app functionality
+
+## Acceptance criteria
+
+After this change:
+
+1. `RUNNING` red light is about 10% brighter than it is now.
+2. `RUNNING` ramps from unlit to fully lit over about 1.8s.
+3. `STARTING` ramps from unlit to fully lit over about 1.8s.
+4. `STOPPING` ramps from unlit to fully lit over about 1.8s.
+5. None of the status lights pulse repeatedly.
+6. Once fully lit, active lights remain steadily illuminated.
+7. No unrelated UI or functionality changes are made.
