@@ -95,8 +95,8 @@
   */
 
   --opaque-button-border-intensity: 8;
-  --elevate-1: rgba(200, 20, 20, 0.025);
-  --elevate-2: rgba(200, 20, 20, 0.045);
+  --elevate-1: rgba(185, 14, 28, 0.025);
+  --elevate-2: rgba(185, 14, 28, 0.045);
 
   /* Core */
   --background:          0 0% 3.5%;     /* #090909 */
@@ -167,11 +167,11 @@
   /* Shadows — dark, slight red rim */
   --shadow-2xs: 0px 1px 3px 0px rgba(0,0,0,0.8);
   --shadow-xs:  0px 1px 3px 0px rgba(0,0,0,0.8);
-  --shadow-sm:  0px 2px 4px 0px rgba(0,0,0,0.8), 0 0 0 1px rgba(200,20,20,0.03);
-  --shadow:     0px 2px 4px 0px rgba(0,0,0,0.8), 0 0 0 1px rgba(200,20,20,0.03);
-  --shadow-md:  0px 4px 8px 0px rgba(0,0,0,0.8), 0 0 0 1px rgba(200,20,20,0.04);
-  --shadow-lg:  0px 6px 12px 0px rgba(0,0,0,0.9), 0 0 0 1px rgba(200,20,20,0.04);
-  --shadow-xl:  0px 10px 20px 0px rgba(0,0,0,0.9), 0 0 0 1px rgba(200,20,20,0.05);
+  --shadow-sm:  0px 2px 4px 0px rgba(0,0,0,0.8), 0 0 0 1px rgba(185,14,28,0.03);
+  --shadow:     0px 2px 4px 0px rgba(0,0,0,0.8), 0 0 0 1px rgba(185,14,28,0.03);
+  --shadow-md:  0px 4px 8px 0px rgba(0,0,0,0.8), 0 0 0 1px rgba(185,14,28,0.04);
+  --shadow-lg:  0px 6px 12px 0px rgba(0,0,0,0.9), 0 0 0 1px rgba(185,14,28,0.04);
+  --shadow-xl:  0px 10px 20px 0px rgba(0,0,0,0.9), 0 0 0 1px rgba(185,14,28,0.05);
   --shadow-2xl: 0px 10px 20px 0px rgba(0,0,0,0.9);
   --tracking-normal: 0em;
   --spacing: 0.25rem;
@@ -202,13 +202,13 @@
 @keyframes rr-running-pulse {
   0%, 100% {
     box-shadow:
-      0 0 10px rgba(200, 20, 20, 0.16),
-      0 0  3px rgba(200, 20, 20, 0.10);
+      0 0 10px rgba(185, 14, 28, 0.16),
+      0 0  3px rgba(185, 14, 28, 0.10);
   }
   50% {
     box-shadow:
-      0 0 24px rgba(200, 20, 20, 0.48),
-      0 0  8px rgba(200, 20, 20, 0.28);
+      0 0 24px rgba(185, 14, 28, 0.48),
+      0 0  8px rgba(185, 14, 28, 0.28);
   }
 }
 
@@ -220,13 +220,13 @@
 @keyframes rr-indicator-pulse {
   0%, 100% {
     box-shadow:
-      0 0 4px  rgba(200, 20, 20, 0.50),
-      0 0 1px  rgba(200, 20, 20, 0.28);
+      0 0 4px  rgba(185, 14, 28, 0.50),
+      0 0 1px  rgba(185, 14, 28, 0.28);
   }
   50% {
     box-shadow:
-      0 0 14px rgba(200, 20, 20, 0.88),
-      0 0 5px  rgba(200, 20, 20, 0.62);
+      0 0 14px rgba(185, 14, 28, 0.88),
+      0 0 5px  rgba(185, 14, 28, 0.62);
   }
 }
 
@@ -698,17 +698,17 @@ input[type="number"] {
     /* main body */
     linear-gradient(
       180deg,
-      rgba(200, 20, 20, 0.93) 0%,
-      rgba(130, 14, 14, 0.94) 12%,
-      rgba(64, 10, 10, 0.96) 25%,
-      rgba(20, 5, 5, 0.97) 40%,
-      rgba(6, 2, 2, 0.99) 66%,
-      rgba(10, 3, 3, 1.00) 100%
+      rgba(188, 14, 28, 0.93) 0%,
+      rgba(126, 8, 18, 0.94) 12%,
+      rgba(62, 4, 10, 0.96) 25%,
+      rgba(20, 2, 5, 0.97) 40%,
+      rgba(6, 1, 2, 0.99) 66%,
+      rgba(10, 2, 3, 1.00) 100%
     );
-  border: 1px solid rgba(200, 20, 20, 0.52);
+  border: 1px solid rgba(185, 14, 28, 0.52);
   box-shadow:
     0 5px 18px rgba(0, 0, 0, 0.80),
-    0 0 20px rgba(200, 20, 20, 0.20),
+    0 0 20px rgba(185, 14, 28, 0.20),
     inset 0 1px 0 rgba(255, 178, 178, 0.56),
     inset 0 2px 1px rgba(255, 140, 140, 0.14),
     inset 0 5px 22px rgba(255, 60, 60, 0.12),
@@ -717,7 +717,7 @@ input[type="number"] {
     inset 0 -1px 0 rgba(0, 0, 0, 0.80),
     inset 0 -5px 16px rgba(0, 0, 0, 0.52),
     inset 0 -14px 34px rgba(0, 0, 0, 0.20);
-  color: #d01414;
+  color: #c40e1c;
 }
 .btn-glass-primary:hover:not(:disabled) {
   background:
@@ -741,17 +741,17 @@ input[type="number"] {
     ),
     linear-gradient(
       180deg,
-      rgba(218, 22, 22, 0.95) 0%,
-      rgba(148, 16, 16, 0.96) 12%,
-      rgba(68, 10, 10, 0.97) 25%,
-      rgba(24, 6, 6, 0.97) 40%,
-      rgba(8, 3, 3, 1.00) 66%,
-      rgba(12, 4, 4, 1.00) 100%
+      rgba(210, 14, 30, 0.95) 0%,
+      rgba(142, 8, 20, 0.96) 12%,
+      rgba(68, 4, 12, 0.97) 25%,
+      rgba(24, 2, 6, 0.97) 40%,
+      rgba(8, 2, 3, 1.00) 66%,
+      rgba(12, 2, 4, 1.00) 100%
     );
-  border-color: rgba(200, 20, 20, 0.72);
+  border-color: rgba(185, 14, 28, 0.72);
   box-shadow:
     0 6px 18px rgba(0, 0, 0, 0.80),
-    0 0 26px rgba(200, 20, 20, 0.30),
+    0 0 26px rgba(185, 14, 28, 0.30),
     inset 0 1px 0 rgba(255, 178, 178, 0.60),
     inset 0 2px 1px rgba(255, 140, 140, 0.15),
     inset 0 5px 24px rgba(255, 60, 60, 0.11),
@@ -760,7 +760,7 @@ input[type="number"] {
     inset 0 -1px 0 rgba(0, 0, 0, 0.80),
     inset 0 -5px 16px rgba(0, 0, 0, 0.52),
     inset 0 -14px 34px rgba(0, 0, 0, 0.16);
-  color: #de1414;
+  color: #d20e1e;
 }
 .btn-glass-primary:active:not(:disabled) {
   background: linear-gradient(
@@ -768,15 +768,15 @@ input[type="number"] {
     rgba(16, 5, 5, 0.98) 0%,
     rgba(6, 2, 2, 1.00) 100%
   );
-  border-color: rgba(200, 20, 20, 0.26);
+  border-color: rgba(185, 14, 28, 0.26);
   box-shadow:
     0 1px 2px rgba(0, 0, 0, 0.60),
-    0 0 5px rgba(200, 20, 20, 0.07),
+    0 0 5px rgba(185, 14, 28, 0.07),
     inset 0 1px 0 rgba(255, 110, 110, 0.05),
     inset 0 3px 10px rgba(0, 0, 0, 0.60),
     inset 0 -1px 0 rgba(0, 0, 0, 0.72),
     inset 0 -4px 10px rgba(0, 0, 0, 0.38);
-  color: #a81414;
+  color: #9c0a14;
 }
 
 /* ── Danger / deep red smoked glass ──────────────────────────────────────
@@ -807,17 +807,17 @@ input[type="number"] {
     /* main body */
     linear-gradient(
       180deg,
-      rgba(226, 20, 20, 0.90) 0%,
-      rgba(162, 14, 14, 0.93) 12%,
-      rgba(82, 10, 10, 0.95) 25%,
-      rgba(38, 6, 6, 0.97) 40%,
-      rgba(14, 3, 3, 0.99) 66%,
-      rgba(20, 4, 4, 1.00) 100%
+      rgba(220, 14, 30, 0.90) 0%,
+      rgba(158, 8, 22, 0.93) 12%,
+      rgba(80, 4, 12, 0.95) 25%,
+      rgba(38, 2, 6, 0.97) 40%,
+      rgba(14, 2, 3, 0.99) 66%,
+      rgba(20, 2, 4, 1.00) 100%
     );
-  border: 1px solid rgba(200, 20, 20, 0.82);
+  border: 1px solid rgba(185, 14, 28, 0.82);
   box-shadow:
     0 5px 18px rgba(0, 0, 0, 0.80),
-    0 0 26px rgba(200, 20, 20, 0.34),
+    0 0 26px rgba(185, 14, 28, 0.34),
     inset 0 1px 0 rgba(255, 188, 188, 0.62),
     inset 0 2px 1px rgba(255, 150, 150, 0.16),
     inset 0 5px 22px rgba(255, 60, 60, 0.15),
@@ -826,7 +826,7 @@ input[type="number"] {
     inset 0 -1px 0 rgba(0, 0, 0, 0.82),
     inset 0 -5px 16px rgba(0, 0, 0, 0.52),
     inset 0 -14px 34px rgba(0, 0, 0, 0.20);
-  color: #d61414;
+  color: #c40e1c;
 }
 .btn-glass-danger:hover:not(:disabled) {
   background:
@@ -850,17 +850,17 @@ input[type="number"] {
     ),
     linear-gradient(
       180deg,
-      rgba(246, 22, 22, 0.93) 0%,
-      rgba(188, 16, 16, 0.95) 12%,
-      rgba(96, 10, 10, 0.96) 25%,
-      rgba(44, 6, 6, 0.97) 40%,
-      rgba(18, 4, 4, 1.00) 66%,
-      rgba(26, 5, 5, 1.00) 100%
+      rgba(232, 14, 34, 0.93) 0%,
+      rgba(178, 8, 24, 0.95) 12%,
+      rgba(96, 4, 14, 0.96) 25%,
+      rgba(44, 2, 8, 0.97) 40%,
+      rgba(18, 2, 4, 1.00) 66%,
+      rgba(26, 2, 5, 1.00) 100%
     );
-  border-color: rgba(200, 20, 20, 0.96);
+  border-color: rgba(185, 14, 28, 0.96);
   box-shadow:
     0 6px 18px rgba(0, 0, 0, 0.82),
-    0 0 36px rgba(200, 20, 20, 0.46),
+    0 0 36px rgba(185, 14, 28, 0.46),
     inset 0 1px 0 rgba(255, 188, 188, 0.68),
     inset 0 2px 1px rgba(255, 150, 150, 0.17),
     inset 0 5px 24px rgba(255, 60, 60, 0.15),
@@ -869,7 +869,7 @@ input[type="number"] {
     inset 0 -1px 0 rgba(0, 0, 0, 0.82),
     inset 0 -5px 16px rgba(0, 0, 0, 0.52),
     inset 0 -14px 34px rgba(0, 0, 0, 0.16);
-  color: #e61818;
+  color: #d40e1e;
 }
 .btn-glass-danger:active:not(:disabled) {
   background: linear-gradient(
@@ -877,13 +877,13 @@ input[type="number"] {
     rgba(30, 6, 6, 0.98) 0%,
     rgba(14, 3, 3, 1.00) 100%
   );
-  border-color: rgba(200, 20, 20, 0.54);
+  border-color: rgba(185, 14, 28, 0.54);
   box-shadow:
     0 1px 2px rgba(0, 0, 0, 0.64),
-    0 0 8px rgba(200, 20, 20, 0.12),
+    0 0 8px rgba(185, 14, 28, 0.12),
     inset 0 1px 0 rgba(255, 130, 130, 0.06),
     inset 0 3px 10px rgba(0, 0, 0, 0.60),
     inset 0 -1px 0 rgba(0, 0, 0, 0.76),
     inset 0 -4px 10px rgba(0, 0, 0, 0.42);
-  color: #a81414;
+  color: #9c0a14;
 }

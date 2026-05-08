@@ -1,0 +1,132 @@
+RepoRunner needs one **small red brand hue refinement** only.
+
+Do **not** redesign the UI.
+Do **not** change layout.
+Do **not** change functionality.
+Do **not** change button sizing, typography, icons, meteors behavior, ripple behavior, setup behavior, logs behavior, engine logic, IPC, or product flow.
+
+This is only about refining the red accent color family.
+
+## Current state
+
+The previous pass unified all reds around:
+
+```text
+rgb(200, 20, 20)
+```
+
+That made the reds consistent, which is good.
+
+But visually, the result feels a little too plain / flat red.
+
+I want the red system to lean more into a **rich crimson** hue.
+
+## Requested direction
+
+Shift the brand red family slightly toward:
+
+* deeper crimson
+* richer ruby red
+* less generic bright red
+* slightly darker / moodier
+* premium cinematic red
+
+Think:
+
+```text
+crimson / ruby / dark red glass
+```
+
+Not:
+
+```text
+orange-red
+pink-red
+magenta
+plain UI red
+neon red
+```
+
+## Suggested base red
+
+Use a richer crimson anchor close to:
+
+```css
+#B80F1F
+```
+
+or:
+
+```css
+rgb(184, 15, 31)
+```
+
+This keeps the red in the logo family, but gives it more crimson depth.
+
+## Apply consistently
+
+Use this crimson family across the same red accent system:
+
+* Start Frontend button
+* Start Backend button
+* Stop Engine button
+* Save Configuration button
+* red button borders/glows/highlights
+* meteors
+* ripple / impact effects
+* setup modal red accents
+* red focus rings / red accent lines
+
+## Important
+
+Do **not** make everything exactly the same flat color.
+
+Use the crimson as the core hue, then create state/material variations from it:
+
+* idle = rich crimson
+* hover = slightly brighter crimson
+* active = deeper crimson
+* glow = transparent crimson
+* highlight = lighter crimson, but still crimson
+* disabled = dimmed crimson
+
+The hue should stay cohesive, but the glass materials still need depth and variation.
+
+## Preserve material depth
+
+Do not flatten the buttons or effects.
+
+Keep:
+
+* current glass button depth
+* current gradients
+* current glow structure
+* current meteor depth variation
+* current ripple opacity variation
+* current setup modal styling
+
+Only retint the red family.
+
+## Avoid
+
+Do not shift toward:
+
+* orange
+* salmon
+* hot pink
+* magenta
+* purple
+* neon red
+
+The target is **crimson/ruby**, not pink or orange.
+
+## Acceptance criteria
+
+After this pass:
+
+1. All red accents still feel unified.
+2. The red now feels richer and more crimson.
+3. Buttons look like crimson glass, not generic red UI.
+4. Meteors and ripples use the same crimson family.
+5. Setup modal accents match the same crimson family.
+6. No layout or functionality changes are made.
