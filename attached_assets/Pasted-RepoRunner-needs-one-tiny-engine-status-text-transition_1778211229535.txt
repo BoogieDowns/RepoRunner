@@ -1,0 +1,127 @@
+RepoRunner needs one **tiny engine/status text transition fix** only.
+
+Do **not** redesign the UI.
+Do **not** change layout.
+Do **not** change functionality.
+Do **not** change service logic, process management, IPC, setup behavior, logs, buttons, meteors, or product flow.
+
+This is only about the **status text inside the engine lights**.
+
+## Current issue
+
+When the status changes from:
+
+```text
+STARTING
+```
+
+to:
+
+```text
+RUNNING
+```
+
+the text fades in with the light.
+
+I do **not** want the text to fade in.
+
+The light/lens illumination can continue its smooth animation, but the text should update immediately.
+
+## Desired behavior
+
+When the status changes:
+
+```text
+STARTING → RUNNING
+```
+
+the text should switch immediately to:
+
+```text
+RUNNING
+```
+
+at whatever brightness/luminance the light currently has.
+
+So visually:
+
+```text
+light continues its smooth illumination
+text changes instantly from STARTING to RUNNING
+```
+
+The text should not restart a fade animation.
+
+The text should not fade from transparent.
+
+The text should not animate opacity.
+
+## Important distinction
+
+The lens/background/glow can animate.
+
+The text should not.
+
+Please separate the text layer from the animated light layer if needed.
+
+Suggested structure:
+
+```text
+status indicator container
+  animated lens/glow layer
+  static text layer
+```
+
+Only the lens/glow layer should animate.
+
+The text layer should update instantly and remain stable.
+
+## Apply to all status text changes
+
+This should apply to status label changes such as:
+
+```text
+STARTING → RUNNING
+STOPPING → STOPPED
+STOPPED → STARTING
+RUNNING → STOPPING
+```
+
+The text can change, but it should not fade, pulse, flash, or animate.
+
+## Preserve
+
+Keep:
+
+* current smooth light illumination behavior
+* independent Frontend / Backend animations
+* final red shutdown flicker
+* no text white flash
+* no pulsing
+* no spinner
+* current plastic/ribbed lens style
+* current red light behavior
+* same status light size
+
+## Do not change
+
+Do not change:
+
+* actual service state logic
+* light timing
+* light brightness
+* final flicker intensity
+* layout
+* app functionality
+
+## Acceptance criteria
+
+After this fix:
+
+1. `STARTING → RUNNING` text changes immediately.
+2. The text does not fade in with the light.
+3. The light/lens can continue animating independently.
+4. All status text remains stable and readable.
+5. No text flashes white.
+6. Final shutdown flicker still affects only the light/lens, not the text.
+7. No unrelated UI or functionality changes are made.

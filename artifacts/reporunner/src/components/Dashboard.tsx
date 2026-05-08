@@ -627,21 +627,29 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
             border: "1px solid rgba(60,14,14,0.95)",
             boxShadow: "0 2px 7px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,110,110,0.05), inset 0 -1px 0 rgba(0,0,0,0.40)",
           }}>
-            <span
-              style={{
-                ...lens,
+            <span style={{
+              ...lens,
+              position: "relative",
+              overflow: "hidden",
+              background: "none",
+              boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18)",
+            }}>
+              <span style={{
+                position: "absolute",
+                inset: 0,
+                borderRadius: "1px",
                 background: [
                   ribs(0.26),
                   specular(255, 230, 225, 0.28),
                   "radial-gradient(ellipse at 50% 58%, rgba(255,180,164,0.96) 0%, rgba(232,52,52,0.98) 24%, rgba(178,18,18,0.98) 58%, rgba(62,4,4,0.99) 100%)",
                 ].join(", "),
-                color: "rgba(255,226,222,0.98)",
-                textShadow: "0 0 10px rgba(255,95,85,0.92)",
-                boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18), 0 0 15px rgba(204,34,34,0.82), 0 0 5px rgba(204,34,34,0.56)",
+                boxShadow: "0 0 15px rgba(204,34,34,0.82), 0 0 5px rgba(204,34,34,0.56)",
                 animation: "rr-lens-running 1.2s ease-in forwards",
-              }}
-            >
-              Running
+                zIndex: 0,
+              }} />
+              <span style={{ position: "relative", zIndex: 1, color: "rgba(255,226,222,0.98)", textShadow: "0 0 10px rgba(255,95,85,0.92)" }}>
+                Running
+              </span>
             </span>
           </span>
         );
@@ -656,17 +664,27 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
           }}>
             <span style={{
               ...lens,
-              background: [
-                ribs(0.26),
-                specular(255, 230, 225, 0.28),
-                "radial-gradient(ellipse at 50% 58%, rgba(255,180,164,0.96) 0%, rgba(232,52,52,0.98) 24%, rgba(178,18,18,0.98) 58%, rgba(62,4,4,0.99) 100%)",
-              ].join(", "),
-              color: "rgba(255,226,222,0.98)",
-              textShadow: "0 0 10px rgba(255,95,85,0.92)",
-              boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18), 0 0 15px rgba(204,34,34,0.82), 0 0 5px rgba(204,34,34,0.56)",
-              animation: "rr-lens-starting 2.8s ease-in forwards",
+              position: "relative",
+              overflow: "hidden",
+              background: "none",
+              boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18)",
             }}>
-              Starting
+              <span style={{
+                position: "absolute",
+                inset: 0,
+                borderRadius: "1px",
+                background: [
+                  ribs(0.26),
+                  specular(255, 230, 225, 0.28),
+                  "radial-gradient(ellipse at 50% 58%, rgba(255,180,164,0.96) 0%, rgba(232,52,52,0.98) 24%, rgba(178,18,18,0.98) 58%, rgba(62,4,4,0.99) 100%)",
+                ].join(", "),
+                boxShadow: "0 0 15px rgba(204,34,34,0.82), 0 0 5px rgba(204,34,34,0.56)",
+                animation: "rr-lens-starting 2.8s ease-in forwards",
+                zIndex: 0,
+              }} />
+              <span style={{ position: "relative", zIndex: 1, color: "rgba(255,226,222,0.98)", textShadow: "0 0 10px rgba(255,95,85,0.92)" }}>
+                Starting
+              </span>
             </span>
           </span>
         );
@@ -772,16 +790,26 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
           }}>
             <span style={{
               ...lens,
-              background: [
-                ribs(0.38),
-                "linear-gradient(148deg, rgba(65,18,18,0.10) 0%, transparent 34%)",
-                "radial-gradient(ellipse at 50% 58%, rgba(42,7,7,0.72) 0%, rgba(15,3,3,0.88) 55%, rgba(4,1,1,0.97) 100%)",
-              ].join(", "),
-              color: "rgba(60,42,42,0.82)",
+              position: "relative",
+              overflow: "hidden",
+              background: "none",
               boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18)",
-              animation: "rr-lens-stopped 0.08s ease-out forwards",
             }}>
-              Stopped
+              <span style={{
+                position: "absolute",
+                inset: 0,
+                borderRadius: "1px",
+                background: [
+                  ribs(0.38),
+                  "linear-gradient(148deg, rgba(65,18,18,0.10) 0%, transparent 34%)",
+                  "radial-gradient(ellipse at 50% 58%, rgba(42,7,7,0.72) 0%, rgba(15,3,3,0.88) 55%, rgba(4,1,1,0.97) 100%)",
+                ].join(", "),
+                animation: "rr-lens-stopped 0.08s ease-out forwards",
+                zIndex: 0,
+              }} />
+              <span style={{ position: "relative", zIndex: 1, color: "rgba(60,42,42,0.82)" }}>
+                Stopped
+              </span>
             </span>
           </span>
         );
