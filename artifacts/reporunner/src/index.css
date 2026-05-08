@@ -241,8 +241,8 @@
       inset 0 -1px 1px rgba(0,0,0,0.28),
       inset 1px 0 1px rgba(0,0,0,0.18),
       inset -1px 0 1px rgba(0,0,0,0.18),
-      0 0 4px  rgba(242,184,160,0.12),
-      0 0 1px  rgba(242,184,160,0.08);
+      0 0 5px  rgba(242,184,160,0.18),
+      0 0 1px  rgba(242,184,160,0.12);
   }
   50% {
     box-shadow:
@@ -250,13 +250,13 @@
       inset 0 -1px 1px rgba(0,0,0,0.28),
       inset 1px 0 1px rgba(0,0,0,0.18),
       inset -1px 0 1px rgba(0,0,0,0.18),
-      0 0 11px rgba(242,184,160,0.34),
-      0 0 4px  rgba(242,184,160,0.20);
+      0 0 14px rgba(242,184,160,0.46),
+      0 0 5px  rgba(242,184,160,0.28);
   }
 }
 
 .rr-indicator-transitioning {
-  animation: rr-indicator-peach-pulse 3.6s ease-in-out infinite;
+  animation: rr-indicator-peach-pulse 2.8s ease-in-out infinite;
 }
 
 @keyframes rr-fall {
