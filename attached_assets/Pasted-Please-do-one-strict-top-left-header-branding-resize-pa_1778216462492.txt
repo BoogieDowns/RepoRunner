@@ -1,0 +1,117 @@
+Please do one **strict top-left header branding resize pass** only.
+
+Do **not** redesign the app.
+Do **not** change functionality.
+Do **not** change buttons, engine lights, logs, meteors, setup modal, or dashboard layout.
+Do **not** touch anything outside the top-left header branding area unless required for spacing.
+
+This is only about the **RR logo in the top-left header**.
+
+## Problem
+
+The RR logo is still far too small.
+
+From a visual design point of view, it currently looks undersized and weak.
+It does **not** feel intentional or properly scaled for the header.
+
+I do **not** want a tiny decorative logo.
+I want a strong, properly sized brand mark.
+
+## Required change
+
+### 1. Make the RR logo dramatically bigger
+
+Increase the rendered RR logo size by roughly **3x** from its current visible size.
+
+Do **not** make it just “a bit bigger.”
+Make it **substantially bigger immediately**.
+
+Target outcome:
+
+* the logo should feel bold and clearly visible
+* it should act as the visual anchor of the top-left header
+* it should no longer look tiny or lost
+
+### 2. Use an explicit rendered target size
+
+Do not guess vaguely.
+
+Please size the logo to something in this range:
+
+* **logo height: ~40px to 52px**
+* scale proportionally so it remains crisp
+* keep aspect ratio intact
+
+If needed, increase the containing branding block so the logo can actually display at the correct size.
+
+### 3. Widen the left header branding area
+
+The left header section is currently too constrained.
+
+Please widen the left branding/header block enough to comfortably hold:
+
+* the larger RR logo
+* the divider
+* the project name / repo path block
+
+This does **not** mean redesigning the header.
+It just means giving the logo enough room so it can be the correct size.
+
+### 4. Keep the logo crisp and centered
+
+Make sure the RR logo is:
+
+* crisp
+* not blurry
+* not stretched
+* vertically centered in the header
+* balanced with the divider and project name block
+
+### 5. Preserve clean spacing
+
+After enlarging the logo, rebalance spacing so the layout feels intentional:
+
+Structure should remain:
+
+```text
+[ large RR logo ] | [ project name ]
+                  [ repo path ]
+```
+
+Please adjust:
+
+* left padding
+* spacing between logo and divider
+* spacing between divider and project block
+
+so it feels visually clean.
+
+## Important instruction
+
+Do **not** stop at a timid increase.
+
+If the result still looks visually small, it is not done.
+
+The goal is:
+
+* **big**
+* **clear**
+* **intentional**
+* **properly scaled**
+
+not:
+
+* subtle
+* slightly improved
+* still undersized
+
+## Acceptance criteria
+
+After this change:
+
+1. The RR logo is roughly **3x larger** than before.
+2. The logo is visually strong and no longer tiny.
+3. The left header section is widened enough to support the larger logo.
+4. The logo remains crisp and properly centered.
+5. The divider and project block still align cleanly.
+6. No unrelated UI or functionality changes are made.

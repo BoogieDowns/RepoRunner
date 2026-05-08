@@ -437,19 +437,44 @@ function AmbientBackground({
 /* ─── Logo ──────────────────────────────────────────────────────────────────*/
 
 function RepoRunnerLogo() {
+  /*
+   * The PNG canvas is 1254×1254; the RR mark occupies only the centre band:
+   *   X: 235–971 (58.7% wide), Y: 495–788 (23.4% tall), centred at 48.1% / 51.2%
+   * We render the image at 222px so the mark itself is ≈52px tall, then clip
+   * the transparent padding with an overflow-hidden container sized to the mark.
+   * Mark at 222px → width≈130px, height≈52px; top padding≈110px, left≈52px.
+   */
+  const IMG  = 222;
+  const MARK_W = Math.round(IMG * 0.587);  // ≈130
+  const MARK_H = Math.round(IMG * 0.234);  // ≈52
+  const MARK_TOP  = Math.round(IMG * 0.495); // ≈110
+  const MARK_LEFT = Math.round(IMG * 0.187); // ≈42
   return (
-    <img
-      src={rrLogo}
-      alt="RepoRunner logo"
+    <div
       aria-hidden="true"
       style={{
-        width: "140px",
-        height: "140px",
-        objectFit: "contain",
-        filter: "drop-shadow(0 0 12px rgba(204,30,30,0.58))",
+        width: MARK_W,
+        height: MARK_H,
+        overflow: "hidden",
         flexShrink: 0,
+        filter: "drop-shadow(0 0 10px rgba(204,30,30,0.62))",
       }}
-    />
+    >
+      <img
+        src={rrLogo}
+        alt=""
+        style={{
+          position: "relative",
+          width: IMG,
+          height: IMG,
+          top: -MARK_TOP,
+          left: -MARK_LEFT,
+          objectFit: "contain",
+          flexShrink: 0,
+          display: "block",
+        }}
+      />
+    </div>
   );
 }
 
