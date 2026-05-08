@@ -870,9 +870,9 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-5">
-                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
                   {/* Row 1 — Pull, Install, Start Frontend, Start Backend */}
-                  <div style={{ display: "flex", gap: "0.5rem" }}>
+                  <div style={{ display: "flex", gap: "0.625rem" }}>
                     <CommandButton
                       label="Pull Latest"
                       icon={Download}
@@ -910,7 +910,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                   </div>
 
                   {/* Row 2 — Stop Engine, Restart All, Open Preview (centered under row 1) */}
-                  <div style={{ display: "flex", gap: "0.5rem", justifyContent: "center" }}>
+                  <div style={{ display: "flex", gap: "0.625rem", justifyContent: "center" }}>
                     <CommandButton
                       label="Stop Engine"
                       icon={SquareSquare}
@@ -918,7 +918,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                       disabled={bothStopped}
                       loading={actionLoading["stop"]}
                       variant="destructive"
-                      style={{ width: "calc((100% - 1.5rem) / 4)", justifyContent: "center" }}
+                      style={{ width: "calc((100% - 1.875rem) / 4)", justifyContent: "center" }}
                     />
                     <CommandButton
                       label="Restart All"
@@ -926,7 +926,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                       onClick={wrapAction("restart", window.repoRunner.restartAll)}
                       loading={actionLoading["restart"]}
                       variant="outline"
-                      style={{ width: "calc((100% - 1.5rem) / 4)", justifyContent: "center" }}
+                      style={{ width: "calc((100% - 1.875rem) / 4)", justifyContent: "center" }}
                     />
                     <CommandButton
                       label="Open Preview"
@@ -934,7 +934,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                       onClick={wrapAction("preview", window.repoRunner.openPreview)}
                       loading={actionLoading["preview"]}
                       variant="outline"
-                      style={{ width: "calc((100% - 1.5rem) / 4)", justifyContent: "center" }}
+                      style={{ width: "calc((100% - 1.875rem) / 4)", justifyContent: "center" }}
                     />
                   </div>
                 </div>
