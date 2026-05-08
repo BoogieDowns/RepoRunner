@@ -428,7 +428,7 @@ function AmbientBackground({
   );
 }
 
-/* ─── Restart icon (two crossing sine-wave curves, mirrored left/right) ─────*/
+/* ─── Restart icon (two crossing sine-wave curves, split endpoints, cross at 12,12) ─*/
 
 function RestartOrbitIcon({ className, strokeWidth = 1.5 }: { className?: string; strokeWidth?: number }) {
   return (
@@ -442,10 +442,10 @@ function RestartOrbitIcon({ className, strokeWidth = 1.5 }: { className?: string
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      {/* Wave 1: upper-left → lower-right, crossing at center (12,12) */}
-      <path d="M3,9 C8,3 16,21 21,15" />
-      {/* Wave 2: mirror — upper-right → lower-left, crossing at center (12,12) */}
-      <path d="M21,9 C16,3 8,21 3,15" />
+      {/* Wave 1: starts upper-left, arcs up then down, ends lower-right — crosses at (12,12) */}
+      <path d="M3,10 C7,3 17,21 21,14" />
+      {/* Wave 2: mirror — starts lower-left, arcs down then up, ends upper-right */}
+      <path d="M3,14 C7,21 17,3 21,10" />
     </svg>
   );
 }
@@ -471,25 +471,27 @@ function InstallStackIcon({ className, strokeWidth = 1.5 }: { className?: string
   );
 }
 
-/* ─── Open icon (comet: circle head + 3 parallel diagonal trailing strokes) ──*/
+/* ─── Open icon (comet: circle head + 3 parallel 45° trailing strokes) ───────*/
 
 function OpenCometIcon({ className }: { className?: string }) {
   return (
     <svg
       className={className}
-      viewBox="0 -1.5 24 24"
+      viewBox="0 0 24 24"
       fill="none"
       aria-hidden="true"
     >
-      <circle cx="15.5" cy="7.5" r="4.5" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M10.8 6.3 L4.8 12.3"  stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <path d="M12.2 11.2 L8.8 14.6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <path d="M14.1 13.6 L8.1 19.6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      {/* Circle head — upper right */}
+      <circle cx="15" cy="7" r="4" stroke="currentColor" strokeWidth="1.5" />
+      {/* Three parallel 45° tail strokes fanning toward lower-left */}
+      <line x1="10.8" y1="5"    x2="4"   y2="11.8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="11.5" y1="10"   x2="7"   y2="14.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="13.5" y1="13.5" x2="9"   y2="18"   stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   );
 }
 
-/* ─── Pull icon (three stacked ellipses / ripple-bowl shape) ────────────────*/
+/* ─── Pull icon (three evenly-spaced concentric rings, gravity-well / funnel) ─*/
 
 function PullRingsIcon({ className, strokeWidth = 1.5 }: { className?: string; strokeWidth?: number }) {
   return (
@@ -503,9 +505,10 @@ function PullRingsIcon({ className, strokeWidth = 1.5 }: { className?: string; s
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      <ellipse cx="12" cy="8"    rx="7.5" ry="2.5" />
-      <ellipse cx="12" cy="12.5" rx="5"   ry="1.8" />
-      <ellipse cx="12" cy="16"   rx="2.8" ry="1.3" />
+      {/* Evenly spaced at cy 7 / 12 / 17, proportionally scaled rx/ry */}
+      <ellipse cx="12" cy="7"  rx="7.5" ry="2.4" />
+      <ellipse cx="12" cy="12" rx="5"   ry="1.8" />
+      <ellipse cx="12" cy="17" rx="2.8" ry="1.2" />
     </svg>
   );
 }
@@ -524,9 +527,10 @@ function StopCircleXIcon({ className, strokeWidth = 1.5 }: { className?: string;
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      <circle cx="12" cy="12" r="8" />
-      <line x1="7" y1="7" x2="17" y2="17" />
-      <line x1="17" y1="7" x2="7" y2="17" />
+      {/* r=7.5; X arms endpoint at 45° on circle: 12 ± 7.5/√2 ≈ 6.7 / 17.3 */}
+      <circle cx="12" cy="12" r="7.5" />
+      <line x1="6.7" y1="6.7" x2="17.3" y2="17.3" />
+      <line x1="17.3" y1="6.7" x2="6.7" y2="17.3" />
     </svg>
   );
 }

@@ -1,0 +1,195 @@
+RepoRunner needs one **focused icon correction pass** for the quick action buttons.
+
+Do **not** redesign the UI.
+Do **not** change layout.
+Do **not** change functionality.
+Do **not** change button order.
+Do **not** change button labels.
+Do **not** change button sizes.
+Do **not** change typography.
+Do **not** change the glass button styling.
+Do **not** change panel spacing, engine lights, logs, meteors, setup modal, or product flow.
+
+This pass is only about improving **four button icons**:
+
+* Stop Engine
+* Pull
+* Restart
+* Open
+
+## What is already correct
+
+Leave these icons alone:
+
+* Start Frontend
+* Start Backend
+* Install
+
+Those are good enough.
+
+## Problem
+
+The remaining four icons still do not look polished enough.
+
+Current issues:
+
+* they feel under-designed
+* they do not read clearly enough at button size
+* some feel too generic
+* some feel too small or optically weak
+* the Restart icon still does not communicate the intended shape properly
+* the Open icon still does not feel clean enough
+* the Stop Engine and Pull icons also need refinement
+
+## Goal
+
+Make the four problem icons feel:
+
+* sharper
+* cleaner
+* more deliberate
+* more premium
+* more legible
+* visually matched to the quality of the rest of the UI
+
+They should feel like part of one coherent icon system.
+
+## Scope
+
+Only refine these four icons:
+
+### 1. Stop Engine
+
+Improve the Stop Engine icon so it feels cleaner and more intentional.
+
+Desired direction:
+
+* a clean circular form
+* a clear internal X / crossed mark
+* balanced line weight
+* readable at small size
+* centered and optically stable
+
+It should not feel:
+
+* muddy
+* too thin
+* too tiny
+* awkwardly proportioned
+
+### 2. Pull
+
+Refine the Pull icon so it looks cleaner and more distinctive.
+
+Desired direction:
+
+* preserve the current general concept
+* make the silhouette clearer
+* make the internal shape more readable
+* improve optical balance
+* improve clarity at button size
+
+It should feel more intentional and less vague.
+
+### 3. Restart
+
+This is still the weakest icon and needs the most attention.
+
+The Restart icon should look like:
+
+* **two smooth sine-wave-like strokes**
+* crossing through one another
+* mirrored
+* balanced
+* elegant
+* easy to read at small size
+
+It should **not** look like:
+
+* DNA
+* a sideways accident
+* a random X
+* cramped loops
+* messy curves
+
+Important:
+Please refine the actual SVG geometry until it clearly reads as **two smooth crossing wave lines**.
+
+### 4. Open
+
+The Open icon still needs a stronger cleanup.
+
+Desired direction:
+
+* a clean circular head
+* cleaner stroke placement
+* balanced angled linework
+* more readable silhouette
+* cleaner symmetry / composition
+
+It should feel precise and deliberate, not improvised.
+
+## Very important implementation guidance
+
+Do **not** just brighten the icons.
+
+Instead improve:
+
+* geometry
+* proportions
+* stroke placement
+* optical centering
+* spacing
+* recognizability
+
+You may increase icon size **slightly** if needed, but only if it helps clarity and keeps the set visually consistent.
+
+## System consistency
+
+All four corrected icons should match the rest of the button system in:
+
+* stroke weight
+* overall scale
+* visual sharpness
+* alignment
+* icon-to-label spacing
+* optical weight
+
+They should look like a matched set.
+
+## Use references
+
+If the earlier pasted reference images for these icons are available in chat/context, use them.
+
+Especially:
+
+* Restart reference = two crossing sine-wave-like strokes
+* Open reference = the cleaner line/circle form previously discussed
+
+If needed, prioritize **matching the reference character**, not inventing a new symbol.
+
+## Restraint
+
+Do not touch:
+
+* Start Frontend icon
+* Start Backend icon
+* Install icon
+* labels
+* glass styling
+* row layout
+* button dimensions
+* card layout
+* anything outside these four icons
+
+## Acceptance criteria
+
+After this pass:
+
+1. Stop Engine, Pull, Restart, and Open are all visibly improved.
+2. Start Frontend, Start Backend, and Install remain unchanged.
+3. The four corrected icons look cleaner and more polished.
+4. Restart clearly reads as two crossing sine-wave-like strokes.
+5. Open reads more cleanly and intentionally.
+6. All quick action icons feel like one coherent set.
+7. No unrelated UI or functionality changes are made.
