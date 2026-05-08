@@ -897,7 +897,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
       case "frontend": return "#cc4444";
       case "backend":  return "#9B3F67";
       case "system":
-      default:         return "#575452";
+      default:         return "#D9D7D5";
     }
   };
 
