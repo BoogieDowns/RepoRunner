@@ -635,7 +635,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                 ].join(", "),
                 color: "rgba(255,214,210,0.95)",
                 textShadow: "0 0 8px rgba(255,95,85,0.72)",
-                boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18)",
+                boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18), 0 0 10px rgba(204,34,34,0.62), 0 0 3px rgba(204,34,34,0.40)",
               }}
             >
               Running
@@ -660,7 +660,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
               ].join(", "),
               color: "rgba(242,184,160,0.92)",
               textShadow: "0 0 7px rgba(242,184,160,0.48)",
-              boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18), 0 0 5px rgba(242,184,160,0.10)",
+              boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18), 0 0 9px rgba(242,184,160,0.42), 0 0 3px rgba(242,184,160,0.26)",
             }}>
               <Loader2 className="w-[9px] h-[9px] animate-spin flex-none" />
               Starting
@@ -685,7 +685,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
               ].join(", "),
               color: "rgba(200,150,118,0.84)",
               textShadow: "0 0 6px rgba(200,148,115,0.36)",
-              boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18)",
+              boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.28), inset 1px 0 1px rgba(0,0,0,0.18), inset -1px 0 1px rgba(0,0,0,0.18), 0 0 8px rgba(200,148,115,0.36), 0 0 3px rgba(200,148,115,0.22)",
             }}>
               <Loader2 className="w-[9px] h-[9px] animate-spin flex-none" />
               Stopping

@@ -1,0 +1,147 @@
+RepoRunner needs one **tiny status-light styling correction** only.
+
+Do **not** redesign the UI.
+Do **not** change layout.
+Do **not** change functionality.
+Do **not** change service logic, process management, IPC, setup behavior, logs behavior, meteors, buttons, or product flow.
+
+This is only about restoring the illuminated look of the engine/status lights **without re-adding pulsing**.
+
+## Current problem
+
+The pulse animations were removed correctly.
+
+However, the active lights also stopped looking illuminated.
+
+I want the active lights to be steadily lit, not dark.
+
+## Required behavior
+
+### RUNNING
+
+When a status light says:
+
+```text
+RUNNING
+```
+
+it should:
+
+* be steadily illuminated red
+* have a visible internal red glow
+* have a subtle steady outer red glow
+* look like a lit plastic indicator module
+* not pulse
+* not animate repeatedly
+
+### STARTING / STOPPING
+
+When a status light says:
+
+```text
+STARTING
+STOPPING
+```
+
+it should:
+
+* be steadily illuminated peach
+* have a visible internal peach glow
+* have a subtle steady outer peach glow
+* look like a lit plastic indicator module
+* not pulse
+* not animate repeatedly
+
+### STOPPED
+
+When a status light says:
+
+```text
+STOPPED
+```
+
+it should remain:
+
+* dark
+* smoked
+* unlit
+* static
+
+## Important distinction
+
+I want:
+
+```text
+active state = steady illuminated light
+```
+
+I do **not** want:
+
+```text
+active state = pulsing light
+```
+
+and I also do **not** want:
+
+```text
+active state = dark/unlit light
+```
+
+## Styling direction
+
+Restore the steady illuminated styling using static CSS values, not animation.
+
+For active red / peach lights, use:
+
+* brighter lens background
+* internal glow
+* inset highlights
+* steady outer glow
+* readable text
+* existing ribbed plastic texture
+
+But do not add any repeating keyframe animation.
+
+## Remove only the animation, not the lit state
+
+If previous pulse classes included both:
+
+* the base lit appearance
+* the pulse animation
+
+please separate them.
+
+Keep the base lit appearance.
+Remove only the repeating animation.
+
+For example:
+
+```text
+RUNNING should keep red glow styles but no animation.
+STARTING / STOPPING should keep peach glow styles but no animation.
+```
+
+## Preserve everything else
+
+Do not change:
+
+* status light shape
+* status text
+* lens ribbing
+* stopped style
+* failed/unknown styles
+* layout
+* functionality
+* service logic
+
+## Acceptance criteria
+
+After this fix:
+
+1. `RUNNING` is steadily illuminated red.
+2. `STARTING` is steadily illuminated peach.
+3. `STOPPING` is steadily illuminated peach.
+4. None of these states pulse.
+5. `STOPPED` remains dark/unlit.
+6. The plastic indicator look remains intact.
+7. No unrelated UI or functionality changes are made.
