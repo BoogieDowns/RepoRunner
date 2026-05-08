@@ -267,7 +267,7 @@
 @keyframes rr-lens-off {
   0%   { opacity: 1;    filter: brightness(1); }
   72%  { opacity: 0.28; filter: brightness(1); }
-  79%  { opacity: 0.82; filter: brightness(1.9); }
+  79%  { opacity: 0.94; filter: brightness(2.3); }
   86%  { opacity: 0.12; filter: brightness(0.5); }
   100% { opacity: 0;    filter: brightness(1); }
 }

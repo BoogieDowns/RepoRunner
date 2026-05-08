@@ -1,0 +1,132 @@
+RepoRunner needs one **tiny engine/status light transition tuning pass** only.
+
+Do **not** redesign the UI.
+Do **not** change layout.
+Do **not** change functionality.
+Do **not** change service logic, process management, IPC, setup behavior, logs behavior, meteors, buttons, or product flow.
+
+This is only about tuning the **engine/status light illumination timing and shutdown flicker**.
+
+## Current state
+
+The final shutdown flicker looks good conceptually.
+
+But two small things need adjusting:
+
+1. The ending flicker should be a little brighter.
+2. The startup illumination/fade-on has become too fast and needs to be slowed back down to the previous/original speed.
+
+---
+
+## 1. Make the final shutdown flicker slightly brighter
+
+When the light transitions from:
+
+```text
+STOPPING → STOPPED
+```
+
+the red light currently gives a quick final flicker.
+
+Please make that final flicker a little brighter.
+
+Increase only the flicker brightness/glow slightly.
+
+Suggested direction:
+
+```text
+10–20% brighter
+```
+
+It should feel like a quick old hardware bulb flicker before power cuts out.
+
+Do **not** make it huge, flashy, or distracting.
+
+---
+
+## 2. Slow the startup illumination back down
+
+The light fade-on / illumination at the start has sped up too much.
+
+Please slow the startup fade-on back to the previous/original timing.
+
+This applies when the light changes into active states like:
+
+```text
+STARTING
+RUNNING
+```
+
+The desired behavior is:
+
+```text
+unlit/dark → red light gradually illuminates → steady full red
+```
+
+The fade-on should feel smooth and physical, not instant.
+
+Use the earlier slower timing if it exists in the code history.
+
+If you need a target, use approximately:
+
+```text
+1.5s–2.0s
+```
+
+Around:
+
+```text
+1.8s
+```
+
+is fine.
+
+---
+
+## 3. Preserve shutdown behavior
+
+Keep the current shutdown sequence:
+
+```text
+red light fades down while STOPPING → quick final red flicker → STOPPED/unlit
+```
+
+But only make the final flicker slightly brighter.
+
+Do not speed up or otherwise change the shutdown unless required for the flicker.
+
+---
+
+## Preserve everything else
+
+Keep:
+
+* no pulsing
+* no spinner
+* red light for active/transition states
+* same status light size
+* same plastic/ribbed lens style
+* same text behavior
+* stopped state dark/unlit
+
+Do not change:
+
+* engine status logic
+* layout
+* buttons
+* logs
+* meteors
+* setup modal
+* app functionality
+
+## Acceptance criteria
+
+After this change:
+
+1. The final shutdown flicker is slightly brighter.
+2. The startup illumination/fade-on is slower again, around 1.5s–2.0s.
+3. The light still stays steadily illuminated once active.
+4. The light still fades/shuts off cleanly when stopping.
+5. The `STOPPED` text does not flash white.
+6. No pulsing or spinner is reintroduced.
+7. No unrelated UI or functionality changes are made.
