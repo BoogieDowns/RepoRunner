@@ -1,0 +1,81 @@
+RepoRunner needs one **tiny Open icon geometry correction** only.
+
+Do **not** redesign the UI.
+Do **not** change layout.
+Do **not** change button labels.
+Do **not** change button sizes.
+Do **not** change button styling.
+Do **not** change any icons except the `Open` icon.
+Do **not** change engine lights, logs, meteors, setup modal, header, IPC, process logic, or product flow.
+
+This is only about adjusting the custom `OpenCometIcon` SVG.
+
+## Current issue
+
+The `Open` icon is close, but the trailing-line arrangement still looks visually unbalanced.
+
+I think the issue is that the **short upper line** and the **middle line** are in the wrong relationship.
+
+## Requested change
+
+In the `OpenCometIcon`, swap the visual role/position of:
+
+* the current short upper trailing line
+* the current middle trailing line
+
+The goal is for the icon to feel more symmetrical and balanced.
+
+## Important
+
+Do **not** redraw the whole icon.
+Do **not** invent a new icon.
+Do **not** change the circle.
+Do **not** change the button layout.
+Do **not** change any other icons.
+
+Only adjust the existing trailing stroke geometry.
+
+## Desired result
+
+The Open icon should still read as:
+
+* one circular head
+* three diagonal trailing strokes
+* a sleek comet/signal glyph
+
+But the three trailing strokes should feel more balanced and symmetrical.
+
+The short stroke should no longer make the icon feel lopsided.
+
+## Implementation direction
+
+Find the current `OpenCometIcon` SVG.
+
+It should have:
+
+* one circle
+* short upper trailing stroke
+* middle trailing stroke
+* lower trailing stroke
+
+Adjust only the path coordinates for the short upper and middle trailing strokes so they effectively swap their visual placement/length relationship.
+
+After the swap:
+
+* the top/middle/lower strokes should feel evenly staged
+* the icon should look less awkward
+* the circle should still remain the visual head
+* all strokes should remain parallel
+* all strokes should use `currentColor`
+* keep the current stroke width unless absolutely necessary
+
+## Acceptance criteria
+
+After this change:
+
+1. Only the `Open` icon changes.
+2. The circle remains unchanged.
+3. The three trailing strokes remain diagonal and parallel.
+4. The short upper stroke and middle stroke have been visually swapped/rebalanced.
+5. The icon feels more symmetrical and readable.
+6. No unrelated UI or functionality changes are made.
