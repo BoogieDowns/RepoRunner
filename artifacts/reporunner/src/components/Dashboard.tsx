@@ -442,8 +442,8 @@ function RestartOrbitIcon({ className, strokeWidth = 1.5 }: { className?: string
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      <path d="M8,6 C3,6 3,18 16,18" />
-      <path d="M16,6 C21,6 21,18 8,18" />
+      <path d="M9,6 C3,9 21,15 15,18" />
+      <path d="M15,6 C21,9 3,15 9,18" />
     </svg>
   );
 }

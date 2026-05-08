@@ -1,0 +1,104 @@
+Do one correction pass only, and do it properly.
+
+The current RESTART icon is wrong.
+
+It does NOT match the reference.
+It currently reads like a weak loop / lollipop / abstract curve.
+That is not acceptable.
+
+Do not redesign the UI.
+Do not change layout.
+Do not change button sizes.
+Do not change button text.
+Do not change fonts.
+Do not change glass styling.
+Do not change spacing for other buttons.
+Do not touch any icon except RESTART.
+
+This task is ONLY:
+Fix the RESTART icon so it matches the pasted reference image closely and clearly.
+
+## Source of truth
+
+Use the pasted reference image as the visual source of truth.
+
+Do not “interpret” it loosely.
+Do not simplify it into some other symbol.
+Do not make a new symbol that is merely “inspired by” it.
+
+I want a close visual match.
+
+## What the RESTART icon must look like
+
+The icon should look like:
+
+- two mirrored curved strokes
+- one on the left, one on the right
+- crossing/interlocking at the center
+- forming an X-like crossing in the middle
+- with soft outward curves on both sides
+- symmetrical left-to-right
+- clean and obvious at small size
+
+Very important:
+- there should NOT be a circle
+- there should NOT be a loop with a tail
+- there should NOT be a magnifying-glass shape
+- there should NOT be a separate central oval blob
+- there should NOT be a random abstract squiggle
+
+It should read like the reference:
+a clean mirrored interlocking symbol.
+
+## Build method
+
+Create it as a custom SVG icon.
+
+Requirements:
+- use stroke only
+- use `currentColor`
+- rounded line caps
+- rounded line joins
+- no fill
+- crisp geometry
+- centered in the icon box
+
+Use 2 primary mirrored paths if possible.
+If needed, use 4 paths, but keep the result visually simple and clean.
+
+## Visual sizing requirements
+
+The icon must be:
+
+- clearly visible
+- not tiny
+- not faint
+- not overly thin
+- optically centered
+- visually balanced with the other button icons
+
+Target:
+- icon visual area roughly 14–16px wide inside the standard button icon box
+- stroke weight approximately 1.8–2.1px, whatever best matches the other icons
+- icon/text spacing should remain tidy and consistent with the other buttons
+
+## Hard acceptance criteria
+
+Do not stop at “technically updated.”
+Visually compare the result to the pasted reference before finishing.
+
+The final RESTART icon must satisfy all of these:
+
+1. It clearly matches the pasted reference image.
+2. It is symmetrical.
+3. It has an obvious crossing/interlocking center.
+4. It does not look like a loop, circle, or magnifying glass.
+5. It is readable at button size.
+6. It matches the visual weight of the other button icons.
+7. No unrelated UI changes are made.
+
+## Important instruction
+
+If the first SVG attempt does not visually match the reference, revise it immediately in the same pass before finishing.
+
+Do not leave me with a half-correct icon.
