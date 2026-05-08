@@ -1,0 +1,88 @@
+RepoRunner needs one **very small final Quick Actions polish pass** only.
+
+Do **not** redesign the UI.
+Do **not** change layout.
+Do **not** change button order.
+Do **not** change button labels.
+Do **not** change icon SVG geometry.
+Do **not** change icon size.
+Do **not** change functionality.
+Do **not** change engine lights, logs, meteors, setup modal, header, IPC, process logic, or product flow.
+
+This is only about checking whether the Quick Actions buttons need any final micro-adjustments.
+
+## Current state
+
+The last pass was good:
+
+* Dashboard was inspected directly.
+* Red buttons were judged already strong.
+* Disabled Stop Engine was judged good.
+* Neutral text/icon contrast was lifted slightly.
+* Layout and spacing were judged solid.
+
+So this pass should be extremely restrained.
+
+## Goal
+
+Do one final visual inspection of the Quick Actions panel and only change something if there is a clear visible issue.
+
+Do **not** make changes just to make changes.
+
+## Things to inspect
+
+Check the actual dashboard Quick Actions panel, not the setup screen.
+
+Inspect:
+
+* icon/text readability
+* icon/text alignment
+* neutral button contrast
+* red button contrast
+* disabled state readability
+* glass reflection balance
+* row spacing
+* button edge clarity
+* card/button separation
+
+## Only fix clear issues
+
+Only make a tiny adjustment if one of these is visibly true:
+
+* a label is still slightly hard to read
+* an icon is still slightly buried
+* disabled state looks too active or too invisible
+* a hover state looks inconsistent
+* a button edge looks muddy
+* top row and bottom row feel visually unbalanced
+
+## What not to do
+
+Do not:
+
+* add more shadow layers
+* add more major gradients
+* brighten all buttons again
+* redraw icons
+* change icon size
+* change button dimensions
+* change layout
+* change labels
+* change functionality
+
+The buttons are close. This is a final check, not another redesign pass.
+
+## If everything looks good
+
+If the Quick Actions buttons already look clean and balanced after inspection, then make no further visual changes and report that no change was needed.
+
+## Acceptance criteria
+
+After this pass:
+
+1. Quick Actions buttons remain visually stable.
+2. Any change made is tiny and clearly justified.
+3. Icons and labels remain readable.
+4. Disabled state remains clearly inactive.
+5. No layout, icon geometry, labels, or functionality are changed.
+6. If no clear issue exists, no code change is made.
