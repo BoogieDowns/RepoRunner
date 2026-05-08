@@ -1,0 +1,95 @@
+RepoRunner needs one **focused Install icon refinement** only.
+
+Do **not** redesign the UI.
+Do **not** change layout.
+Do **not** change button labels.
+Do **not** change button sizes.
+Do **not** change button styling.
+Do **not** change any icons except the `Install` icon.
+Do **not** change engine lights, logs, meteors, setup modal, header, IPC, process logic, or product flow.
+
+This is only about making the custom `Install` icon clearer and more polished.
+
+## Current issue
+
+The `Install` icon is close, but it still does not read strongly enough.
+
+It should look like a clean stacked-layer / database-style symbol, but right now it feels a bit too small and too much like a generic set of horizontal lines.
+
+## Goal
+
+Make the `Install` icon clearly read as:
+
+```text
+three stacked oval rings
+```
+
+It should feel like a compact layered stack.
+
+## Reference direction
+
+The icon should look like:
+
+* three horizontal oval rings
+* stacked vertically
+* evenly spaced
+* slightly overlapping / closely grouped
+* clean and symmetrical
+* clearly visible at button size
+
+It should **not** look like:
+
+* three flat horizontal lines
+* a hamburger menu
+* a tiny smudge
+* a generic database cylinder that is too detailed
+* a random abstract mark
+
+## Required changes
+
+Please refine the `Install` custom SVG so that:
+
+1. The three oval rings are more obvious.
+2. The icon is slightly larger / clearer within the existing 18×18 icon box.
+3. The rings have enough vertical separation to read individually.
+4. The rings are wide enough to feel like ovals, not short dashes.
+5. The stroke weight matches the other icons.
+6. The icon remains centered beside the `INSTALL` label.
+
+## Important
+
+Do **not** redraw every icon.
+Do **not** touch Pull, Restart, Open, Stop, or Start icons.
+Do **not** change the button layout.
+Do **not** change button text or functionality.
+
+## Implementation guidance
+
+Use the existing custom `Install` SVG component.
+
+Keep:
+
+* `currentColor`
+* stroke only
+* no fill
+* rounded caps/joins if useful
+* same shared icon sizing system
+
+Adjust only the oval/ring geometry.
+
+A good direction would be:
+
+* slightly wider ovals
+* slightly taller rings
+* a touch more vertical spacing
+* keep the overall stack compact and centered
+
+## Acceptance criteria
+
+After this change:
+
+1. The `Install` icon clearly reads as three stacked oval rings.
+2. It no longer looks like a hamburger/menu icon.
+3. It is readable at normal button size.
+4. It feels visually consistent with the other custom icons.
+5. No unrelated UI or functionality changes are made.

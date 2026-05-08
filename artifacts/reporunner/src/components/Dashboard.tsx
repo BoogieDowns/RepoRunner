@@ -462,9 +462,9 @@ function InstallStackIcon({ className, strokeWidth = 1.5 }: { className?: string
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      <ellipse cx="12" cy="8"  rx="7" ry="2.2" />
-      <ellipse cx="12" cy="12" rx="7" ry="2.2" />
-      <ellipse cx="12" cy="16" rx="7" ry="2.2" />
+      <ellipse cx="12" cy="7.5"  rx="7.5" ry="2.8" />
+      <ellipse cx="12" cy="12"   rx="7.5" ry="2.8" />
+      <ellipse cx="12" cy="16.5" rx="7.5" ry="2.8" />
     </svg>
   );
 }
