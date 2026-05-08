@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import rrLogo from "../assets/rr-logo-nobg.png";
+import rrWordmark from "../assets/rr-wordmark-nobg.png";
 import {
   Download,
   Package,
@@ -436,62 +438,18 @@ function AmbientBackground({
 
 function RepoRunnerLogo() {
   return (
-    <svg
-      width="32"
-      height="32"
-      viewBox="0 0 32 32"
-      fill="none"
+    <img
+      src={rrLogo}
+      alt="RepoRunner logo"
       aria-hidden="true"
-      style={{ filter: "drop-shadow(0 0 7px rgba(204,30,30,0.48))", flexShrink: 0 }}
-    >
-      <defs>
-        <linearGradient id="rr-badge" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#210e0e" />
-          <stop offset="100%" stopColor="#090404" />
-        </linearGradient>
-        <linearGradient id="rr-border-g" x1="0" y1="0" x2="0" y2="32" gradientUnits="userSpaceOnUse">
-          <stop offset="0%"   stopColor="rgba(230,55,55,0.70)" />
-          <stop offset="55%"  stopColor="rgba(150,20,20,0.35)" />
-          <stop offset="100%" stopColor="rgba(60,8,8,0.15)" />
-        </linearGradient>
-        <linearGradient id="rr-mark-g" x1="0" y1="6" x2="0" y2="27" gradientUnits="userSpaceOnUse">
-          <stop offset="0%"   stopColor="#ffaaaa" />
-          <stop offset="30%"  stopColor="#e03030" />
-          <stop offset="100%" stopColor="#5a0c0c" />
-        </linearGradient>
-      </defs>
-
-      {/* Badge */}
-      <rect width="32" height="32" rx="7" fill="url(#rr-badge)" />
-      <rect width="32" height="32" rx="7" fill="none" stroke="url(#rr-border-g)" strokeWidth="1" />
-      {/* Top-edge gloss */}
-      <rect x="1.5" y="1.5" width="29" height="5.5" rx="5" fill="rgba(255,255,255,0.032)" />
-
-      {/*
-        R Я monogram — each letter has its own outer stem.
-        Left R:  stem on the left  (x=6),  bowl opens rightward, leg angles to center-bottom.
-        Right Я: stem on the right (x=26), bowl opens leftward,  leg angles to center-bottom.
-        Both legs converge at (16, 26) — forming one unified diamond silhouette.
-      */}
-      <path
-        d={[
-          /* ── Left R ── */
-          /* stem */      "M 6 6.5 L 6 25.5",
-          /* bowl */      "M 6 6.5 L 12.5 6.5 Q 15 6.5 15 9.5 L 15 14.5 Q 15 17 12.5 17 L 6 17",
-          /* leg */       "M 10.5 17 L 16 26",
-
-          /* ── Right Я (mirrored) ── */
-          /* stem */      "M 26 6.5 L 26 25.5",
-          /* bowl */      "M 26 6.5 L 19.5 6.5 Q 17 6.5 17 9.5 L 17 14.5 Q 17 17 19.5 17 L 26 17",
-          /* leg */       "M 21.5 17 L 16 26",
-        ].join(" ")}
-        stroke="url(#rr-mark-g)"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill="none"
-      />
-    </svg>
+      style={{
+        width: "44px",
+        height: "44px",
+        objectFit: "contain",
+        filter: "drop-shadow(0 0 7px rgba(204,30,30,0.48))",
+        flexShrink: 0,
+      }}
+    />
   );
 }
 
@@ -856,22 +814,18 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
           style={{ filter: "drop-shadow(0 0 10px rgba(204,34,34,0.14))" }}
         >
           <RepoRunnerLogo />
-          <span
-            className="select-none leading-none"
+          <img
+            src={rrWordmark}
+            alt="RepoRunner"
             style={{
-              fontFamily: "'HS LunaObscura', 'Orbitron', 'Plus Jakarta Sans', sans-serif",
-              fontSize: "14px",
-              fontWeight: "normal",
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
-              background: "linear-gradient(155deg, #eceae6 0%, #b0aca8 45%, #d8d4d0 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
+              height: "20px",
+              width: "auto",
+              objectFit: "contain",
+              filter: "drop-shadow(0 0 6px rgba(204,30,30,0.22))",
+              flexShrink: 0,
+              userSelect: "none",
             }}
-          >
-            RepoRunner
-          </span>
+          />
         </div>
 
         <div className={DIV} style={DIV_STYLE} />
