@@ -5,7 +5,7 @@ import {
   Package,
   Play,
   Server,
-  SquareSquare,
+  XCircle,
   RotateCw,
   ExternalLink,
   Copy,
@@ -902,7 +902,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                     />
                     <CommandButton
                       label="Stop Engine"
-                      icon={SquareSquare}
+                      icon={XCircle}
                       onClick={wrapAction("stop", window.repoRunner.stopServices)}
                       disabled={bothStopped}
                       loading={actionLoading["stop"]}
