@@ -942,7 +942,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                 animation: "rr-glow-flicker 0.7s ease-out forwards",
                 zIndex: 0,
               }} />
-              <span style={{ position: "relative", zIndex: 1 }} />
+              <span style={{ position: "relative", zIndex: 1, opacity: 0, pointerEvents: "none", userSelect: "none" }}>Running</span>
             </span>
           </span>
         );
