@@ -1,0 +1,109 @@
+RepoRunner needs one **specific engine/status light timing correction** only.
+
+Do **not** redesign the UI.
+Do **not** change layout.
+Do **not** change functionality.
+Do **not** change actual service timing, mock timing, process management, IPC, setup behavior, logs, buttons, meteors, or product flow.
+
+This is only about the **visual fade-on timing** of the engine/status light during `STARTING`.
+
+## Current issue
+
+The `STARTING` light fade-on is still visually too quick.
+
+Even though it was matched to the mock start timing of `1.6s`, it still reaches visible/full brightness too early.
+
+I want the red light to take longer to visually power up.
+
+## Requested change
+
+Make the `STARTING` fade-on animation slower and more gradual.
+
+Set the visual fade-on duration to around:
+
+```text
+2.6s–3.0s
+```
+
+Suggested target:
+
+```text
+2.8s
+```
+
+## Important
+
+This is only the **visual light fade-on**.
+
+Do **not** change:
+
+* actual service start timing
+* mock timing
+* when the status changes to `RUNNING`
+* start/stop logic
+
+If the service reaches `RUNNING` before the visual fade-on finishes, that is okay. The light can continue completing its smooth illumination briefly as it settles into the `RUNNING` state.
+
+## Desired behavior
+
+When the status changes to:
+
+```text
+STARTING
+```
+
+the red lens should slowly power up:
+
+```text
+dark / low glow → gradual red illumination → full red light
+```
+
+The fade should feel:
+
+* slower
+* physical
+* like an old plastic light warming up
+* clearly visible
+* not instant
+
+## Avoid
+
+Do not make it:
+
+* snap bright early
+* reach full brightness in the first half-second
+* look like a digital state switch
+* pulse
+
+## Preserve STOPPING behavior
+
+Keep the current `STOPPING` fade-off timing if it looks good.
+
+Keep:
+
+* `STOPPING` fade-off around the current mock duration
+* final shutdown flicker
+* `STOPPED` dark/unlit state
+* no text flash
+* no spinner
+* no pulse
+
+## Preserve RUNNING behavior
+
+`RUNNING` should remain fully illuminated once the fade-on completes.
+
+But do not force `RUNNING` to snap so aggressively that it cancels the slower fade-on.
+
+If there is currently a `RUNNING` 0.15s snap-on that makes the light brighten too suddenly when `STARTING` hands off to `RUNNING`, please adjust it so the transition remains smooth.
+
+## Acceptance criteria
+
+After this change:
+
+1. `STARTING` red light fade-on is visibly slower.
+2. The light takes around `2.8s` to reach full visual brightness.
+3. The light no longer appears to snap bright too quickly.
+4. `RUNNING` remains steadily illuminated after the fade-on completes.
+5. `STOPPING` / `STOPPED` behavior remains as it is.
+6. No actual service timing or functionality is changed.
+7. No unrelated UI changes are made.
