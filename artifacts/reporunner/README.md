@@ -1,49 +1,73 @@
 # RepoRunner
 
-> Run local GitHub repos with buttons — no terminal juggling required.
+> Import your repo once. Save the run setup once. Then pull, install, start, stop, restart, open preview, and inspect logs with buttons.
 
-RepoRunner is a simple desktop app for AI-assisted builders who want to run local GitHub/local repo apps without using Git Bash or juggling terminals. Save your project config once, then pull, install, start, stop, and restart your services with a single click.
+RepoRunner is a desktop-style app for AI-assisted builders, vibe coders, and solo founders who want to run local GitHub repos without juggling terminals. Save your project config once, then drive everything with a button panel.
 
 ---
 
 ## Who it's for
 
-Developers and AI-assisted builders who:
-- Clone AI-generated repos and need a simple way to run them locally
-- Don't want to manage multiple terminal windows
-- Want a clean interface for starting frontend and backend services
+- **AI-assisted builders** — you got a repo from Cursor, Replit, or Claude and just need to run it
+- **Vibe coders** — you want to ship, not manage shells
+- **Solo founders** — one project, one panel, no terminal context switching
+- **Anyone running a local repo** who doesn't want Git Bash, npm scripts, and two terminal windows open simultaneously
+
+RepoRunner is **not** an IDE, a deployment tool, or an AI debugging assistant.
 
 ---
 
-## V0 Feature Scope
+## Current status
 
-### What RepoRunner V0 does
+Early version — first public build. Core workflow is functional. Single-project only. See [limitations](#current-limitations) below.
+
+---
+
+## Features
 
 - Save one local project profile (repo path, commands, ports, preview URL)
 - **Pull latest** — runs `git pull` in your repo directory
 - **Install** — runs your install command (e.g. `npm install`)
 - **Start Frontend** — starts your frontend dev server
 - **Start Backend** — starts your backend server
-- **Stop Services** — stops both frontend and backend
+- **Stop Engine** — stops both frontend and backend services
 - **Restart All** — sequentially restarts backend then frontend
 - **Open Preview** — opens your configured preview URL in a browser
 - **View live logs** — colored by source (git / install / frontend / backend / system)
 - **Copy logs** — copies full log output to clipboard
 - **Clear logs** — clears the log panel
-
-### What V0 does not include
-
-- IDE or editor features
-- Deployment or hosting
-- GitHub OAuth or authentication
-- Repo cloning
-- Branch switching
-- AI-assisted debugging
-- Multi-project support (only one project profile at a time)
+- **Edit Setup** — reopen the config modal at any time without losing running services
 
 ---
 
-## Tech Stack
+## Usage
+
+1. Open the app — the setup modal appears on first launch
+2. Fill in your project details:
+   - Project name and local repo folder path
+   - Preview URL (e.g. `http://localhost:3000`)
+   - Install, frontend, and backend commands
+   - Frontend and backend ports (optional, used for port readiness checks)
+3. Click **Save Configuration** — the dashboard loads
+4. Use Quick Actions:
+   - **Pull** to fetch latest code
+   - **Install** to run your install command
+   - **Start Frontend / Start Backend** to spin up services
+   - **Stop Engine** to kill everything cleanly
+   - **Restart** to do a full stop → start cycle
+   - **Open** to launch your preview URL
+5. Watch the log panel for real-time output from each service
+6. Click **Edit Setup** (gear icon in the header) to adjust config at any time
+
+---
+
+## Screenshots
+
+Screenshots coming soon.
+
+---
+
+## Tech stack
 
 | Layer | Technology |
 |---|---|
@@ -51,7 +75,7 @@ Developers and AI-assisted builders who:
 | Styling | Tailwind CSS v4 + shadcn/ui |
 | Desktop | Electron |
 | Forms | react-hook-form + Zod |
-| Font | Plus Jakarta Sans + JetBrains Mono |
+| Fonts | Plus Jakarta Sans + JetBrains Mono |
 | Process management | Node.js `child_process` + `tree-kill` |
 | Port detection | `tcp-port-used` |
 | Config storage | Electron `app.getPath('userData')` |
@@ -59,7 +83,7 @@ Developers and AI-assisted builders who:
 
 ---
 
-## Local Development
+## Local development
 
 ### Prerequisites
 
@@ -78,18 +102,24 @@ pnpm install
 pnpm --filter @workspace/reporunner run dev
 ```
 
-Open the URL shown in your terminal. The browser mock simulates all IPC calls so you can develop the UI without Electron.
+Open the URL shown in your terminal. The browser mock simulates all IPC calls so you can develop the UI without Electron. Project config is persisted via `localStorage` in this mode.
 
-### Run as Electron app (full desktop mode)
+### Typecheck
 
 ```bash
-# 1. Compile the Electron main process
+pnpm --filter @workspace/reporunner run typecheck
+```
+
+### Run as Electron desktop app
+
+```bash
+# 1. Build the renderer
+pnpm --filter @workspace/reporunner run build
+
+# 2. Compile the Electron main process
 pnpm --filter @workspace/reporunner run electron:build-main
 
-# 2. Start the Vite dev server
-pnpm --filter @workspace/reporunner run dev
-
-# 3. In a second terminal, launch Electron
+# 3. Launch Electron
 pnpm --filter @workspace/reporunner run electron:dev
 ```
 
@@ -99,30 +129,34 @@ pnpm --filter @workspace/reporunner run electron:dev
 pnpm --filter @workspace/reporunner run electron:dist
 ```
 
-Output goes to `artifacts/reporunner/release/`.
+Output goes to `artifacts/reporunner/release/`. Targets: `.dmg` (macOS), `.exe` / NSIS (Windows), `.AppImage` (Linux).
+
+### Replit note
+
+This repo lives inside a pnpm monorepo. The Replit web preview runs the Vite dev server with the browser mock — real process management requires the Electron build.
 
 ---
 
-## Project Structure
+## Project structure
 
 ```
 artifacts/reporunner/
 ├── electron/               # Electron main process
 │   ├── main.ts             # Entry point
-│   ├── preload.ts          # Exposes window.repoRunner to renderer
-│   ├── ipc.ts              # IPC handlers (pull, install, start, stop...)
+│   ├── preload.ts          # Exposes window.repoRunner to renderer via contextBridge
+│   ├── ipc.ts              # IPC handlers (pull, install, start, stop, restart...)
 │   ├── processManager.ts   # Spawns and kills service processes
-│   ├── portManager.ts      # Port readiness checks
+│   ├── portManager.ts      # Port readiness checks (tcp-port-used)
 │   └── projectStore.ts     # Reads/writes project profile to disk
 ├── src/                    # React renderer
 │   ├── components/
-│   │   ├── Dashboard.tsx   # Main app view (actions, services, logs)
+│   │   ├── Dashboard.tsx   # Main app view (quick actions, engine panel, logs)
 │   │   ├── SetupScreen.tsx # Project config form
 │   │   └── CommandButton.tsx
 │   ├── mock/
 │   │   └── repoRunnerMock.ts  # Browser mock of window.repoRunner
-│   ├── types.ts            # Shared TypeScript types
-│   └── App.tsx             # Root component and routing state
+│   ├── types.ts            # Shared TypeScript types (RepoRunnerAPI, ProjectProfile, etc.)
+│   └── App.tsx             # Root component and state machine
 ├── electron-dist/          # Compiled Electron JS (git-ignored)
 ├── dist/                   # Vite build output (git-ignored)
 └── release/                # electron-builder output (git-ignored)
@@ -130,7 +164,7 @@ artifacts/reporunner/
 
 ---
 
-## V0 Test Checklist
+## V0 test checklist
 
 - [ ] Save project config
 - [ ] Reopen app and confirm config persists
@@ -138,25 +172,25 @@ artifacts/reporunner/
 - [ ] Run install
 - [ ] Start frontend
 - [ ] Start backend
-- [ ] Stop services
+- [ ] Stop engine
 - [ ] Restart all
 - [ ] Open preview
 - [ ] Copy logs
 - [ ] Clear logs
-- [ ] Edit setup (pencil icon)
+- [ ] Edit setup (gear icon in header)
 - [ ] Close edit without saving (X button)
 
 ---
 
-## Current Limitations
+## Current limitations
 
 - **Single project only** — no project switcher yet
-- **No process health checks** — if a process crashes silently, the pill stays "Running"
-- **No env var support** — commands must not require `.env` injection through the UI
-- **Browser preview only** — the Replit web preview runs the browser mock; real process management requires Electron
+- **No process health checks** — if a process crashes silently, the engine light stays on
+- **No env var injection** — commands that require `.env` values must have them baked into the command string or the shell environment
+- **Browser preview only** — the Replit web preview runs the browser mock; real process management requires the Electron build
 
 ---
 
 ## License
 
-MIT
+MIT — see root `package.json`. No `LICENSE` file present yet; one will be added before a formal release.
