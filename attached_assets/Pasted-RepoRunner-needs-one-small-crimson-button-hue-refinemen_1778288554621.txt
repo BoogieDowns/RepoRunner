@@ -1,0 +1,116 @@
+RepoRunner needs one **small crimson button hue refinement** only.
+
+Do **not** redesign the UI.
+Do **not** change layout.
+Do **not** change button sizes.
+Do **not** change labels.
+Do **not** change icons.
+Do **not** change typography.
+Do **not** change functionality.
+Do **not** change engine lights, logs, meteors, setup modal, header, IPC, process logic, or product flow.
+
+This task is only about making the red action buttons lean slightly more into a **dark crimson** hue.
+
+## Buttons in scope
+
+Apply this only to the red action buttons:
+
+* `Start Frontend`
+* `Start Backend`
+* `Stop Engine`
+* `Save Configuration`
+
+## Current issue
+
+The red buttons look good, but they can lean a little more toward a richer dark crimson / ruby tone.
+
+They should feel more like:
+
+* dark crimson glass
+* ruby glass
+* premium red hardware controls
+* richer and moodier
+
+And less like:
+
+* standard UI red
+* bright red
+* orange-red
+* neon red
+* pink/magenta
+
+## Requested adjustment
+
+Shift the red button color family slightly deeper and more crimson.
+
+Use a richer crimson anchor close to:
+
+```css
+#9F0D1C
+```
+
+or:
+
+```css
+#A40E1D
+```
+
+Use this as the base family for the red button material.
+
+## Important
+
+Do **not** make the buttons flat.
+
+Preserve the existing:
+
+* glass gradients
+* reflective highlights
+* bevels
+* shadows
+* glow
+* hover states
+* active/pressed states
+* disabled treatment
+
+Only retint the red hue family slightly darker / more crimson.
+
+## State guidance
+
+Keep state variation within the same crimson family:
+
+* idle = dark crimson glass
+* hover = slightly brighter crimson glass
+* active = deeper pressed crimson
+* disabled = dimmed crimson
+* glow = transparent crimson
+
+Do not introduce a separate red hue for hover or active.
+
+## Preserve everything else
+
+Do not touch:
+
+* neutral grey buttons
+* icon shapes
+* icon sizing
+* button layout
+* labels
+* engine panel
+* log colors
+* meteors
+* setup modal layout
+* app behavior
+
+Only adjust the red action button color family.
+
+## Acceptance criteria
+
+After this change:
+
+1. `Start Frontend` feels more dark crimson.
+2. `Start Backend` feels more dark crimson.
+3. `Stop Engine` feels more dark crimson.
+4. `Save Configuration` feels more dark crimson.
+5. The glass button material remains intact.
+6. Hover/active/disabled states still work correctly.
+7. No unrelated UI or functionality changes are made.

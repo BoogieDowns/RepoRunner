@@ -87,11 +87,11 @@
      surface:      #0e0e0e  → hsl(0 0% 5.5%)
      card:         #0e0e0e  → hsl(0 0% 5.5%)
      border:       #1a1a1a  → hsl(0 0% 10%)
-     accent-red:   #cc2222  → hsl(0 72% 46%)
+     accent-red:   #9F0D1C  → hsl(354 82% 34%)   ← dark crimson anchor
      text:         #dedad5  → hsl(20 6% 87%)
      text-sec:     #9a9896  → hsl(20 2% 59%)
      text-muted:   #6a6864  → hsl(20 2% 41%)
-     danger-red:   #e03030  → hsl(0 75% 52%)
+     danger-red:   #b81020  → hsl(354 83% 39%)
   */
 
   --opaque-button-border-intensity: 8;
@@ -115,8 +115,8 @@
   --popover-foreground:  20 6% 87%;
   --popover-border:      0 0% 10%;
 
-  /* Primary — red accent */
-  --primary:             0 72% 46%;     /* #cc2222 */
+  /* Primary — dark crimson accent */
+  --primary:             354 82% 34%;   /* #9F0D1C */
   --primary-foreground:  0 0% 96%;      /* #f5f5f5 */
 
   /* Secondary — neutral dark */
@@ -131,15 +131,15 @@
   --accent:              0 0% 8%;      /* #141414 */
   --accent-foreground:   20 6% 87%;
 
-  /* Destructive — brighter red */
-  --destructive:         0 75% 52%;    /* #e03030 */
+  /* Destructive — deep crimson */
+  --destructive:         354 83% 39%;  /* #b81020 */
   --destructive-foreground: 0 0% 100%;
 
   /* Input */
   --input:               0 0% 10%;
 
   /* Focus ring */
-  --ring:                0 72% 46%;    /* red */
+  --ring:                354 82% 34%;  /* dark crimson */
 
   /* Charts */
   --chart-1: 0 72% 46%;
@@ -152,11 +152,11 @@
   --sidebar:                    0 0% 5.5%;
   --sidebar-foreground:         20 6% 87%;
   --sidebar-border:             0 0% 10%;
-  --sidebar-primary:            0 72% 46%;
+  --sidebar-primary:            354 82% 34%;
   --sidebar-primary-foreground: 0 0% 96%;
   --sidebar-accent:             0 0% 8%;
   --sidebar-accent-foreground:  20 6% 87%;
-  --sidebar-ring:               0 72% 46%;
+  --sidebar-ring:               354 82% 34%;
 
   /* Fonts */
   --app-font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
@@ -727,7 +727,7 @@ input[type="number"] {
     inset 0 -1px 0 rgba(0, 0, 0, 0.80),
     inset 0 -5px 16px rgba(0, 0, 0, 0.52),
     inset 0 -14px 34px rgba(0, 0, 0, 0.20);
-  color: #c40e1c;
+  color: #9F0D1C;
 }
 .btn-glass-primary:hover:not(:disabled) {
   background:
@@ -770,7 +770,7 @@ input[type="number"] {
     inset 0 -1px 0 rgba(0, 0, 0, 0.80),
     inset 0 -5px 16px rgba(0, 0, 0, 0.52),
     inset 0 -14px 34px rgba(0, 0, 0, 0.16);
-  color: #d20e1e;
+  color: #b8101f;
 }
 .btn-glass-primary:active:not(:disabled) {
   background: linear-gradient(
@@ -786,7 +786,7 @@ input[type="number"] {
     inset 0 3px 10px rgba(0, 0, 0, 0.60),
     inset 0 -1px 0 rgba(0, 0, 0, 0.72),
     inset 0 -4px 10px rgba(0, 0, 0, 0.38);
-  color: #9c0a14;
+  color: #8a0b14;
 }
 
 /* ── Danger / deep red smoked glass ──────────────────────────────────────
@@ -836,7 +836,7 @@ input[type="number"] {
     inset 0 -1px 0 rgba(0, 0, 0, 0.82),
     inset 0 -5px 16px rgba(0, 0, 0, 0.52),
     inset 0 -14px 34px rgba(0, 0, 0, 0.20);
-  color: #c40e1c;
+  color: #9F0D1C;
 }
 .btn-glass-danger:hover:not(:disabled) {
   background:
@@ -879,7 +879,7 @@ input[type="number"] {
     inset 0 -1px 0 rgba(0, 0, 0, 0.82),
     inset 0 -5px 16px rgba(0, 0, 0, 0.52),
     inset 0 -14px 34px rgba(0, 0, 0, 0.16);
-  color: #d40e1e;
+  color: #b8101f;
 }
 .btn-glass-danger:active:not(:disabled) {
   background: linear-gradient(
@@ -895,5 +895,5 @@ input[type="number"] {
     inset 0 3px 10px rgba(0, 0, 0, 0.60),
     inset 0 -1px 0 rgba(0, 0, 0, 0.76),
     inset 0 -4px 10px rgba(0, 0, 0, 0.42);
-  color: #9c0a14;
+  color: #8a0b14;
 }
