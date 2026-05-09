@@ -9,6 +9,7 @@ import {
   Loader2,
   GitPullRequest,
   Square,
+  Heart,
 } from "lucide-react";
 import { ProjectProfile, ServiceStatuses, LogEntry } from "@/types";
 import { CommandButton } from "./CommandButton";
@@ -482,35 +483,6 @@ function InstallStackIcon({ className, strokeWidth = 1.5 }: { className?: string
   );
 }
 
-/* ─── Open icon (4-corner expand arrows — matches reference) ─────────────────*/
-
-function OpenCometIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.5}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      {/*
-        Four corner arrows pointing outward.
-        Each arrow = L-bracket at corner + diagonal shaft toward center.
-        Shafts stop at (11,11)/(13,11)/(11,13)/(13,13) leaving a clean gap at center.
-        Single path — all 8 subpaths in one element for consistency.
-      */}
-      <path d="
-        M6,9  L6,6  L9,6  M6,6  L11,11
-        M18,9 L18,6 L15,6 M18,6 L13,11
-        M6,15 L6,18 L9,18 M6,18 L11,13
-        M18,15 L18,18 L15,18 M18,18 L13,13
-      " />
-    </svg>
-  );
-}
 
 
 /* ─── Logo ──────────────────────────────────────────────────────────────────*/
@@ -1078,7 +1050,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                     />
                     <CommandButton
                       label="Open"
-                      icon={OpenCometIcon}
+                      icon={Heart}
                       onClick={wrapAction("preview", window.repoRunner.openPreview)}
                       loading={actionLoading["preview"]}
                       variant="outline"
