@@ -937,7 +937,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
               }}
             >
               <CardHeader className="px-5 pt-4 pb-3" style={{ borderBottom: "1px solid #191818" }}>
-                <CardTitle style={{ ...LABEL, color: "#3a3836" }}>
+                <CardTitle style={{ ...LABEL, color: "#4e4c4a" }}>
                   Quick Actions
                 </CardTitle>
               </CardHeader>

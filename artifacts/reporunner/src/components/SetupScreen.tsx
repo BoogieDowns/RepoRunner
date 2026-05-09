@@ -174,7 +174,7 @@ export function SetupScreen({
           >
             RepoRunner Setup
           </CardTitle>
-          <CardDescription className="text-xs" style={{ color: "#525050" }}>
+          <CardDescription className="text-xs" style={{ color: "#5a5856" }}>
             Save your local app setup once. Run it with buttons after that.
           </CardDescription>
         </CardHeader>
@@ -317,7 +317,7 @@ export function SetupScreen({
                       <FormItem className="space-y-1.5">
                         <FormLabel className="font-medium flex items-center gap-1.5" style={labelStyle}>
                           {i === 0 ? "Frontend Port" : "Backend Port"}
-                          <span style={{ color: "#404040", fontSize: "10px", letterSpacing: "0.02em" }}>optional</span>
+                          <span style={{ color: "#4c4a48", fontSize: "10px", letterSpacing: "0.02em" }}>optional</span>
                         </FormLabel>
                         <FormControl>
                           <Input
