@@ -7,6 +7,7 @@ import {
   Trash2,
   Settings2,
   Loader2,
+  GitPullRequest,
 } from "lucide-react";
 import { ProjectProfile, ServiceStatuses, LogEntry } from "@/types";
 import { CommandButton } from "./CommandButton";
@@ -510,31 +511,6 @@ function OpenCometIcon({ className }: { className?: string }) {
   );
 }
 
-/* ─── Pull icon (three concentric rings + focal dot — gravity-well / vortex) ─*/
-
-function PullRingsIcon({ className, strokeWidth = 1.5 }: { className?: string; strokeWidth?: number }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={strokeWidth}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      {/*
-        Bowl / gravity-well shape — 3 ellipses clustered together.
-        Wide rim at top, narrowing downward. Matches reference image.
-        Rings packed tight so they read as a single bowl form, not spread rings.
-      */}
-      <ellipse cx="12" cy="10"  rx="9"   ry="2.5" />   {/* wide rim */}
-      <ellipse cx="12" cy="13.5" rx="6"  ry="2"   />   {/* middle   */}
-      <ellipse cx="12" cy="16.5" rx="3"  ry="1.5" />   {/* bottom   */}
-    </svg>
-  );
-}
 
 /* ─── Stop Engine icon (circle + X, custom — LunaObscura has no such glyph) ─*/
 
@@ -1103,7 +1079,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                   <div style={{ display: "flex", gap: "0.625rem" }}>
                     <CommandButton
                       label="Pull"
-                      icon={PullRingsIcon}
+                      icon={GitPullRequest}
                       onClick={wrapAction("pull", window.repoRunner.pullLatest)}
                       loading={actionLoading["pull"]}
                       variant="outline"
