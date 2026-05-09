@@ -11,6 +11,7 @@ import {
   Square,
   Heart,
   Orbit,
+  Webhook,
 } from "lucide-react";
 import { ProjectProfile, ServiceStatuses, LogEntry } from "@/types";
 import { CommandButton } from "./CommandButton";
@@ -433,27 +434,6 @@ function AmbientBackground({
 }
 
 
-
-/* ─── Install icon (three stacked horizontal oval rings / database-stack) ────*/
-
-function InstallStackIcon({ className, strokeWidth = 1.5 }: { className?: string; strokeWidth?: number }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={strokeWidth}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <ellipse cx="12" cy="7.5"  rx="7.5" ry="2.8" />
-      <ellipse cx="12" cy="12"   rx="7.5" ry="2.8" />
-      <ellipse cx="12" cy="16.5" rx="7.5" ry="2.8" />
-    </svg>
-  );
-}
 
 
 
@@ -1006,7 +986,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                     />
                     <CommandButton
                       label="Install"
-                      icon={InstallStackIcon}
+                      icon={Webhook}
                       onClick={wrapAction("install", window.repoRunner.runInstall)}
                       loading={actionLoading["install"]}
                       variant="outline"
