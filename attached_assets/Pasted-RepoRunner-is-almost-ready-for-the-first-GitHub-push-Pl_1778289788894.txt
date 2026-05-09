@@ -1,0 +1,109 @@
+RepoRunner is almost ready for the first GitHub push.
+
+Please do a **final pre-GitHub smoke test** only.
+
+Do **not** redesign the UI.
+Do **not** add new features.
+Do **not** refactor large areas.
+Do **not** change visual styling unless there is an obvious broken issue.
+Do **not** change functionality unless something is clearly failing.
+
+## Goal
+
+Verify the app is stable and ready to push to GitHub.
+
+## Smoke test checklist
+
+Please inspect/test the current app and confirm the following:
+
+### Setup flow
+
+* Setup modal opens correctly
+* Heading says `RepoRunner Setup`
+* Project Name input works
+* Local Repository Folder field works
+* Choose folder button works if available in this environment
+* Preview URL field works
+* Install Command field works
+* Frontend Command field works
+* Backend Command field works
+* Frontend Port field works
+* Backend Port field works
+* Save Configuration button works
+* Saved setup loads the dashboard correctly
+
+### Dashboard
+
+* Header logo displays correctly
+* Project name displays correctly
+* Repo path displays correctly
+* Edit Setup opens setup modal
+* Quick Actions layout is correct
+* Buttons are visually intact
+* Icons display correctly
+* Engine panel displays correctly
+* Logs panel displays correctly
+
+### Button behavior
+
+Check that these buttons still call the correct behavior:
+
+* Pull
+* Install
+* Start Frontend
+* Start Backend
+* Stop Engine
+* Restart
+* Open
+
+Do not change labels.
+
+### Engine lights
+
+Verify:
+
+* stopped lights are blank/dark
+* active/transition lights show `RUNNING`
+* light size does not change between states
+* red plastic lens styling remains intact
+* no spinner appears
+* no unwanted text appears
+
+### Logs
+
+Verify:
+
+* logs appear correctly
+* log source colors are correct
+* Copy works
+* Clear works
+* log count updates
+* empty state works
+
+### Visual check
+
+Quickly confirm there are no obvious regressions:
+
+* broken layout
+* missing icons
+* clipped text
+* console errors
+* broken modal
+* broken buttons
+* broken engine lights
+* broken logs
+
+## Important
+
+If everything passes, do not make code changes.
+
+If something fails, report the issue clearly before making a fix unless it is a tiny obvious fix.
+
+## Output wanted
+
+Please report:
+
+1. What passed
+2. Any issues found
+3. Any tiny fixes made, if needed
+4. Whether the app is ready for README / screenshots / GitHub prep
