@@ -10,6 +10,7 @@ import {
   GitPullRequest,
   Square,
   Heart,
+  Orbit,
 } from "lucide-react";
 import { ProjectProfile, ServiceStatuses, LogEntry } from "@/types";
 import { CommandButton } from "./CommandButton";
@@ -431,36 +432,7 @@ function AmbientBackground({
   );
 }
 
-/* ─── Restart icon (two compound S-curves crossing at center — true sine-wave character) */
 
-function RestartOrbitIcon({ className, strokeWidth = 1.5 }: { className?: string; strokeWidth?: number }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={strokeWidth}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      {/*
-        Two crossing cubic bezier curves, both passing through center (12,12).
-        Midpoint formula: (P0 + 3·P1 + 3·P2 + P3) / 8 = (12,12) verified for both.
-
-        Curve 1: enters top-left area (10,6), CP1 bows hard LEFT (2,6),
-                 CP2 bows hard RIGHT (22,18), exits bottom-right (14,18).
-        Curve 2: mirror — enters top-right (14,6), bows RIGHT then LEFT, exits bottom-left (10,18).
-
-        At t=0.25 the two curves are ~7 units apart in x, creating the
-        pronounced spread of the reference image. They converge at (12,12).
-      */}
-      <path d="M10,6 C2,6 22,18 14,18" />
-      <path d="M14,6 C22,6 2,18 10,18" />
-    </svg>
-  );
-}
 
 /* ─── Install icon (three stacked horizontal oval rings / database-stack) ────*/
 
@@ -1042,7 +1014,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                     />
                     <CommandButton
                       label="Restart"
-                      icon={RestartOrbitIcon}
+                      icon={Orbit}
                       onClick={wrapAction("restart", window.repoRunner.restartAll)}
                       loading={actionLoading["restart"]}
                       variant="outline"
