@@ -8,6 +8,7 @@ import {
   Settings2,
   Loader2,
   GitPullRequest,
+  Square,
 } from "lucide-react";
 import { ProjectProfile, ServiceStatuses, LogEntry } from "@/types";
 import { CommandButton } from "./CommandButton";
@@ -511,32 +512,6 @@ function OpenCometIcon({ className }: { className?: string }) {
   );
 }
 
-
-/* ─── Stop Engine icon (circle + X, custom — LunaObscura has no such glyph) ─*/
-
-function StopCircleXIcon({ className, strokeWidth = 1.5 }: { className?: string; strokeWidth?: number }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={strokeWidth}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      {/*
-        r=9 fills the icon box boldly.
-        X arm endpoints at 45° on the circle: 12 ± 9/√2 ≈ 12 ± 6.36 → 5.6 / 18.4
-        Arms reach exactly to the circle edge — no gap, no overshoot.
-      */}
-      <circle cx="12" cy="12" r="9" />
-      <line x1="5.6" y1="5.6" x2="18.4" y2="18.4" />
-      <line x1="18.4" y1="5.6" x2="5.6" y2="18.4" />
-    </svg>
-  );
-}
 
 /* ─── Logo ──────────────────────────────────────────────────────────────────*/
 
@@ -1066,7 +1041,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                     />
                     <CommandButton
                       label="Stop Engine"
-                      icon={StopCircleXIcon}
+                      icon={Square}
                       onClick={wrapAction("stop", window.repoRunner.stopServices)}
                       disabled={bothStopped}
                       loading={actionLoading["stop"]}
