@@ -63,7 +63,15 @@ Early version — first public build. Core workflow is functional. Single-projec
 
 ## Screenshots
 
-Screenshots coming soon.
+**Setup screen** — configure your project once
+
+![Setup screen](docs/screenshots/setup-modal.jpg)
+
+**Dashboard** — Quick Actions, Engine panel, and log output
+
+![Dashboard](docs/screenshots/dashboard.jpg)
+
+![Dashboard with logs](docs/screenshots/dashboard-logs.jpg)
 
 ---
 
