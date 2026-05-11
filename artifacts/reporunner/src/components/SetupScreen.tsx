@@ -14,7 +14,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 const setupSchema = z.object({
   name: z.string().min(1, "Project name is required"),
@@ -97,7 +103,11 @@ export function SetupScreen({
 
   return (
     <div
-      className={overlay ? undefined : "flex min-h-screen items-center justify-center p-4 sm:p-8 animate-in fade-in duration-300"}
+      className={
+        overlay
+          ? "w-full"
+          : "flex min-h-screen items-center justify-center p-4 sm:p-8 animate-in fade-in duration-300"
+      }
       style={overlay ? undefined : { background: "#070707" }}
     >
       {/* Subtle grain — only in full-screen (non-overlay) mode */}
@@ -118,7 +128,7 @@ export function SetupScreen({
       )}
 
       <Card
-        className="w-full max-w-3xl rounded-xl relative overflow-hidden"
+        className="w-full max-w-4xl rounded-xl relative overflow-hidden"
         style={{
           background: "#0a0a0a",
           border: overlay ? "1px solid #242020" : "1px solid #1e1e1e",
@@ -137,12 +147,16 @@ export function SetupScreen({
             left: 0,
             right: 0,
             height: "1px",
-            background: "linear-gradient(90deg, transparent 0%, rgba(185,14,28,0.55) 30%, rgba(185,14,28,0.72) 50%, rgba(185,14,28,0.55) 70%, transparent 100%)",
+            background:
+              "linear-gradient(90deg, transparent 0%, rgba(185,14,28,0.55) 30%, rgba(185,14,28,0.72) 50%, rgba(185,14,28,0.55) 70%, transparent 100%)",
             zIndex: 2,
           }}
         />
 
-        <CardHeader className="space-y-1 pb-5 pt-7 px-8 sm:px-10 relative" style={{ borderBottom: "1px solid #161616" }}>
+        <CardHeader
+          className="space-y-1 pb-5 pt-7 px-8 sm:px-10 relative"
+          style={{ borderBottom: "1px solid #161616" }}
+        >
           {onClose && (
             <button
               type="button"
@@ -179,10 +193,9 @@ export function SetupScreen({
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="px-8 pb-8 sm:px-10 sm:pb-10 pt-6">
+        <CardContent className="px-5 pb-6 pt-5 sm:px-8 sm:pb-8 sm:pt-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-
               {/* Row 1: Project Name | Repo Folder */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <FormField
@@ -278,9 +291,19 @@ export function SetupScreen({
               />
 
               {/* Row 3: Install | Frontend | Backend commands */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                {(["installCommand", "frontendCommand", "backendCommand"] as const).map((fieldName, i) => {
-                  const labels = ["Install Command", "Frontend Command", "Backend Command"];
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                {(
+                  [
+                    "installCommand",
+                    "frontendCommand",
+                    "backendCommand",
+                  ] as const
+                ).map((fieldName, i) => {
+                  const labels = [
+                    "Install Command",
+                    "Frontend Command",
+                    "Backend Command",
+                  ];
                   return (
                     <FormField
                       key={fieldName}
@@ -295,7 +318,11 @@ export function SetupScreen({
                             <Input
                               {...field}
                               className={`text-xs ${inputClassName}`}
-                              style={{ ...inputStyle, ...MONO, fontSize: "12px" }}
+                              style={{
+                                ...inputStyle,
+                                ...MONO,
+                                fontSize: "12px",
+                              }}
                             />
                           </FormControl>
                           <FormMessage />
@@ -307,51 +334,74 @@ export function SetupScreen({
               </div>
 
               {/* Row 4: Frontend Port | Backend Port */}
-              <div className="grid grid-cols-2 gap-5" style={{ maxWidth: "50%" }}>
-                {(["frontendPort", "backendPort"] as const).map((fieldName, i) => (
-                  <FormField
-                    key={fieldName}
-                    control={form.control}
-                    name={fieldName}
-                    render={({ field }) => (
-                      <FormItem className="space-y-1.5">
-                        <FormLabel className="font-medium flex items-center gap-1.5" style={labelStyle}>
-                          {i === 0 ? "Frontend Port" : "Backend Port"}
-                          <span style={{ color: "#4c4a48", fontSize: "10px", letterSpacing: "0.02em" }}>optional</span>
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            {...field}
-                            value={field.value || ""}
-                            className={`text-xs ${inputClassName}`}
-                            style={{ ...inputStyle, ...MONO, fontSize: "12px" }}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                ))}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full sm:max-w-md">
+                {(["frontendPort", "backendPort"] as const).map(
+                  (fieldName, i) => (
+                    <FormField
+                      key={fieldName}
+                      control={form.control}
+                      name={fieldName}
+                      render={({ field }) => (
+                        <FormItem className="space-y-1.5">
+                          <FormLabel
+                            className="font-medium flex items-center gap-1.5"
+                            style={labelStyle}
+                          >
+                            {i === 0 ? "Frontend Port" : "Backend Port"}
+                            <span
+                              style={{
+                                color: "#4c4a48",
+                                fontSize: "10px",
+                                letterSpacing: "0.02em",
+                              }}
+                            >
+                              optional
+                            </span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              {...field}
+                              value={field.value || ""}
+                              className={`text-xs ${inputClassName}`}
+                              style={{
+                                ...inputStyle,
+                                ...MONO,
+                                fontSize: "12px",
+                              }}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  ),
+                )}
               </div>
 
-              <div className="pt-5 mt-1" style={{ borderTop: "1px solid #161616" }}>
+              <div
+                className="pt-5 mt-1"
+                style={{ borderTop: "1px solid #161616" }}
+              >
                 <button
                   type="submit"
                   className="btn-glass btn-glass-primary w-full hover:-translate-y-px active:translate-y-0 active:scale-[0.99]"
                   style={{ height: "40px" }}
                 >
                   <Save className="h-4 w-4 flex-none" strokeWidth={1.5} />
-                  <span style={{
-                    fontFamily: "'HS LunaObscura', sans-serif",
-                    fontSize: "0.63rem",
-                    letterSpacing: "0.03em",
-                    lineHeight: 1,
-                  }}>Save Configuration</span>
+                  <span
+                    style={{
+                      fontFamily: "'HS LunaObscura', sans-serif",
+                      fontSize: "0.63rem",
+                      letterSpacing: "0.03em",
+                      lineHeight: 1,
+                    }}
+                  >
+                    Save Configuration
+                  </span>
                   <ArrowRight className="h-4 w-4 flex-none" strokeWidth={1.5} />
                 </button>
               </div>
-
             </form>
           </Form>
         </CardContent>

@@ -77,17 +77,17 @@ Early version — first public build. Core workflow is functional. Single-projec
 
 ## Tech stack
 
-| Layer | Technology |
-|---|---|
-| UI | React + Vite + TypeScript |
-| Styling | Tailwind CSS v4 + shadcn/ui |
-| Desktop | Electron |
-| Forms | react-hook-form + Zod |
-| Fonts | Plus Jakarta Sans + JetBrains Mono |
+| Layer              | Technology                            |
+| ------------------ | ------------------------------------- |
+| UI                 | React + Vite + TypeScript             |
+| Styling            | Tailwind CSS v4 + shadcn/ui           |
+| Desktop            | Electron                              |
+| Forms              | react-hook-form + Zod                 |
+| Fonts              | Plus Jakarta Sans + JetBrains Mono    |
 | Process management | Node.js `child_process` + `tree-kill` |
-| Port detection | `tcp-port-used` |
-| Config storage | Electron `app.getPath('userData')` |
-| Web preview | Browser mock via `window.repoRunner` |
+| Port detection     | `tcp-port-used`                       |
+| Config storage     | Electron `app.getPath('userData')`    |
+| Web preview        | Browser mock via `window.repoRunner`  |
 
 ---
 
@@ -110,7 +110,7 @@ pnpm install
 pnpm --filter @workspace/reporunner run dev
 ```
 
-Open the URL shown in your terminal. The browser mock simulates all IPC calls so you can develop the UI without Electron. Project config is persisted via `localStorage` in this mode.
+The script supplies the local Vite defaults (`PORT=5173` and `BASE_PATH=/`) in a Windows-safe way. Open the URL shown in your terminal. The browser mock simulates all IPC calls so you can develop the UI without Electron. Project config is persisted via `localStorage` in this mode.
 
 ### Typecheck
 
@@ -121,15 +121,26 @@ pnpm --filter @workspace/reporunner run typecheck
 ### Run as Electron desktop app
 
 ```bash
-# 1. Build the renderer
-pnpm --filter @workspace/reporunner run build
-
-# 2. Compile the Electron main process
-pnpm --filter @workspace/reporunner run electron:build-main
-
-# 3. Launch Electron
 pnpm --filter @workspace/reporunner run electron:dev
 ```
+
+`electron:dev` is the recommended local desktop workflow on Windows, macOS, and Linux. It compiles the Electron main process, starts Vite on port `5173` with `BASE_PATH=/`, waits for Vite to accept connections, then launches Electron with `NODE_ENV=development`.
+
+If you need to run the pieces separately for debugging, use:
+
+```bash
+# Terminal 1: Vite browser/renderer dev server
+pnpm --filter @workspace/reporunner run dev
+
+# Terminal 2: Electron main process build
+pnpm --filter @workspace/reporunner run electron:build-main
+
+# Terminal 2: launch Electron after the build finishes
+# PowerShell
+$env:NODE_ENV="development"; pnpm --filter @workspace/reporunner exec electron .; Remove-Item Env:NODE_ENV
+```
+
+On Windows PowerShell, avoid Unix-style inline environment assignments such as `NODE_ENV=development ...`; the package scripts above set the needed environment variables for the recommended workflow.
 
 ### Build for distribution
 
