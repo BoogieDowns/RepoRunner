@@ -13,6 +13,7 @@ const baseEnv = {
 function run(command, args, options = {}) {
   return spawn(command, args, {
     stdio: "inherit",
+    shell: process.platform === "win32",
     env: baseEnv,
     ...options,
   });
