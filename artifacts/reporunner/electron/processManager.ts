@@ -1,6 +1,5 @@
 import { spawn, ChildProcess } from "child_process";
 import treeKill from "tree-kill";
-import { promisify } from "util";
 import { BrowserWindow } from "electron";
 import {
   isPortInUse,
@@ -8,9 +7,21 @@ import {
   killProcessUsingPort,
   waitUntilPortIsReachable,
 } from "./portManager.js";
-import { LogEntry, LogSource, ServiceStatus, ServiceStatuses } from "../src/types.js";
+import {
+  LogEntry,
+  LogSource,
+  ServiceStatus,
+  ServiceStatuses,
+} from "../src/types.js";
 
-const treeKillAsync = promisify(treeKill);
+function treeKillAsync(pid: number, signal: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    treeKill(pid, signal, (error) => {
+      if (error) reject(error);
+      else resolve();
+    });
+  });
+}
 
 // Per-service process handles and run IDs
 // A new runId is issued every time startService is called for a service.
@@ -94,7 +105,7 @@ function streamProcess(proc: ChildProcess, source: LogSource) {
  */
 export function waitForServiceSettled(
   service: "frontend" | "backend",
-  timeoutMs = 60000
+  timeoutMs = 60000,
 ): Promise<void> {
   if (statuses[service] !== "starting") return Promise.resolve();
   return new Promise<void>((resolve) => {
@@ -116,12 +127,9 @@ export async function startService(
   service: "frontend" | "backend",
   command: string,
   cwd: string,
-  port?: number
+  port?: number,
 ): Promise<void> {
-  if (
-    statuses[service] === "running" ||
-    statuses[service] === "starting"
-  ) {
+  if (statuses[service] === "running" || statuses[service] === "starting") {
     emitLog("system", `${service} is already running or starting.`);
     return;
   }
@@ -132,7 +140,7 @@ export async function startService(
       const label = service.charAt(0).toUpperCase() + service.slice(1);
       emitLog(
         "system",
-        `${label} port ${port} is already in use. Stop services first or free the port.`
+        `${label} port ${port} is already in use. Stop services first or free the port.`,
       );
       setStatus(service, "failed");
       return;
@@ -174,7 +182,7 @@ export async function startService(
 
     emitLog(
       service as LogSource,
-      `Process exited with code ${code}${signal ? ` (signal ${signal})` : ""}`
+      `Process exited with code ${code}${signal ? ` (signal ${signal})` : ""}`,
     );
     setStatus(service, code === 0 ? "stopped" : "failed");
   });
@@ -193,14 +201,14 @@ export async function startService(
       // Process already died while we were waiting
       emitLog(
         service as LogSource,
-        `${service} process exited before becoming ready on port ${port}.`
+        `${service} process exited before becoming ready on port ${port}.`,
       );
       setStatus(service, "failed");
     } else {
       // Process still alive but port never opened — mark unknown
       emitLog(
         service as LogSource,
-        `${service} process is still alive, but port ${port} did not become reachable within 15 seconds. Status set to Unknown. The app may still be starting; check the preview URL.`
+        `${service} process is still alive, but port ${port} did not become reachable within 15 seconds. Status set to Unknown. The app may still be starting; check the preview URL.`,
       );
       setStatus(service, "unknown");
     }
@@ -220,7 +228,7 @@ export async function startService(
 
 export async function stopService(
   service: "frontend" | "backend",
-  port?: number
+  port?: number,
 ): Promise<void> {
   const proc = processes[service];
 
@@ -249,14 +257,14 @@ export async function stopService(
     if (!freed) {
       emitLog(
         "system",
-        `Port ${port} still in use after stopping ${service}. Attempting force kill...`
+        `Port ${port} still in use after stopping ${service}. Attempting force kill...`,
       );
       await killProcessUsingPort(port);
       const freedAfterKill = await waitUntilPortIsFree(port, 5000);
       if (!freedAfterKill) {
         emitLog(
           "system",
-          `Warning: Could not verify port ${port} is free. Status set to unknown.`
+          `Warning: Could not verify port ${port} is free. Status set to unknown.`,
         );
         setStatus(service, "unknown");
         return;
@@ -270,7 +278,7 @@ export async function stopService(
 
 export async function stopAllServices(
   frontendPort?: number,
-  backendPort?: number
+  backendPort?: number,
 ): Promise<void> {
   await Promise.all([
     stopService("frontend", frontendPort),

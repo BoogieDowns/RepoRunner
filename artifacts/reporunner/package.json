@@ -3,13 +3,13 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "main": "electron-dist/main.js",
+  "main": "electron-dist/electron/main.js",
   "scripts": {
-    "dev": "vite --config vite.config.ts --host 0.0.0.0",
-    "build": "vite build --config vite.config.ts",
-    "serve": "vite preview --config vite.config.ts --host 0.0.0.0",
+    "dev": "node ./scripts/vite.mjs dev",
+    "build": "node ./scripts/vite.mjs build",
+    "serve": "node ./scripts/vite.mjs preview",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "electron:dev": "NODE_ENV=development electron .",
+    "electron:dev": "node ./scripts/electron-dev.mjs",
     "electron:build-main": "tsc -p tsconfig.electron.json",
     "electron:dist": "pnpm run build && pnpm run electron:build-main && electron-builder"
   },
