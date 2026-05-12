@@ -78,6 +78,6 @@ Pro:
 
 ## UI reference
 
-The README contains screenshots of the current or previous UI. Use those screenshots as visual reference when rebuilding or polishing the local app UI.
+The README contains screenshots of the current UI and prior visual direction. Use those screenshots as visual reference when rebuilding or polishing the local app UI.
 
 Future UI work should preserve the intended RepoRunner visual direction unless there is a clear reason to change it.
