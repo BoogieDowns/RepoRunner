@@ -6,7 +6,10 @@ import { ProjectProfile } from "@/types";
 import { SetupScreen } from "@/components/SetupScreen";
 import { Dashboard } from "@/components/Dashboard";
 
-if (typeof window !== "undefined" && !window.repoRunner) {
+const isElectronRuntime =
+  typeof navigator !== "undefined" && navigator.userAgent.includes("Electron");
+
+if (typeof window !== "undefined" && !window.repoRunner && !isElectronRuntime) {
   installMock();
 }
 
@@ -95,7 +98,11 @@ function App() {
               <div className="pointer-events-auto w-full max-w-4xl">
                 <SetupScreen
                   overlay
-                  onSave={(profile) => { setProject(profile); setIsEditing(false); }}
+                  initialProfile={project}
+                  onSave={(profile) => {
+                    setProject(profile);
+                    setIsEditing(false);
+                  }}
                   onClose={handleEditClose}
                 />
               </div>
