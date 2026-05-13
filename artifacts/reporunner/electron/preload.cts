@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer } from "electron";
-import { ProjectProfile, LogEntry, ServiceStatuses } from "../src/types.js";
+import type { IpcRendererEvent } from "electron";
+import type { ProjectProfile, LogEntry, ServiceStatuses } from "../src/types.js";
 
 contextBridge.exposeInMainWorld("repoRunner", {
   selectFolder: () => ipcRenderer.invoke("select-folder"),
@@ -30,7 +31,7 @@ contextBridge.exposeInMainWorld("repoRunner", {
   getStatuses: () => ipcRenderer.invoke("get-statuses"),
 
   onLog: (callback: (entry: LogEntry) => void) => {
-    const listener = (_event: Electron.IpcRendererEvent, entry: LogEntry) =>
+    const listener = (_event: IpcRendererEvent, entry: LogEntry) =>
       callback(entry);
     ipcRenderer.on("log", listener);
     return () => ipcRenderer.removeListener("log", listener);
@@ -38,7 +39,7 @@ contextBridge.exposeInMainWorld("repoRunner", {
 
   onStatus: (callback: (statuses: ServiceStatuses) => void) => {
     const listener = (
-      _event: Electron.IpcRendererEvent,
+      _event: IpcRendererEvent,
       statuses: ServiceStatuses
     ) => callback(statuses);
     ipcRenderer.on("status", listener);

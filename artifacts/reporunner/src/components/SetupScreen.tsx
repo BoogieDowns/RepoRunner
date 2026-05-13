@@ -1,18 +1,8 @@
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect, useState } from "react";
 import * as z from "zod";
 import { Folder, Save, ArrowRight, X } from "lucide-react";
 import { ProjectProfile } from "@/types";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
   Card,
@@ -22,18 +12,93 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+type SetupFormState = {
+  name: string;
+  repoPath: string;
+  installCommand: string;
+  frontendCommand: string;
+  backendCommand: string;
+  previewUrl: string;
+  frontendPort: string;
+  backendPort: string;
+};
+
 const setupSchema = z.object({
-  name: z.string().min(1, "Project name is required"),
-  repoPath: z.string().min(1, "Repository path is required"),
-  installCommand: z.string().min(1, "Install command is required"),
-  frontendCommand: z.string().min(1, "Frontend command is required"),
-  backendCommand: z.string().min(1, "Backend command is required"),
-  previewUrl: z.string().url("Must be a valid URL"),
-  frontendPort: z.coerce.number().optional(),
-  backendPort: z.coerce.number().optional(),
+  name: z.string().trim().min(1, "Project name is required"),
+  repoPath: z.string().trim().min(1, "Repository path is required"),
+  installCommand: z.string().trim().min(1, "Install command is required"),
+  frontendCommand: z.string().trim().min(1, "Frontend command is required"),
+  backendCommand: z.string().trim().min(1, "Backend command is required"),
+  previewUrl: z.string().trim().url("Must be a valid URL"),
+  frontendPort: z
+    .string()
+    .trim()
+    .refine(
+      (value) => value === "" || isValidPort(value),
+      "Must be a valid port",
+    ),
+  backendPort: z
+    .string()
+    .trim()
+    .refine(
+      (value) => value === "" || isValidPort(value),
+      "Must be a valid port",
+    ),
 });
 
-type SetupFormValues = z.infer<typeof setupSchema>;
+type SetupErrors = Partial<Record<keyof SetupFormState, string>>;
+
+const defaultFormValues: SetupFormState = {
+  name: "",
+  repoPath: "",
+  installCommand: "npm install",
+  frontendCommand: "npm run dev",
+  backendCommand: "npm start",
+  previewUrl: "http://localhost:3000",
+  frontendPort: "3000",
+  backendPort: "3001",
+};
+
+function isValidPort(value: string) {
+  const port = Number(value);
+  return Number.isInteger(port) && port > 0 && port <= 65535;
+}
+
+function projectToFormValues(project?: ProjectProfile | null): SetupFormState {
+  if (!project) return defaultFormValues;
+
+  return {
+    name: project.name,
+    repoPath: project.repoPath,
+    installCommand: project.installCommand,
+    frontendCommand: project.frontendCommand,
+    backendCommand: project.backendCommand,
+    previewUrl: project.previewUrl,
+    frontendPort: project.frontendPort?.toString() ?? "",
+    backendPort: project.backendPort?.toString() ?? "",
+  };
+}
+
+function formValuesToProfile(
+  data: SetupFormState,
+  existingId?: string,
+): ProjectProfile {
+  return {
+    id: existingId ?? crypto.randomUUID(),
+    name: data.name.trim(),
+    repoPath: data.repoPath.trim(),
+    installCommand: data.installCommand.trim(),
+    frontendCommand: data.frontendCommand.trim(),
+    backendCommand: data.backendCommand.trim(),
+    previewUrl: data.previewUrl.trim(),
+    frontendPort: data.frontendPort.trim()
+      ? Number(data.frontendPort)
+      : undefined,
+    backendPort: data.backendPort.trim()
+      ? Number(data.backendPort)
+      : undefined,
+  };
+}
 
 const MONO: React.CSSProperties = { fontFamily: "'JetBrains Mono', monospace" };
 
@@ -58,48 +123,82 @@ export function SetupScreen({
   onSave,
   onClose,
   overlay = false,
+  initialProfile = null,
 }: {
   onSave: (profile: ProjectProfile) => void;
   onClose?: () => void;
   overlay?: boolean;
+  initialProfile?: ProjectProfile | null;
 }) {
   const [isSelecting, setIsSelecting] = useState(false);
+  const [formData, setFormData] = useState<SetupFormState>(() =>
+    projectToFormValues(initialProfile),
+  );
+  const [errors, setErrors] = useState<SetupErrors>({});
 
-  const form = useForm<SetupFormValues>({
-    resolver: zodResolver(setupSchema),
-    defaultValues: {
-      name: "",
-      repoPath: "",
-      installCommand: "npm install",
-      frontendCommand: "npm run dev",
-      backendCommand: "npm start",
-      previewUrl: "http://localhost:3000",
-      frontendPort: 3000,
-      backendPort: 3001,
-    },
-  });
+  useEffect(() => {
+    setFormData(projectToFormValues(initialProfile));
+    setErrors({});
+  }, [initialProfile]);
+
+  const updateField = (field: keyof SetupFormState, value: string) => {
+    setFormData((current) => ({ ...current, [field]: value }));
+    setErrors((current) => ({ ...current, [field]: undefined }));
+  };
 
   const handleSelectFolder = async () => {
     try {
       setIsSelecting(true);
-      const folder = await window.repoRunner.selectFolder();
-      if (folder) {
-        form.setValue("repoPath", folder);
-        if (!form.getValues("name")) {
-          const parts = folder.split(/[/\\]/);
-          form.setValue("name", parts[parts.length - 1] || "My Project");
+      try {
+        const folder = await window.repoRunner.selectFolder();
+        if (folder) {
+          setFormData((current) => {
+            const parts = folder.split(/[/\\]/);
+            return {
+              ...current,
+              repoPath: folder,
+              name: current.name || parts[parts.length - 1] || "My Project",
+            };
+          });
+          setErrors((current) => ({
+            ...current,
+            repoPath: undefined,
+            name: undefined,
+          }));
         }
+      } catch (error) {
+        console.error("Failed to select folder:", error);
       }
     } finally {
       setIsSelecting(false);
     }
   };
 
-  const onSubmit = async (data: SetupFormValues) => {
-    const profile: ProjectProfile = { id: crypto.randomUUID(), ...data };
+  const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const result = setupSchema.safeParse(formData);
+    if (!result.success) {
+      const fieldErrors: SetupErrors = {};
+      for (const issue of result.error.issues) {
+        const field = issue.path[0] as keyof SetupFormState | undefined;
+        if (field) fieldErrors[field] = issue.message;
+      }
+      setErrors(fieldErrors);
+      return;
+    }
+
+    const profile = formValuesToProfile(result.data, initialProfile?.id);
     await window.repoRunner.saveProject(profile);
     onSave(profile);
   };
+
+  const renderError = (field: keyof SetupFormState) =>
+    errors[field] ? (
+      <p className="text-[0.8rem] font-medium text-destructive">
+        {errors[field]}
+      </p>
+    ) : null;
 
   return (
     <div
@@ -194,216 +293,188 @@ export function SetupScreen({
         </CardHeader>
 
         <CardContent className="px-5 pb-6 pt-5 sm:px-8 sm:pb-8 sm:pt-6">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* Row 1: Project Name | Repo Folder */}
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-[0.9fr_1.1fr] md:gap-5">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem className="space-y-1.5">
-                      <FormLabel className="font-medium" style={labelStyle}>
-                        Project Name
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="My Cool App"
-                          {...field}
-                          className={inputClassName}
-                          style={inputStyle}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="repoPath"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col justify-end space-y-1.5">
-                      <FormLabel className="font-medium" style={labelStyle}>
-                        Local Repository Folder
-                      </FormLabel>
-                      <div className="flex flex-col gap-2 sm:flex-row">
-                        <FormControl>
-                          <Input
-                            placeholder="/path/to/project"
-                            readOnly
-                            {...field}
-                            className={`flex-1 min-w-0 text-sm ${inputClassName}`}
-                            style={{ ...inputStyle, ...MONO, fontSize: "12px" }}
-                          />
-                        </FormControl>
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          onClick={handleSelectFolder}
-                          disabled={isSelecting}
-                          className="h-10 flex-none whitespace-nowrap px-3 text-xs sm:w-auto"
-                          style={{
-                            background: "#0d0d0d",
-                            border: "1px solid #1e1e1e",
-                            color: "#6a6864",
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = "#141414";
-                            e.currentTarget.style.color = "#9a9896";
-                            e.currentTarget.style.borderColor = "#2a2a2a";
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = "#0d0d0d";
-                            e.currentTarget.style.color = "#6a6864";
-                            e.currentTarget.style.borderColor = "#1e1e1e";
-                          }}
-                        >
-                          <Folder className="h-3.5 w-3.5 mr-1.5 flex-none" />
-                          Choose
-                        </Button>
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              {/* Row 2: Preview URL — full width */}
-              <FormField
-                control={form.control}
-                name="previewUrl"
-                render={({ field }) => (
-                  <FormItem className="space-y-1.5">
-                    <FormLabel className="font-medium" style={labelStyle}>
-                      Preview URL
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        className={`text-xs ${inputClassName}`}
-                        style={{ ...inputStyle, ...MONO, fontSize: "12px" }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Row 3: Install | Frontend | Backend commands */}
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-5">
-                {(
-                  [
-                    "installCommand",
-                    "frontendCommand",
-                    "backendCommand",
-                  ] as const
-                ).map((fieldName, i) => {
-                  const labels = [
-                    "Install Command",
-                    "Frontend Command",
-                    "Backend Command",
-                  ];
-                  return (
-                    <FormField
-                      key={fieldName}
-                      control={form.control}
-                      name={fieldName}
-                      render={({ field }) => (
-                        <FormItem className="space-y-1.5">
-                          <FormLabel className="font-medium" style={labelStyle}>
-                            {labels[i]}
-                          </FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              className={`text-xs ${inputClassName}`}
-                              style={{
-                                ...inputStyle,
-                                ...MONO,
-                                fontSize: "12px",
-                              }}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  );
-                })}
-              </div>
-
-              {/* Row 4: Frontend Port | Backend Port */}
-              <div className="grid w-full grid-cols-1 gap-4 sm:max-w-md sm:grid-cols-2 md:gap-5">
-                {(["frontendPort", "backendPort"] as const).map(
-                  (fieldName, i) => (
-                    <FormField
-                      key={fieldName}
-                      control={form.control}
-                      name={fieldName}
-                      render={({ field }) => (
-                        <FormItem className="space-y-1.5">
-                          <FormLabel
-                            className="font-medium flex items-center gap-1.5"
-                            style={labelStyle}
-                          >
-                            {i === 0 ? "Frontend Port" : "Backend Port"}
-                            <span
-                              style={{
-                                color: "#4c4a48",
-                                fontSize: "10px",
-                                letterSpacing: "0.02em",
-                              }}
-                            >
-                              optional
-                            </span>
-                          </FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              {...field}
-                              value={field.value || ""}
-                              className={`text-xs ${inputClassName}`}
-                              style={{
-                                ...inputStyle,
-                                ...MONO,
-                                fontSize: "12px",
-                              }}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  ),
-                )}
-              </div>
-
-              <div
-                className="pt-6 mt-1"
-                style={{ borderTop: "1px solid #161616" }}
-              >
-                <button
-                  type="submit"
-                  className="btn-glass btn-glass-primary w-full hover:-translate-y-px active:translate-y-0 active:scale-[0.99]"
-                  style={{ height: "42px" }}
+          <form onSubmit={onSubmit} className="space-y-6">
+            {/* Row 1: Project Name | Repo Folder */}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-[0.9fr_1.1fr] md:gap-5">
+              <div className="space-y-1.5">
+                <label
+                  className="font-medium"
+                  style={labelStyle}
+                  htmlFor="setup-project-name"
                 >
-                  <Save className="h-4 w-4 flex-none" strokeWidth={1.5} />
-                  <span
+                  Project Name
+                </label>
+                <Input
+                  id="setup-project-name"
+                  placeholder="My Cool App"
+                  value={formData.name}
+                  onChange={(event) => updateField("name", event.target.value)}
+                  className={inputClassName}
+                  style={inputStyle}
+                />
+                {renderError("name")}
+              </div>
+
+              <div className="flex flex-col justify-end space-y-1.5">
+                <label
+                  className="font-medium"
+                  style={labelStyle}
+                  htmlFor="setup-repo-path"
+                >
+                  Local Repository Folder
+                </label>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Input
+                    id="setup-repo-path"
+                    placeholder="/path/to/project"
+                    readOnly
+                    value={formData.repoPath}
+                    onChange={(event) =>
+                      updateField("repoPath", event.target.value)
+                    }
+                    className={`flex-1 min-w-0 text-sm ${inputClassName}`}
+                    style={{ ...inputStyle, ...MONO, fontSize: "12px" }}
+                  />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={handleSelectFolder}
+                    disabled={isSelecting}
+                    className="h-10 flex-none whitespace-nowrap px-3 text-xs sm:w-auto"
                     style={{
-                      fontFamily: "'HS LunaObscura', sans-serif",
-                      fontSize: "0.63rem",
-                      letterSpacing: "0.03em",
-                      lineHeight: 1,
+                      background: "#0d0d0d",
+                      border: "1px solid #1e1e1e",
+                      color: "#6a6864",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = "#141414";
+                      e.currentTarget.style.color = "#9a9896";
+                      e.currentTarget.style.borderColor = "#2a2a2a";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = "#0d0d0d";
+                      e.currentTarget.style.color = "#6a6864";
+                      e.currentTarget.style.borderColor = "#1e1e1e";
                     }}
                   >
-                    Save Configuration
-                  </span>
-                  <ArrowRight className="h-4 w-4 flex-none" strokeWidth={1.5} />
-                </button>
+                    <Folder className="h-3.5 w-3.5 mr-1.5 flex-none" />
+                    Choose
+                  </Button>
+                </div>
+                {renderError("repoPath")}
               </div>
-            </form>
-          </Form>
+            </div>
+
+            {/* Row 2: Preview URL — full width */}
+            <div className="space-y-1.5">
+              <label
+                className="font-medium"
+                style={labelStyle}
+                htmlFor="setup-preview-url"
+              >
+                Preview URL
+              </label>
+              <Input
+                id="setup-preview-url"
+                value={formData.previewUrl}
+                onChange={(event) =>
+                  updateField("previewUrl", event.target.value)
+                }
+                className={`text-xs ${inputClassName}`}
+                style={{ ...inputStyle, ...MONO, fontSize: "12px" }}
+              />
+              {renderError("previewUrl")}
+            </div>
+
+            {/* Row 3: Install | Frontend | Backend commands */}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-5">
+              {([
+                ["installCommand", "Install Command"],
+                ["frontendCommand", "Frontend Command"],
+                ["backendCommand", "Backend Command"],
+              ] as const).map(([fieldName, label]) => (
+                <div key={fieldName} className="space-y-1.5">
+                  <label
+                    className="font-medium"
+                    style={labelStyle}
+                    htmlFor={`setup-${fieldName}`}
+                  >
+                    {label}
+                  </label>
+                  <Input
+                    id={`setup-${fieldName}`}
+                    value={formData[fieldName]}
+                    onChange={(event) =>
+                      updateField(fieldName, event.target.value)
+                    }
+                    className={`text-xs ${inputClassName}`}
+                    style={{ ...inputStyle, ...MONO, fontSize: "12px" }}
+                  />
+                  {renderError(fieldName)}
+                </div>
+              ))}
+            </div>
+
+            {/* Row 4: Frontend Port | Backend Port */}
+            <div className="grid w-full grid-cols-1 gap-4 sm:max-w-md sm:grid-cols-2 md:gap-5">
+              {([
+                ["frontendPort", "Frontend Port"],
+                ["backendPort", "Backend Port"],
+              ] as const).map(([fieldName, label]) => (
+                <div key={fieldName} className="space-y-1.5">
+                  <label
+                    className="font-medium flex items-center gap-1.5"
+                    style={labelStyle}
+                    htmlFor={`setup-${fieldName}`}
+                  >
+                    {label}
+                    <span
+                      style={{
+                        color: "#4c4a48",
+                        fontSize: "10px",
+                        letterSpacing: "0.02em",
+                      }}
+                    >
+                      optional
+                    </span>
+                  </label>
+                  <Input
+                    id={`setup-${fieldName}`}
+                    type="number"
+                    value={formData[fieldName]}
+                    onChange={(event) =>
+                      updateField(fieldName, event.target.value)
+                    }
+                    className={`text-xs ${inputClassName}`}
+                    style={{ ...inputStyle, ...MONO, fontSize: "12px" }}
+                  />
+                  {renderError(fieldName)}
+                </div>
+              ))}
+            </div>
+
+            <div
+              className="pt-6 mt-1"
+              style={{ borderTop: "1px solid #161616" }}
+            >
+              <button
+                type="submit"
+                className="btn-glass btn-glass-primary w-full justify-center h-10"
+              >
+                <Save className="h-4 w-4 flex-none" strokeWidth={1.5} />
+                <span
+                  style={{
+                    fontSize: "0.63rem",
+                    letterSpacing: "0.03em",
+                    lineHeight: 1,
+                  }}
+                >
+                  Save Configuration
+                </span>
+                <ArrowRight className="h-4 w-4 flex-none" strokeWidth={1.5} />
+              </button>
+            </div>
+          </form>
         </CardContent>
       </Card>
     </div>
