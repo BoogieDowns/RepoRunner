@@ -92,7 +92,7 @@ function App() {
                   : "rr-modal-in 0.18s cubic-bezier(0.16,1,0.3,1) forwards",
               }}
             >
-              <div className="pointer-events-auto w-full max-w-3xl">
+              <div className="pointer-events-auto w-full max-w-4xl">
                 <SetupScreen
                   overlay
                   onSave={(profile) => { setProject(profile); setIsEditing(false); }}

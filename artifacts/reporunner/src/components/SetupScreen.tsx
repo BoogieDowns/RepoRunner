@@ -41,7 +41,7 @@ const inputStyle: React.CSSProperties = {
   background: "#060606",
   border: "1px solid #252220",
   color: "#dedad5",
-  height: "36px",
+  height: "40px",
 };
 
 const inputClassName =
@@ -106,7 +106,7 @@ export function SetupScreen({
       className={
         overlay
           ? "w-full"
-          : "flex min-h-screen items-center justify-center p-4 sm:p-8 animate-in fade-in duration-300"
+          : "flex min-h-screen w-full items-center justify-center px-4 py-8 sm:px-8 animate-in fade-in duration-300"
       }
       style={overlay ? undefined : { background: "#070707" }}
     >
@@ -128,7 +128,7 @@ export function SetupScreen({
       )}
 
       <Card
-        className="w-full max-w-4xl rounded-xl relative overflow-hidden"
+        className="relative z-10 mx-auto w-full max-w-[920px] rounded-xl overflow-hidden"
         style={{
           background: "#0a0a0a",
           border: overlay ? "1px solid #242020" : "1px solid #1e1e1e",
@@ -154,7 +154,7 @@ export function SetupScreen({
         />
 
         <CardHeader
-          className="space-y-1 pb-5 pt-7 px-8 sm:px-10 relative"
+          className="space-y-1 px-5 pb-5 pt-6 sm:px-8 sm:pt-7 relative"
           style={{ borderBottom: "1px solid #161616" }}
         >
           {onClose && (
@@ -195,9 +195,9 @@ export function SetupScreen({
 
         <CardContent className="px-5 pb-6 pt-5 sm:px-8 sm:pb-8 sm:pt-6">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               {/* Row 1: Project Name | Repo Folder */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-[0.9fr_1.1fr] md:gap-5">
                 <FormField
                   control={form.control}
                   name="name"
@@ -227,7 +227,7 @@ export function SetupScreen({
                       <FormLabel className="font-medium" style={labelStyle}>
                         Local Repository Folder
                       </FormLabel>
-                      <div className="flex gap-2">
+                      <div className="flex flex-col gap-2 sm:flex-row">
                         <FormControl>
                           <Input
                             placeholder="/path/to/project"
@@ -242,7 +242,7 @@ export function SetupScreen({
                           variant="secondary"
                           onClick={handleSelectFolder}
                           disabled={isSelecting}
-                          className="flex-none whitespace-nowrap h-[36px] px-3 text-xs"
+                          className="h-10 flex-none whitespace-nowrap px-3 text-xs sm:w-auto"
                           style={{
                             background: "#0d0d0d",
                             border: "1px solid #1e1e1e",
@@ -291,7 +291,7 @@ export function SetupScreen({
               />
 
               {/* Row 3: Install | Frontend | Backend commands */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-5">
                 {(
                   [
                     "installCommand",
@@ -334,7 +334,7 @@ export function SetupScreen({
               </div>
 
               {/* Row 4: Frontend Port | Backend Port */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full sm:max-w-md">
+              <div className="grid w-full grid-cols-1 gap-4 sm:max-w-md sm:grid-cols-2 md:gap-5">
                 {(["frontendPort", "backendPort"] as const).map(
                   (fieldName, i) => (
                     <FormField
@@ -380,13 +380,13 @@ export function SetupScreen({
               </div>
 
               <div
-                className="pt-5 mt-1"
+                className="pt-6 mt-1"
                 style={{ borderTop: "1px solid #161616" }}
               >
                 <button
                   type="submit"
                   className="btn-glass btn-glass-primary w-full hover:-translate-y-px active:translate-y-0 active:scale-[0.99]"
-                  style={{ height: "40px" }}
+                  style={{ height: "42px" }}
                 >
                   <Save className="h-4 w-4 flex-none" strokeWidth={1.5} />
                   <span
