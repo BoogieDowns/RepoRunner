@@ -327,7 +327,6 @@ export function SetupScreen({
                   <Input
                     id="setup-repo-path"
                     placeholder="/path/to/project"
-                    readOnly
                     value={formData.repoPath}
                     onChange={(event) =>
                       updateField("repoPath", event.target.value)
