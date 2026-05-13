@@ -28,12 +28,28 @@ function emitLog(source: LogSource, text: string) {
 }
 
 export function setupIpc() {
-  ipcMain.handle("select-folder", async () => {
-    const result = await dialog.showOpenDialog({
+  ipcMain.handle("select-folder", async (event) => {
+    const parentWindow =
+      BrowserWindow.fromWebContents(event.sender) ??
+      BrowserWindow.getFocusedWindow() ??
+      BrowserWindow.getAllWindows()[0] ??
+      null;
+    const usableParentWindow =
+      parentWindow && !parentWindow.isDestroyed() ? parentWindow : null;
+    const options: Electron.OpenDialogOptions = {
       properties: ["openDirectory"],
-    });
-    if (result.canceled || result.filePaths.length === 0) return null;
-    return result.filePaths[0];
+    };
+
+    try {
+      const result = usableParentWindow
+        ? await dialog.showOpenDialog(usableParentWindow, options)
+        : await dialog.showOpenDialog(options);
+      if (result.canceled || result.filePaths.length === 0) return null;
+      return result.filePaths[0];
+    } catch (error) {
+      console.error("Failed to open folder picker:", error);
+      return null;
+    }
   });
 
   ipcMain.handle("load-project", async () => {
