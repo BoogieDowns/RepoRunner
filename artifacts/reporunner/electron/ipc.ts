@@ -66,7 +66,12 @@ export function setupIpc() {
   });
 
   ipcMain.handle("save-project", async (_event, profile: ProjectProfile) => {
-    saveProject(profile);
+    saveProject({
+      ...profile,
+      installCommand: sanitizeCommandInput(profile.installCommand),
+      frontendCommand: sanitizeCommandInput(profile.frontendCommand),
+      backendCommand: sanitizeCommandInput(profile.backendCommand),
+    });
   });
 
   ipcMain.handle("pull-latest", async () => {
@@ -230,6 +235,8 @@ ipcMain.handle("copy-logs", async (_event, logs: unknown) => {
     return getStatuses();
   });
 }
+
+
 
 
 
