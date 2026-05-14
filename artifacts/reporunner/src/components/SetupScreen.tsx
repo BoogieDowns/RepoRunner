@@ -397,7 +397,7 @@ export function SetupScreen({
               {([
                 ["installCommand", "Install Command"],
                 ["frontendCommand", "Frontend Command"],
-                ["backendCommand", "Backend Command"],
+                ["backendCommand", "Backend Command (optional)"],
               ] as const).map(([fieldName, label]) => (
                 <div key={fieldName} className="space-y-1.5">
                   <label
@@ -425,7 +425,7 @@ export function SetupScreen({
             <div className="grid w-full grid-cols-1 gap-4 sm:max-w-md sm:grid-cols-2 md:gap-5">
               {([
                 ["frontendPort", "Frontend Port"],
-                ["backendPort", "Backend Port"],
+                ["backendPort", "Backend Port (optional)"],
               ] as const).map(([fieldName, label]) => (
                 <div key={fieldName} className="space-y-1.5">
                   <label
@@ -486,4 +486,5 @@ export function SetupScreen({
     </div>
   );
 }
+
 
