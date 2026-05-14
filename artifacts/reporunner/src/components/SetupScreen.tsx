@@ -28,7 +28,7 @@ const setupSchema = z.object({
   repoPath: z.string().trim().min(1, "Repository path is required"),
   installCommand: z.string().trim().min(1, "Install command is required"),
   frontendCommand: z.string().trim().min(1, "Frontend command is required"),
-  backendCommand: z.string().trim().min(1, "Backend command is required"),
+  backendCommand: z.string().trim(),
   previewUrl: z.string().trim().url("Must be a valid URL"),
   frontendPort: z
     .string()
@@ -486,3 +486,4 @@ export function SetupScreen({
     </div>
   );
 }
+
