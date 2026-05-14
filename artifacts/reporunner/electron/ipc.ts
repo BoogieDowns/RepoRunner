@@ -174,9 +174,31 @@ export function setupIpc() {
     await shell.openExternal(project.previewUrl);
   });
 
-  ipcMain.handle("copy-logs", async (_event, logs: string) => {
-    clipboard.writeText(logs);
-  });
+  function normalizeClipboardText(value: unknown): string {
+  if (value === undefined || value === null) return "";
+
+  if (typeof value === "string") return value;
+
+  if (
+    typeof value === "number" ||
+    typeof value === "boolean" ||
+    typeof value === "bigint"
+  ) {
+    return String(value);
+  }
+
+  try {
+    const serialized = JSON.stringify(value);
+    return serialized === undefined ? "" : serialized;
+  } catch {
+    return String(value);
+  }
+}
+
+ipcMain.handle("copy-logs", async (_event, logs: unknown) => {
+  const clipboardText = normalizeClipboardText(logs);
+  clipboard.writeText(clipboardText);
+});
 
   ipcMain.handle("clear-logs", async () => {
     // log buffer is managed on the renderer side
@@ -186,3 +208,5 @@ export function setupIpc() {
     return getStatuses();
   });
 }
+
+
