@@ -601,6 +601,8 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
     setLogs([]);
   };
 
+  const hasBackend = project.backendCommand.trim().length > 0;
+
   const anyRunning =
     statuses.frontend === "running" || statuses.frontend === "starting" ||
     statuses.backend  === "running" || statuses.backend  === "starting";
@@ -958,7 +960,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                       label="Start Backend"
                       icon={Play}
                       onClick={wrapAction("startBack", window.repoRunner.startBackend)}
-                      disabled={statuses.backend === "running" || statuses.backend === "starting"}
+                      disabled={!hasBackend || statuses.backend === "running" || statuses.backend === "starting"}
                       loading={actionLoading["startBack"]}
                       variant="default"
                       style={{ flex: "1 1 0", justifyContent: "center", padding: "0 1rem" }}
@@ -1174,3 +1176,6 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
     </div>
   );
 }
+
+
+

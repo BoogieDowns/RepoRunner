@@ -21,6 +21,10 @@ const execFileAsync = promisify(execFile);
 
 let logCounter = 0;
 
+function isBackendConfigured(project: ProjectProfile): boolean {
+  return project.backendCommand.trim().length > 0;
+}
+
 function emitLog(source: LogSource, text: string) {
   const entry: LogEntry = {
     id: `${Date.now()}-${logCounter++}`,
@@ -143,21 +147,26 @@ export function setupIpc() {
     // Brief pause to ensure OS resources are released
     await new Promise((r) => setTimeout(r, 500));
 
-    // 2. Start backend and wait for it to settle before touching frontend
-    emitLog("backend", "Starting backend...");
-    await startService(
-      "backend",
-      project.backendCommand,
-      project.repoPath,
-      project.backendPort
-    );
-    await waitForServiceSettled("backend", 30000);
+    // 2. Start backend and wait for it to settle before touching frontend,
+    // unless this is a frontend-only project.
+    if (isBackendConfigured(project)) {
+      emitLog("backend", "Starting backend...");
+      await startService(
+        "backend",
+        project.backendCommand,
+        project.repoPath,
+        project.backendPort
+      );
+      await waitForServiceSettled("backend", 30000);
 
-    const backendStatus = getStatuses().backend;
-    if (backendStatus === "running") {
-      emitLog("backend", "Backend is running.");
+      const backendStatus = getStatuses().backend;
+      if (backendStatus === "running") {
+        emitLog("backend", "Backend is running.");
+      } else {
+        emitLog("backend", `Backend status: ${backendStatus}. Continuing to start frontend anyway.`);
+      }
     } else {
-      emitLog("backend", `Backend status: ${backendStatus}. Continuing to start frontend anyway.`);
+      emitLog("system", "Backend is not configured; skipping backend startup.");
     }
 
     // 3. Start frontend and wait for it to settle
@@ -221,5 +230,8 @@ ipcMain.handle("copy-logs", async (_event, logs: unknown) => {
     return getStatuses();
   });
 }
+
+
+
 
 
