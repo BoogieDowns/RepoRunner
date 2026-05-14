@@ -1,5 +1,5 @@
 import { ipcMain, dialog, clipboard } from "electron";
-import { exec } from "child_process";
+import { exec, execFile } from "child_process";
 import { promisify } from "util";
 import { loadProject, saveProject } from "./projectStore.js";
 import {
@@ -9,10 +9,15 @@ import {
   getStatuses,
 } from "./processManager.js";
 import { parsePortFromUrl } from "./portManager.js";
+import {
+  prepareCommandForExecution,
+  sanitizeCommandInput,
+} from "./commandUtils.js";
 import { ProjectProfile, LogEntry, LogSource } from "../src/types.js";
 import { BrowserWindow } from "electron";
 
 const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 let logCounter = 0;
 
@@ -75,11 +80,19 @@ export function setupIpc() {
   ipcMain.handle("run-install", async () => {
     const project = loadProject();
     if (!project) throw new Error("No project configured");
-    emitLog("install", `Running: ${project.installCommand}`);
-    const { stdout, stderr } = await execAsync(project.installCommand, {
-      cwd: project.repoPath,
-      env: { ...process.env },
-    });
+    const installCommand = sanitizeCommandInput(project.installCommand);
+    emitLog("install", `Running: ${installCommand}`);
+    const preparedCommand = prepareCommandForExecution(installCommand);
+    const { stdout, stderr } =
+      preparedCommand.kind === "file"
+        ? await execFileAsync(preparedCommand.file, preparedCommand.args, {
+            cwd: project.repoPath,
+            env: { ...process.env },
+          })
+        : await execAsync(preparedCommand.command, {
+            cwd: project.repoPath,
+            env: { ...process.env },
+          });
     if (stdout.trim()) emitLog("install", stdout.trim());
     if (stderr.trim()) emitLog("install", stderr.trim());
     emitLog("install", "Install finished.");
