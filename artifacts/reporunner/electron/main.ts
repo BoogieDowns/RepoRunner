@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, Menu } from "electron";
 import path from "path";
 import { fileURLToPath } from "url";
 import { setupIpc } from "./ipc.js";
@@ -23,6 +23,24 @@ function createWindow() {
       nodeIntegration: false,
     },
     icon: path.join(__dirname, "../assets/icon.png"),
+  });
+
+  mainWindow.webContents.on("context-menu", (_event, params) => {
+
+    if (!params.isEditable) return;
+
+    const menu = Menu.buildFromTemplate([
+      { role: "undo" },
+      { role: "redo" },
+      { type: "separator" },
+      { role: "cut" },
+      { role: "copy" },
+      { role: "paste" },
+      { type: "separator" },
+      { role: "selectAll" },
+    ]);
+
+    menu.popup({ window: mainWindow ?? undefined });
   });
 
   if (isDev) {
@@ -52,3 +70,8 @@ app.on("window-all-closed", () => {
     app.quit();
   }
 });
+
+
+
+
+
