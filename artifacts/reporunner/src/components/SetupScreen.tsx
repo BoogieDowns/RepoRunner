@@ -64,6 +64,13 @@ function isValidPort(value: string) {
   return Number.isInteger(port) && port > 0 && port <= 65535;
 }
 
+function sanitizeCommandField(value: string) {
+  return value
+    .trim()
+    .replace(/^(?:install|frontend|backend|pull)\s+command\s*:\s*/i, "")
+    .trim();
+}
+
 function projectToFormValues(project?: ProjectProfile | null): SetupFormState {
   if (!project) return defaultFormValues;
 
@@ -87,9 +94,9 @@ function formValuesToProfile(
     id: existingId ?? crypto.randomUUID(),
     name: data.name.trim(),
     repoPath: data.repoPath.trim(),
-    installCommand: data.installCommand.trim(),
-    frontendCommand: data.frontendCommand.trim(),
-    backendCommand: data.backendCommand.trim(),
+    installCommand: sanitizeCommandField(data.installCommand),
+    frontendCommand: sanitizeCommandField(data.frontendCommand),
+    backendCommand: sanitizeCommandField(data.backendCommand),
     previewUrl: data.previewUrl.trim(),
     frontendPort: data.frontendPort.trim()
       ? Number(data.frontendPort)

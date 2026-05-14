@@ -1,4 +1,5 @@
 import { spawn, ChildProcess } from "child_process";
+import { prepareCommandForExecution } from "./commandUtils.js";
 import treeKill from "tree-kill";
 import { BrowserWindow } from "electron";
 import {
@@ -155,11 +156,19 @@ export async function startService(
   setStatus(service, "starting");
   emitLog(service as LogSource, `Starting ${service}: ${command}`);
 
-  const proc = spawn(command, {
-    cwd,
-    shell: true,
-    env: { ...process.env },
-  });
+  const preparedCommand = prepareCommandForExecution(command);
+  const proc =
+    preparedCommand.kind === "file"
+      ? spawn(preparedCommand.file, preparedCommand.args, {
+          cwd,
+          shell: false,
+          env: { ...process.env },
+        })
+      : spawn(preparedCommand.command, {
+          cwd,
+          shell: true,
+          env: { ...process.env },
+        });
 
   processes[service] = proc;
 
