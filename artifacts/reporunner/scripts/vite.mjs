@@ -26,6 +26,7 @@ if (!args) {
 
 const child = spawn(pnpm, args, {
   stdio: "inherit",
+  shell: process.platform === "win32",
   env: {
     ...process.env,
     PORT: process.env.PORT || "5173",
@@ -40,3 +41,6 @@ child.on("exit", (code, signal) => {
   }
   process.exit(code ?? 0);
 });
+
+
+
