@@ -1,5 +1,5 @@
 import { ipcMain, dialog, clipboard } from "electron";
-import { exec, execFile } from "child_process";
+import { exec, spawn } from "child_process";
 import { promisify } from "util";
 import { loadProject, saveProject } from "./projectStore.js";
 import {
@@ -18,7 +18,6 @@ import { BrowserWindow } from "electron";
 import { validateProjectProfileForSave } from "./projectProfileValidation.js";
 
 const execAsync = promisify(exec);
-const execFileAsync = promisify(execFile);
 
 let logCounter = 0;
 let logBuffer: LogEntry[] = [];
@@ -52,6 +51,71 @@ function emitLog(source: LogSource, text: string) {
   logBuffer.push(entry);
   const wins = BrowserWindow.getAllWindows();
   wins[0]?.webContents.send("log", entry);
+}
+
+
+function emitInstallChunk(chunk: Buffer | string) {
+  const text = chunk.toString();
+  for (const line of text.split(/\r\n|\n|\r/)) {
+    if (line.trim()) {
+      emitLog("install", line);
+    }
+  }
+}
+
+function runStreamingInstall(
+  preparedCommand: ReturnType<typeof prepareCommandForExecution>,
+  cwd: string
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const child =
+      preparedCommand.kind === "file"
+        ? spawn(preparedCommand.file, preparedCommand.args, {
+            cwd,
+            shell: false,
+            env: { ...process.env },
+          })
+        : spawn(preparedCommand.command, {
+            cwd,
+            shell: true,
+            env: { ...process.env },
+          });
+
+    let settled = false;
+
+    const settleReject = (error: Error) => {
+      if (settled) return;
+      settled = true;
+      reject(error);
+    };
+
+    child.stdout?.on("data", emitInstallChunk);
+    child.stderr?.on("data", emitInstallChunk);
+
+    child.on("error", (error) => {
+      emitLog("install", `Error: ${error.message}`);
+      settleReject(error);
+    });
+
+    child.on("exit", (code, signal) => {
+      if (settled) return;
+      settled = true;
+
+      if (code === 0) {
+        emitLog("install", "Install finished.");
+        resolve();
+        return;
+      }
+
+      const failureMessage =
+        signal && signal.trim()
+          ? `Install failed with code ${code ?? "unknown"} (signal ${signal}).`
+          : `Install failed with code ${code ?? "unknown"}.`;
+
+      emitLog("install", failureMessage);
+      reject(new Error(failureMessage));
+    });
+  });
 }
 
 export function setupIpc() {
@@ -106,20 +170,7 @@ export function setupIpc() {
     const installCommand = sanitizeCommandInput(project.installCommand);
     emitLog("install", `Running: ${installCommand}`);
     const preparedCommand = prepareCommandForExecution(installCommand);
-    const { stdout, stderr } =
-      preparedCommand.kind === "file"
-        ? await execFileAsync(preparedCommand.file, preparedCommand.args, {
-            cwd: project.repoPath,
-            env: { ...process.env },
-          })
-        : await execAsync(preparedCommand.command, {
-            cwd: project.repoPath,
-            env: { ...process.env },
-          });
-    if (stdout.trim()) emitLog("install", stdout.trim());
-    if (stderr.trim()) emitLog("install", stderr.trim());
-    emitLog("install", "Install finished.");
-    return { stdout, stderr };
+    await runStreamingInstall(preparedCommand, project.repoPath);
   });
 
   ipcMain.handle("start-frontend", async () => {
@@ -226,6 +277,8 @@ export function setupIpc() {
     return getStatuses();
   });
 }
+
+
 
 
 
