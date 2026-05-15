@@ -156,6 +156,12 @@ export function setupIpc() {
   ipcMain.handle("start-backend", async () => {
     const project = loadProject();
     if (!project) throw new Error("No project configured");
+
+    if (!isBackendConfigured(project)) {
+      emitLog("system", "Backend is not configured; skipping backend startup.");
+      return;
+    }
+
     await startService(
       "backend",
       project.backendCommand,
@@ -246,6 +252,8 @@ export function setupIpc() {
     return getStatuses();
   });
 }
+
+
 
 
 
