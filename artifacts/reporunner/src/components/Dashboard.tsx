@@ -561,13 +561,29 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
   const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
+    let cancelled = false;
+
+    const hydrateStatuses = async () => {
+      try {
+        const currentStatuses = await window.repoRunner.getStatuses();
+        if (!cancelled) {
+          setStatuses(currentStatuses);
+        }
+      } catch (err) {
+        console.error("Failed to hydrate service statuses:", err);
+      }
+    };
+
+    hydrateStatuses();
+
     const unsubLog = window.repoRunner.onLog((entry) => {
       setLogs((prev) => [...prev, entry]);
     });
     const unsubStatus = window.repoRunner.onStatus((s) => {
       setStatuses(s);
     });
-    return () => { unsubLog(); unsubStatus(); };
+    return () => { cancelled = true;
+      unsubLog(); unsubStatus(); };
   }, []);
 
   useEffect(() => {
@@ -1184,6 +1200,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
     </div>
   );
 }
+
 
 
 

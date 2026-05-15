@@ -239,10 +239,12 @@ export const mockRepoRunnerAPI: RepoRunnerAPI = {
     };
   },
 
+  async getStatuses() {
+    return { ...statuses };
+  },
+
   onStatus(callback) {
     statusListeners.push(callback);
-    // Deliver current state immediately so the UI doesn't start blank
-    setTimeout(() => callback({ ...statuses }), 0);
     return () => {
       statusListeners = statusListeners.filter((fn) => fn !== callback);
     };
@@ -255,6 +257,7 @@ export function installMock() {
     emitLog("system", "RepoRunner ready. (Preview mode — running in browser)");
   }
 }
+
 
 
 
