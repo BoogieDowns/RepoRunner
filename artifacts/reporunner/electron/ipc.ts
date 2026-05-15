@@ -18,13 +18,30 @@ import { BrowserWindow } from "electron";
 import { validateProjectProfileForSave } from "./projectProfileValidation.js";
 import { clearLogs, emitLog, formatLogsForClipboard } from "./logSink.js";
 
-function emitGitChunk(chunk: Buffer | string) {
-  const text = chunk.toString();
-  for (const line of text.split(/\r\n|\n|\r/)) {
-    if (line.trim()) {
-      emitLog("git", line);
+function createLineBufferedLogEmitter(source: LogSource) {
+  let pending = "";
+
+  const emitChunk = (chunk: Buffer | string) => {
+    pending += chunk.toString();
+
+    const lines = pending.split(/\r\n|\n|\r/);
+    pending = lines.pop() ?? "";
+
+    for (const line of lines) {
+      if (line.trim()) {
+        emitLog(source, line);
+      }
     }
-  }
+  };
+
+  const flush = () => {
+    if (pending.trim()) {
+      emitLog(source, pending);
+    }
+    pending = "";
+  };
+
+  return { emitChunk, flush };
 }
 
 function runStreamingPull(cwd: string): Promise<void> {
@@ -35,6 +52,15 @@ function runStreamingPull(cwd: string): Promise<void> {
       env: { ...process.env },
     });
 
+    
+    const stdoutLog = createLineBufferedLogEmitter("git");
+    const stderrLog = createLineBufferedLogEmitter("git");
+
+    const flushLogs = () => {
+      stdoutLog.flush();
+      stderrLog.flush();
+    };
+
     let settled = false;
 
     const settleReject = (error: Error) => {
@@ -43,8 +69,8 @@ function runStreamingPull(cwd: string): Promise<void> {
       reject(error);
     };
 
-    child.stdout?.on("data", emitGitChunk);
-    child.stderr?.on("data", emitGitChunk);
+    child.stdout?.on("data", stdoutLog.emitChunk);
+    child.stderr?.on("data", stderrLog.emitChunk);
 
     child.on("error", (error) => {
       emitLog("git", `Error: ${error.message}`);
@@ -71,15 +97,6 @@ function runStreamingPull(cwd: string): Promise<void> {
     });
   });
 }
-function emitInstallChunk(chunk: Buffer | string) {
-  const text = chunk.toString();
-  for (const line of text.split(/\r\n|\n|\r/)) {
-    if (line.trim()) {
-      emitLog("install", line);
-    }
-  }
-}
-
 function runStreamingInstall(
   preparedCommand: ReturnType<typeof prepareCommandForExecution>,
   cwd: string
@@ -98,6 +115,15 @@ function runStreamingInstall(
             env: { ...process.env },
           });
 
+
+    const stdoutLog = createLineBufferedLogEmitter("install");
+    const stderrLog = createLineBufferedLogEmitter("install");
+
+    const flushLogs = () => {
+      stdoutLog.flush();
+      stderrLog.flush();
+    };
+
     let settled = false;
 
     const settleReject = (error: Error) => {
@@ -106,8 +132,8 @@ function runStreamingInstall(
       reject(error);
     };
 
-    child.stdout?.on("data", emitInstallChunk);
-    child.stderr?.on("data", emitInstallChunk);
+    child.stdout?.on("data", stdoutLog.emitChunk);
+    child.stderr?.on("data", stderrLog.emitChunk);
 
     child.on("error", (error) => {
       emitLog("install", `Error: ${error.message}`);
@@ -298,6 +324,10 @@ export function setupIpc() {
     return getStatuses();
   });
 }
+
+
+
+
 
 
 
