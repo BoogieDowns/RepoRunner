@@ -1,5 +1,6 @@
 import { spawn, ChildProcess } from "child_process";
 import { prepareCommandForExecution } from "./commandUtils.js";
+import { emitLog } from "./logSink.js";
 import treeKill from "tree-kill";
 import { BrowserWindow } from "electron";
 import {
@@ -51,22 +52,9 @@ const settledResolvers: Record<"frontend" | "backend", Array<() => void>> = {
   backend: [],
 };
 
-let logCounter = 0;
-
 function getMainWindow(): BrowserWindow | null {
   const wins = BrowserWindow.getAllWindows();
   return wins.length > 0 ? wins[0] : null;
-}
-
-function emitLog(source: LogSource, text: string) {
-  const entry: LogEntry = {
-    id: `${Date.now()}-${logCounter++}`,
-    timestamp: Date.now(),
-    source,
-    text,
-  };
-  const win = getMainWindow();
-  win?.webContents.send("log", entry);
 }
 
 function emitStatus() {
@@ -298,3 +286,4 @@ export async function stopAllServices(
 export function getStatuses(): ServiceStatuses {
   return { ...statuses };
 }
+

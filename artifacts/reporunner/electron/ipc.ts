@@ -16,43 +16,9 @@ import {
 import { ProjectProfile, LogEntry, LogSource } from "../src/types.js";
 import { BrowserWindow } from "electron";
 import { validateProjectProfileForSave } from "./projectProfileValidation.js";
+import { clearLogs, emitLog, formatLogsForClipboard } from "./logSink.js";
 
 const execAsync = promisify(exec);
-
-let logCounter = 0;
-let logBuffer: LogEntry[] = [];
-
-function formatLogTimestamp(timestamp: number): string {
-  const date = new Date(timestamp);
-  const hours = String(date.getHours()).padStart(2, "0");
-  const minutes = String(date.getMinutes()).padStart(2, "0");
-  const seconds = String(date.getSeconds()).padStart(2, "0");
-
-  return `${hours}:${minutes}:${seconds}`;
-}
-
-function formatLogsForClipboard(logs: LogEntry[]): string {
-  return logs
-    .map((log) => `${formatLogTimestamp(log.timestamp)} [${log.source.toUpperCase()}] ${log.text}`)
-    .join("\n");
-}
-
-function isBackendConfigured(project: ProjectProfile): boolean {
-  return project.backendCommand.trim().length > 0;
-}
-
-function emitLog(source: LogSource, text: string) {
-  const entry: LogEntry = {
-    id: `${Date.now()}-${logCounter++}`,
-    timestamp: Date.now(),
-    source,
-    text,
-  };
-  logBuffer.push(entry);
-  const wins = BrowserWindow.getAllWindows();
-  wins[0]?.webContents.send("log", entry);
-}
-
 
 function emitInstallChunk(chunk: Buffer | string) {
   const text = chunk.toString();
@@ -118,6 +84,9 @@ function runStreamingInstall(
   });
 }
 
+function isBackendConfigured(project: ProjectProfile): boolean {
+  return project.backendCommand.trim().length > 0;
+}
 export function setupIpc() {
   ipcMain.handle("select-folder", async (event) => {
     const parentWindow =
@@ -266,17 +235,19 @@ export function setupIpc() {
     await shell.openExternal(project.previewUrl);
   });
   ipcMain.handle("copy-logs", async () => {
-    clipboard.writeText(formatLogsForClipboard(logBuffer));
+    clipboard.writeText(formatLogsForClipboard());
   });
 
   ipcMain.handle("clear-logs", async () => {
-    logBuffer = [];
+    clearLogs();
   });
 
   ipcMain.handle("get-statuses", async () => {
     return getStatuses();
   });
 }
+
+
 
 
 
