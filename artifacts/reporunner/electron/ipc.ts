@@ -20,6 +20,22 @@ const execAsync = promisify(exec);
 const execFileAsync = promisify(execFile);
 
 let logCounter = 0;
+let logBuffer: LogEntry[] = [];
+
+function formatLogTimestamp(timestamp: number): string {
+  const date = new Date(timestamp);
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const seconds = String(date.getSeconds()).padStart(2, "0");
+
+  return `${hours}:${minutes}:${seconds}`;
+}
+
+function formatLogsForClipboard(logs: LogEntry[]): string {
+  return logs
+    .map((log) => `${formatLogTimestamp(log.timestamp)} [${log.source.toUpperCase()}] ${log.text}`)
+    .join("\n");
+}
 
 function isBackendConfigured(project: ProjectProfile): boolean {
   return project.backendCommand.trim().length > 0;
@@ -32,6 +48,7 @@ function emitLog(source: LogSource, text: string) {
     source,
     text,
   };
+  logBuffer.push(entry);
   const wins = BrowserWindow.getAllWindows();
   wins[0]?.webContents.send("log", entry);
 }
@@ -200,41 +217,19 @@ export function setupIpc() {
     const { shell } = await import("electron");
     await shell.openExternal(project.previewUrl);
   });
-
-  function normalizeClipboardText(value: unknown): string {
-  if (value === undefined || value === null) return "";
-
-  if (typeof value === "string") return value;
-
-  if (
-    typeof value === "number" ||
-    typeof value === "boolean" ||
-    typeof value === "bigint"
-  ) {
-    return String(value);
-  }
-
-  try {
-    const serialized = JSON.stringify(value);
-    return serialized === undefined ? "" : serialized;
-  } catch {
-    return String(value);
-  }
-}
-
-ipcMain.handle("copy-logs", async (_event, logs: unknown) => {
-  const clipboardText = normalizeClipboardText(logs);
-  clipboard.writeText(clipboardText);
-});
+  ipcMain.handle("copy-logs", async () => {
+    clipboard.writeText(formatLogsForClipboard(logBuffer));
+  });
 
   ipcMain.handle("clear-logs", async () => {
-    // log buffer is managed on the renderer side
+    logBuffer = [];
   });
 
   ipcMain.handle("get-statuses", async () => {
     return getStatuses();
   });
 }
+
 
 
 

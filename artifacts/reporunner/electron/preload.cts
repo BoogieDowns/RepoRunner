@@ -24,7 +24,7 @@ contextBridge.exposeInMainWorld("repoRunner", {
 
   openPreview: () => ipcRenderer.invoke("open-preview"),
 
-  copyLogs: (logs: string) => ipcRenderer.invoke("copy-logs", logs),
+  copyLogs: () => ipcRenderer.invoke("copy-logs"),
 
   clearLogs: () => ipcRenderer.invoke("clear-logs"),
 
@@ -46,3 +46,4 @@ contextBridge.exposeInMainWorld("repoRunner", {
     return () => ipcRenderer.removeListener("status", listener);
   },
 });
+

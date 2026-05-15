@@ -49,6 +49,20 @@ function delay(ms: number) {
   return new Promise<void>((r) => setTimeout(r, ms));
 }
 
+function formatLogTimestamp(timestamp: number): string {
+  const date = new Date(timestamp);
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const seconds = String(date.getSeconds()).padStart(2, "0");
+
+  return `${hours}:${minutes}:${seconds}`;
+}
+
+function formatLogsForClipboard(logEntries: LogEntry[]): string {
+  return logEntries
+    .map((log) => `${formatLogTimestamp(log.timestamp)} [${log.source.toUpperCase()}] ${log.text}`)
+    .join("\n");
+}
 function clearFakeTimer(service: "frontend" | "backend") {
   if (fakeTimers[service] !== null) {
     clearTimeout(fakeTimers[service]!);
@@ -211,8 +225,7 @@ export const mockRepoRunnerAPI: RepoRunnerAPI = {
   },
 
   async copyLogs() {
-    const text = logs.map((l) => `[${l.source}] ${l.text}`).join("\n");
-    await navigator.clipboard.writeText(text).catch(() => {});
+    await navigator.clipboard.writeText(formatLogsForClipboard(logs)).catch(() => {});
   },
 
   async clearLogs() {
@@ -242,3 +255,7 @@ export function installMock() {
     emitLog("system", "RepoRunner ready. (Preview mode — running in browser)");
   }
 }
+
+
+
+

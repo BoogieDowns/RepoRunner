@@ -592,6 +592,14 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
   };
 
   const handleCopyLogs = async () => {
+    if (logs.length === 0) {
+      toast({
+        title: "No logs to copy",
+        description: "Run Pull, Install, or Start a service to generate logs.",
+      });
+      return;
+    }
+
     await window.repoRunner.copyLogs();
     toast({ title: "Copied", description: "Logs copied to clipboard." });
   };
@@ -1176,6 +1184,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
     </div>
   );
 }
+
 
 
 
