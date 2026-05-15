@@ -15,6 +15,7 @@ import {
 } from "./commandUtils.js";
 import { ProjectProfile, LogEntry, LogSource } from "../src/types.js";
 import { BrowserWindow } from "electron";
+import { validateProjectProfileForSave } from "./projectProfileValidation.js";
 
 const execAsync = promisify(exec);
 const execFileAsync = promisify(execFile);
@@ -82,13 +83,9 @@ export function setupIpc() {
     return loadProject();
   });
 
-  ipcMain.handle("save-project", async (_event, profile: ProjectProfile) => {
-    saveProject({
-      ...profile,
-      installCommand: sanitizeCommandInput(profile.installCommand),
-      frontendCommand: sanitizeCommandInput(profile.frontendCommand),
-      backendCommand: sanitizeCommandInput(profile.backendCommand),
-    });
+  ipcMain.handle("save-project", async (_event, profile: unknown) => {
+    const validatedProfile = validateProjectProfileForSave(profile);
+    saveProject(validatedProfile);
   });
 
   ipcMain.handle("pull-latest", async () => {
@@ -229,6 +226,7 @@ export function setupIpc() {
     return getStatuses();
   });
 }
+
 
 
 
