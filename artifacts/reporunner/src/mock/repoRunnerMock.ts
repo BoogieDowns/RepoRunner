@@ -63,6 +63,9 @@ function formatLogsForClipboard(logEntries: LogEntry[]): string {
     .map((log) => `${formatLogTimestamp(log.timestamp)} [${log.source.toUpperCase()}] ${log.text}`)
     .join("\n");
 }
+function hasBackend(project: ProjectProfile | null): project is ProjectProfile {
+  return Boolean(project?.backendCommand.trim());
+}
 function clearFakeTimer(service: "frontend" | "backend") {
   if (fakeTimers[service] !== null) {
     clearTimeout(fakeTimers[service]!);
@@ -155,20 +158,33 @@ export const mockRepoRunnerAPI: RepoRunnerAPI = {
       emitLog("system", "Backend is already running or starting.");
       return;
     }
+
     const project = getProject();
-    doFakeStart(
-      "backend",
-      project?.backendCommand ?? "node server.js",
-      project?.backendPort
-    );
+
+    if (!hasBackend(project)) {
+      clearFakeTimer("backend");
+      setStatus("backend", "stopped");
+      emitLog("system", "Backend is not configured; skipping backend startup.");
+      return;
+    }
+
+    doFakeStart("backend", project.backendCommand, project.backendPort);
   },
 
   async stopServices() {
+    const project = getProject();
+    const backendConfigured = hasBackend(project);
+
     clearFakeTimer("frontend");
     clearFakeTimer("backend");
 
     setStatus("frontend", "stopping");
-    setStatus("backend", "stopping");
+    if (backendConfigured) {
+      setStatus("backend", "stopping");
+    } else {
+      setStatus("backend", "stopped");
+    }
+
     emitLog("system", "Stopping services...");
 
     await delay(700);
@@ -180,32 +196,42 @@ export const mockRepoRunnerAPI: RepoRunnerAPI = {
 
   async restartAll() {
     const project = getProject();
+    const backendConfigured = hasBackend(project);
 
     emitLog("system", "Restarting all services...");
     emitLog("system", "Stopping services...");
 
     clearFakeTimer("frontend");
     clearFakeTimer("backend");
+
     setStatus("frontend", "stopping");
-    setStatus("backend", "stopping");
+    if (backendConfigured) {
+      setStatus("backend", "stopping");
+    } else {
+      setStatus("backend", "stopped");
+    }
+
     await delay(700);
+
     setStatus("frontend", "stopped");
     setStatus("backend", "stopped");
     emitLog("system", "Services stopped.");
 
     await delay(400);
 
-    // Start backend and AWAIT it fully before touching frontend.
-    // This is the key fix — no shared interval, no race condition.
-    emitLog("backend", "Starting backend...");
-    await doFakeStart(
-      "backend",
-      project?.backendCommand ?? "node server.js",
-      project?.backendPort
-    );
-    emitLog("backend", "Backend is running.");
+    if (backendConfigured) {
+      emitLog("backend", "Starting backend...");
+      await doFakeStart(
+        "backend",
+        project.backendCommand,
+        project.backendPort
+      );
+      emitLog("backend", "Backend is running.");
 
-    await delay(200);
+      await delay(200);
+    } else {
+      emitLog("system", "Backend is not configured; skipping backend startup.");
+    }
 
     emitLog("frontend", "Starting frontend...");
     await doFakeStart(
@@ -257,6 +283,8 @@ export function installMock() {
     emitLog("system", "RepoRunner ready. (Preview mode — running in browser)");
   }
 }
+
+
 
 
 
