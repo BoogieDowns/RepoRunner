@@ -1,5 +1,5 @@
 import { ipcMain, dialog, clipboard } from "electron";
-import { exec, spawn } from "child_process";
+import { spawn } from "child_process";
 import { promisify } from "util";
 import { loadProject, saveProject } from "./projectStore.js";
 import {
@@ -18,8 +18,59 @@ import { BrowserWindow } from "electron";
 import { validateProjectProfileForSave } from "./projectProfileValidation.js";
 import { clearLogs, emitLog, formatLogsForClipboard } from "./logSink.js";
 
-const execAsync = promisify(exec);
+function emitGitChunk(chunk: Buffer | string) {
+  const text = chunk.toString();
+  for (const line of text.split(/\r\n|\n|\r/)) {
+    if (line.trim()) {
+      emitLog("git", line);
+    }
+  }
+}
 
+function runStreamingPull(cwd: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const child = spawn("git", ["pull"], {
+      cwd,
+      shell: false,
+      env: { ...process.env },
+    });
+
+    let settled = false;
+
+    const settleReject = (error: Error) => {
+      if (settled) return;
+      settled = true;
+      reject(error);
+    };
+
+    child.stdout?.on("data", emitGitChunk);
+    child.stderr?.on("data", emitGitChunk);
+
+    child.on("error", (error) => {
+      emitLog("git", `Error: ${error.message}`);
+      settleReject(error);
+    });
+
+    child.on("exit", (code, signal) => {
+      if (settled) return;
+      settled = true;
+
+      if (code === 0) {
+        emitLog("git", "Pull finished.");
+        resolve();
+        return;
+      }
+
+      const failureMessage =
+        signal && signal.trim()
+          ? `Pull failed with code ${code ?? "unknown"} (signal ${signal}).`
+          : `Pull failed with code ${code ?? "unknown"}.`;
+
+      emitLog("git", failureMessage);
+      reject(new Error(failureMessage));
+    });
+  });
+}
 function emitInstallChunk(chunk: Buffer | string) {
   const text = chunk.toString();
   for (const line of text.split(/\r\n|\n|\r/)) {
@@ -125,12 +176,7 @@ export function setupIpc() {
     const project = loadProject();
     if (!project) throw new Error("No project configured");
     emitLog("git", "Pulling latest code...");
-    const { stdout, stderr } = await execAsync("git pull", {
-      cwd: project.repoPath,
-    });
-    if (stdout.trim()) emitLog("git", stdout.trim());
-    if (stderr.trim()) emitLog("git", stderr.trim());
-    return { stdout, stderr };
+    await runStreamingPull(project.repoPath);
   });
 
   ipcMain.handle("run-install", async () => {
@@ -252,6 +298,7 @@ export function setupIpc() {
     return getStatuses();
   });
 }
+
 
 
 
