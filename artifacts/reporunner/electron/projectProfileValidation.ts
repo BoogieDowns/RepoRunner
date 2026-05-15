@@ -1,3 +1,4 @@
+import fs from "fs";
 import crypto from "crypto";
 import type { ProjectProfile } from "../src/types.js";
 import { sanitizeCommandInput } from "./commandUtils.js";
@@ -162,4 +163,29 @@ export function validateProjectProfileForLoad(input: unknown): ProjectProfile {
     ...(frontendPort !== undefined ? { frontendPort } : {}),
     ...(backendPort !== undefined ? { backendPort } : {}),
   };
+}
+
+export async function validateRepoPathDirectoryForSave(repoPath: string): Promise<void> {
+  try {
+    const stats = await fs.promises.stat(repoPath);
+
+    if (!stats.isDirectory()) {
+      throw new Error("Invalid project profile: Repository path must be a directory");
+    }
+  } catch (error) {
+    if (error instanceof Error && error.message === "Invalid project profile: Repository path must be a directory") {
+      throw error;
+    }
+
+    const code =
+      typeof error === "object" && error !== null && "code" in error
+        ? String((error as NodeJS.ErrnoException).code)
+        : "";
+
+    if (code === "ENOENT" || code === "ENOTDIR") {
+      throw new Error("Invalid project profile: Repository path does not exist");
+    }
+
+    throw new Error("Invalid project profile: Repository path cannot be accessed");
+  }
 }

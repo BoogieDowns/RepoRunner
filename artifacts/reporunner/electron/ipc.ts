@@ -15,7 +15,10 @@ import {
 } from "./commandUtils.js";
 import { ProjectProfile, LogEntry, LogSource } from "../src/types.js";
 import { BrowserWindow } from "electron";
-import { validateProjectProfileForSave } from "./projectProfileValidation.js";
+import {
+  validateProjectProfileForSave,
+  validateRepoPathDirectoryForSave,
+} from "./projectProfileValidation.js";
 import { clearLogs, emitLog, formatLogsForClipboard } from "./logSink.js";
 
 function createLineBufferedLogEmitter(source: LogSource) {
@@ -324,6 +327,7 @@ export function setupIpc() {
     return getStatuses();
   });
 }
+
 
 
 
