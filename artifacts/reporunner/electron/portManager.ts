@@ -50,6 +50,59 @@ export async function waitUntilPortIsReachable(
   return false;
 }
 
+function getExactLocalPort(localAddress: string): number | null {
+  const bracketedIpv6Match = localAddress.match(/^\[.*\]:(\d+)$/);
+  if (bracketedIpv6Match) {
+    return Number(bracketedIpv6Match[1]);
+  }
+
+  const lastColonIndex = localAddress.lastIndexOf(":");
+  if (lastColonIndex === -1) {
+    return null;
+  }
+
+  const portText = localAddress.slice(lastColonIndex + 1);
+  if (!/^\d+$/.test(portText)) {
+    return null;
+  }
+
+  return Number(portText);
+}
+
+function netstatRowOwnsPort(line: string, targetPort: number): string | null {
+  const parts = line.trim().split(/\s+/);
+  if (parts.length < 4) {
+    return null;
+  }
+
+  const protocol = parts[0]?.toUpperCase();
+  const localAddress = parts[1];
+  const pid = parts[parts.length - 1];
+
+  if (!pid || !/^\d+$/.test(pid) || pid === "0") {
+    return null;
+  }
+
+  const localPort = getExactLocalPort(localAddress);
+  if (localPort !== targetPort) {
+    return null;
+  }
+
+  if (protocol === "TCP") {
+    if (parts.length < 5) {
+      return null;
+    }
+
+    const state = parts[parts.length - 2]?.toUpperCase();
+    return state === "LISTENING" ? pid : null;
+  }
+
+  if (protocol === "UDP") {
+    return pid;
+  }
+
+  return null;
+}
 export async function killProcessUsingPort(port: number): Promise<void> {
   const platform = process.platform;
   try {
@@ -93,3 +146,4 @@ export function parsePortFromUrl(url: string): number | null {
     return null;
   }
 }
+
