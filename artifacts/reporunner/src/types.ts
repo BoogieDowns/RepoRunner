@@ -51,6 +51,7 @@ export interface RepoRunnerAPI {
   copyLogs(): Promise<void>;
   clearLogs(): Promise<void>;
   onLog(callback: (entry: LogEntry) => void): () => void;
+  getStatuses(): Promise<ServiceStatuses>;
   onStatus(callback: (statuses: ServiceStatuses) => void): () => void;
 }
 
@@ -59,3 +60,4 @@ declare global {
     repoRunner: RepoRunnerAPI;
   }
 }
+
