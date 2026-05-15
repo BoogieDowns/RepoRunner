@@ -10,9 +10,9 @@ This is a styling reference only. Do not copy the colors from the images.
 
 ## Reference images
 
-![Keyboard keycap reference 1](./assets/keycap-reference-1.png)
+![Keyboard keycap reference 1](./assets/keycap-reference-1.png.webp)
 
-![Keyboard keycap reference 2](./assets/keycap-reference-2.png)
+![Keyboard keycap reference 2](./assets/keycap-reference-2.png.jpeg)
 
 ## What to copy from the references
 
@@ -69,3 +69,4 @@ Apply this styling to the shared `.btn-glass` action-button system:
 - Setup Save Configuration button
 
 Leave small toolbar buttons such as Copy and Clear unchanged unless explicitly asked later.
+
