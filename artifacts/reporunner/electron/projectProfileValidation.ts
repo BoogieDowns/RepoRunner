@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import type { ProjectProfile } from "../src/types.js";
 import { sanitizeCommandInput } from "./commandUtils.js";
 
@@ -108,6 +109,37 @@ export function validateProjectProfileForSave(input: unknown): ProjectProfile {
   }
 
   const id = readOptionalString(input, "id");
+  const name = readRequiredString(input, "name", "Project name");
+  const repoPath = readRequiredString(input, "repoPath", "Repository path");
+  const installCommand = readRequiredCommand(input, "installCommand", "Install command");
+  const frontendCommand = readRequiredCommand(input, "frontendCommand", "Frontend command");
+  const backendCommand = readOptionalCommand(input, "backendCommand");
+  const previewUrl = validatePreviewUrl(
+    readRequiredString(input, "previewUrl", "Preview URL")
+  );
+  const frontendPort = readOptionalPort(input, "frontendPort", "Frontend port");
+  const backendPort = readOptionalPort(input, "backendPort", "Backend port");
+
+  return {
+    id,
+    name,
+    repoPath,
+    installCommand,
+    frontendCommand,
+    backendCommand,
+    previewUrl,
+    ...(frontendPort !== undefined ? { frontendPort } : {}),
+    ...(backendPort !== undefined ? { backendPort } : {}),
+  };
+}
+
+export function validateProjectProfileForLoad(input: unknown): ProjectProfile {
+  if (!isRecord(input)) {
+    throw new Error("Invalid project profile: Expected an object");
+  }
+
+  const storedId = readOptionalString(input, "id");
+  const id = storedId || crypto.randomUUID();
   const name = readRequiredString(input, "name", "Project name");
   const repoPath = readRequiredString(input, "repoPath", "Repository path");
   const installCommand = readRequiredCommand(input, "installCommand", "Install command");
