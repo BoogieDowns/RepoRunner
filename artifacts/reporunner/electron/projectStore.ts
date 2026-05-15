@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
 import { ProjectProfile } from "../src/types.js";
+import { validateProjectProfileForLoad } from "./projectProfileValidation.js";
 
 const STORE_FILE = "reporunner-project.json";
 
@@ -37,3 +38,4 @@ export function deleteProject(): void {
     fs.unlinkSync(filePath);
   }
 }
+
