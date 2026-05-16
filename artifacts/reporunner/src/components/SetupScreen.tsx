@@ -46,7 +46,7 @@ const setupSchema = z.object({
     ),
 });
 
-type SetupErrors = Partial<Record<keyof SetupFormState, string>>;
+type SetupErrors = Partial<Record<keyof SetupFormState | "form", string>>;
 
 const defaultFormValues: SetupFormState = {
   name: "",
@@ -126,6 +126,22 @@ const labelStyle: React.CSSProperties = {
   letterSpacing: "0.04em",
 };
 
+
+function getSaveProjectErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message.trim()) {
+    return error.message;
+  }
+
+  if (typeof error === "string" && error.trim()) {
+    return error;
+  }
+
+  return "Failed to save project setup.";
+}
+
+function saveErrorField(message: string): keyof SetupFormState | "form" {
+  return message.toLowerCase().includes("repository path") ? "repoPath" : "form";
+}
 export function SetupScreen({
   onSave,
   onClose,
@@ -196,11 +212,18 @@ export function SetupScreen({
     }
 
     const profile = formValuesToProfile(result.data, initialProfile?.id);
+
+  try {
     await window.repoRunner.saveProject(profile);
     onSave(profile);
+  } catch (error) {
+    const message = getSaveProjectErrorMessage(error);
+    const field = saveErrorField(message);
+    setErrors({ [field]: message });
+  }
   };
 
-  const renderError = (field: keyof SetupFormState) =>
+  const renderError = (field: keyof SetupErrors) =>
     errors[field] ? (
       <p className="text-[0.8rem] font-medium text-destructive">
         {errors[field]}
@@ -486,5 +509,6 @@ export function SetupScreen({
     </div>
   );
 }
+
 
 
