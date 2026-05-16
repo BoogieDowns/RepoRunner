@@ -198,6 +198,7 @@ export function setupIpc() {
 
   ipcMain.handle("save-project", async (_event, profile: unknown) => {
     const validatedProfile = validateProjectProfileForSave(profile);
+        await validateRepoPathDirectoryForSave(validatedProfile.repoPath);
     saveProject(validatedProfile);
   });
 
@@ -327,6 +328,10 @@ export function setupIpc() {
     return getStatuses();
   });
 }
+
+
+
+
 
 
 
