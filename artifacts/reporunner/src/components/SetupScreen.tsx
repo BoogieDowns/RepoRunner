@@ -127,13 +127,20 @@ const labelStyle: React.CSSProperties = {
 };
 
 
+function cleanElectronErrorMessage(message: string): string {
+  return message
+    .replace(/^Error invoking remote method '[^']+':\s*/i, "")
+    .replace(/^Error:\s*/i, "")
+    .trim();
+}
+
 function getSaveProjectErrorMessage(error: unknown): string {
   if (error instanceof Error && error.message.trim()) {
-    return error.message;
+    return cleanElectronErrorMessage(error.message);
   }
 
   if (typeof error === "string" && error.trim()) {
-    return error;
+    return cleanElectronErrorMessage(error);
   }
 
   return "Failed to save project setup.";
@@ -509,6 +516,8 @@ export function SetupScreen({
     </div>
   );
 }
+
+
 
 
 
