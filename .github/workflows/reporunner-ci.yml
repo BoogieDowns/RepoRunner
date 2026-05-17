@@ -9,6 +9,7 @@ on:
       - "package.json"
       - "pnpm-lock.yaml"
       - "pnpm-workspace.yaml"
+      - "tsconfig.base.json"
       - ".github/workflows/reporunner-ci.yml"
   push:
     branches:
@@ -18,6 +19,7 @@ on:
       - "package.json"
       - "pnpm-lock.yaml"
       - "pnpm-workspace.yaml"
+      - "tsconfig.base.json"
       - ".github/workflows/reporunner-ci.yml"
 
 jobs:
