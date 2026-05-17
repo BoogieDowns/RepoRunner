@@ -126,7 +126,6 @@ const labelStyle: React.CSSProperties = {
   letterSpacing: "0.04em",
 };
 
-
 function cleanElectronErrorMessage(message: string): string {
   return message
     .replace(/^Error invoking remote method '[^']+':\s*/i, "")
@@ -239,7 +238,10 @@ export function SetupScreen({
 
   const renderError = (field: keyof SetupErrors) =>
     errors[field] ? (
-      <p className="text-[0.8rem] font-medium text-destructive">
+      <p
+        className="mt-1.5 rounded-md border border-[#4a1218]/70 bg-[#1a080a]/70 px-2.5 py-1.5 text-[0.72rem] font-medium leading-snug text-[#ff8a94]"
+        role="alert"
+      >
         {errors[field]}
       </p>
     ) : null;
@@ -524,9 +526,3 @@ export function SetupScreen({
     </div>
   );
 }
-
-
-
-
-
-
