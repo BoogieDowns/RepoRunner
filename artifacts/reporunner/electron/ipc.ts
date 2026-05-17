@@ -83,6 +83,7 @@ function runStreamingPull(cwd: string): Promise<void> {
     child.on("exit", (code, signal) => {
       if (settled) return;
       settled = true;
+      flushLogs();
 
       if (code === 0) {
         emitLog("git", "Pull finished.");
@@ -146,6 +147,7 @@ function runStreamingInstall(
     child.on("exit", (code, signal) => {
       if (settled) return;
       settled = true;
+      flushLogs();
 
       if (code === 0) {
         emitLog("install", "Install finished.");
@@ -328,6 +330,7 @@ export function setupIpc() {
     return getStatuses();
   });
 }
+
 
 
 
