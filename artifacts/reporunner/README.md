@@ -19,17 +19,19 @@ RepoRunner is **not** an IDE, a deployment tool, or an AI debugging assistant.
 
 ## Current status
 
-Early version — first public build. Core workflow is functional. Single-project only. See [limitations](#current-limitations) below.
+V0 desktop build — the single-project core workflow is functional and has passed a local end-to-end smoke test. RepoRunner is still intentionally narrow: it is focused on running one local app reliably from a desktop control panel. See [limitations](#current-limitations) below.
 
 ---
 
 ## Features
 
 - Save one local project profile (repo path, commands, ports, preview URL)
+- Validate the local repo path before saving setup
 - **Pull latest** — runs `git pull` in your repo directory
-- **Install** — runs your install command (e.g. `npm install`)
+- **Install** — runs your install command (e.g. `npm install` or `pnpm install`)
 - **Start Frontend** — starts your frontend dev server
-- **Start Backend** — starts your backend server
+- **Start Backend** — starts your backend server when configured
+- **Frontend-only support** — skips backend start cleanly when no backend command is configured
 - **Stop Engine** — stops both frontend and backend services
 - **Restart All** — sequentially restarts backend then frontend
 - **Open Preview** — opens your configured preview URL in a browser
@@ -82,12 +84,13 @@ Early version — first public build. Core workflow is functional. Single-projec
 | UI                 | React + Vite + TypeScript             |
 | Styling            | Tailwind CSS v4 + shadcn/ui           |
 | Desktop            | Electron                              |
-| Forms              | react-hook-form + Zod                 |
+| Forms              | React state + Zod validation          |
 | Fonts              | Plus Jakarta Sans + JetBrains Mono    |
 | Process management | Node.js `child_process` + `tree-kill` |
 | Port detection     | `tcp-port-used`                       |
 | Config storage     | Electron `app.getPath('userData')`    |
 | Web preview        | Browser mock via `window.repoRunner`  |
+| CI                 | GitHub Actions                        |
 
 ---
 
@@ -150,6 +153,18 @@ pnpm --filter @workspace/reporunner run electron:dist
 
 Output goes to `artifacts/reporunner/release/`. Targets: `.dmg` (macOS), `.exe` / NSIS (Windows), `.AppImage` (Linux).
 
+### CI validation
+
+RepoRunner PRs are validated with GitHub Actions. The workflow installs with pnpm, then runs:
+
+```bash
+pnpm run typecheck
+pnpm run electron:build-main
+pnpm run build
+```
+
+from `artifacts/reporunner`.
+
 ### Replit note
 
 This repo lives inside a pnpm monorepo. The Replit web preview runs the Vite dev server with the browser mock — real process management requires the Electron build.
@@ -158,7 +173,7 @@ This repo lives inside a pnpm monorepo. The Replit web preview runs the Vite dev
 
 ## Project structure
 
-```
+```text
 artifacts/reporunner/
 ├── electron/               # Electron main process
 │   ├── main.ts             # Entry point
@@ -183,30 +198,35 @@ artifacts/reporunner/
 
 ---
 
-## V0 test checklist
+## V0 smoke test status
 
-- [ ] Save project config
-- [ ] Reopen app and confirm config persists
-- [ ] Pull latest
-- [ ] Run install
-- [ ] Start frontend
-- [ ] Start backend
-- [ ] Stop engine
-- [ ] Restart all
-- [ ] Open preview
-- [ ] Copy logs
-- [ ] Clear logs
-- [ ] Edit setup (gear icon in header)
-- [ ] Close edit without saving (X button)
+Passed locally:
+
+- [x] Save project config
+- [x] Reopen app and confirm config persists
+- [x] Invalid repo path shows inline setup error
+- [x] Valid repo path saves after failed save attempt
+- [x] Pull latest
+- [x] Run install
+- [x] Start frontend
+- [x] Start backend or skip cleanly for frontend-only projects
+- [x] Stop engine
+- [x] Restart all
+- [x] Open preview
+- [x] Copy logs
+- [x] Clear logs
+- [x] Edit setup (gear icon in header)
+- [x] Close edit without saving (X button)
 
 ---
 
 ## Current limitations
 
 - **Single project only** — no project switcher yet
-- **No process health checks** — if a process crashes silently, the engine light stays on
+- **No process health checks** — if a process crashes silently, the engine light may not immediately reflect the crash
 - **No env var injection** — commands that require `.env` values must have them baked into the command string or the shell environment
 - **Browser preview only** — the Replit web preview runs the browser mock; real process management requires the Electron build
+- **Desktop-first** — distribution packaging exists, but installer signing/release automation is not complete yet
 
 ---
 
