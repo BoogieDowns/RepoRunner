@@ -161,6 +161,7 @@ export function SetupScreen({
   initialProfile?: ProjectProfile | null;
 }) {
   const [isSelecting, setIsSelecting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState<SetupFormState>(() =>
     projectToFormValues(initialProfile),
   );
@@ -207,6 +208,8 @@ export function SetupScreen({
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
+    if (isSaving) return;
+
     const result = setupSchema.safeParse(formData);
     if (!result.success) {
       const fieldErrors: SetupErrors = {};
@@ -220,14 +223,18 @@ export function SetupScreen({
 
     const profile = formValuesToProfile(result.data, initialProfile?.id);
 
-  try {
-    await window.repoRunner.saveProject(profile);
-    onSave(profile);
-  } catch (error) {
-    const message = getSaveProjectErrorMessage(error);
-    const field = saveErrorField(message);
-    setErrors({ [field]: message });
-  }
+    setIsSaving(true);
+
+    try {
+      await window.repoRunner.saveProject(profile);
+      onSave(profile);
+    } catch (error) {
+      const message = getSaveProjectErrorMessage(error);
+      const field = saveErrorField(message);
+      setErrors({ [field]: message });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const renderError = (field: keyof SetupErrors) =>
@@ -495,7 +502,8 @@ export function SetupScreen({
             >
               <button
                 type="submit"
-                className="btn-glass btn-glass-primary w-full justify-center h-10"
+                disabled={isSaving}
+                className="btn-glass btn-glass-primary w-full justify-center h-10 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <Save className="h-4 w-4 flex-none" strokeWidth={1.5} />
                 <span
@@ -505,7 +513,7 @@ export function SetupScreen({
                     lineHeight: 1,
                   }}
                 >
-                  Save Configuration
+                  {isSaving ? "Saving..." : "Save Configuration"}
                 </span>
                 <ArrowRight className="h-4 w-4 flex-none" strokeWidth={1.5} />
               </button>
@@ -516,6 +524,7 @@ export function SetupScreen({
     </div>
   );
 }
+
 
 
 
