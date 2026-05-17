@@ -15,9 +15,10 @@ Save a project profile once — repo path, commands, ports, preview URL. Then dr
 - **Pull** — `git pull` in your repo directory
 - **Install** — runs your install command (`npm install`, `pnpm install`, etc.)
 - **Start Frontend / Start Backend** — spawns processes with live log output
-- **Stop / Restart** — kills processes cleanly, verifies ports are free
+- **Stop / Restart** — kills processes cleanly and verifies configured ports where possible
 - **Open** — opens your preview URL in the browser
-- **Logs** — live terminal panel with color-coded source labels
+- **Logs** — live terminal-style panel with source labels, copy, and clear actions
+- **Setup validation** — catches missing repo paths before saving bad config
 
 RepoRunner is **not** an IDE, a deployment tool, or an AI assistant.
 
@@ -40,6 +41,7 @@ RepoRunner is **not** an IDE, a deployment tool, or an AI assistant.
 - **Electron** + **React** + **Vite** + **TypeScript**
 - `tree-kill` + `tcp-port-used` for reliable process shutdown
 - JSON persistence via Electron's `app.getPath("userData")`
+- GitHub Actions CI for typecheck and build validation
 
 ---
 
@@ -51,4 +53,4 @@ See [`artifacts/reporunner/README.md`](artifacts/reporunner/README.md) for compl
 
 ## Status
 
-Early build — single-project, core workflow functional. Electron desktop only.
+V0 desktop build — single-project core workflow is functional and smoke-tested. Electron desktop only.
