@@ -1156,11 +1156,37 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
           style={{ background: "rgba(5,5,5,0.80)", ...MONO, fontSize: "12px", lineHeight: "1.75" }}
         >
           {logs.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center gap-2 select-none">
-              <span style={{ fontSize: "12px", color: "#484644", letterSpacing: "0.02em" }}>No logs yet</span>
-              <span style={{ fontSize: "11px", color: "#484442", letterSpacing: "0.01em" }}>
-                Run Pull, Install, or Start a service to see output here.
-              </span>
+            <div className="h-full flex flex-col items-center justify-center gap-3 select-none">
+              <div
+                aria-hidden="true"
+                className="flex h-9 w-9 items-center justify-center rounded-lg"
+                style={{
+                  color: "#6f6966",
+                  border: "1px solid rgba(185,14,28,0.10)",
+                  background:
+                    "linear-gradient(180deg, rgba(18,18,18,0.55) 0%, rgba(8,8,8,0.42) 100%)",
+                  boxShadow:
+                    "0 8px 28px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.035)",
+                  opacity: 0.72,
+                }}
+              >
+                <Server className="h-4 w-4" strokeWidth={1.35} />
+              </div>
+              <div className="flex flex-col items-center gap-1.5 text-center">
+                <span
+                  style={{
+                    ...LABEL,
+                    color: "#706a68",
+                    fontWeight: 600,
+                    letterSpacing: "0.16em",
+                  }}
+                >
+                  No logs yet
+                </span>
+                <span style={{ fontSize: "11px", color: "#5b5653", letterSpacing: "0.01em" }}>
+                  Run Pull, Install, or Start a service to see output here.
+                </span>
+              </div>
             </div>
           ) : (
             <div>
