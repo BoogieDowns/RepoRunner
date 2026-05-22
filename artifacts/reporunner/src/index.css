@@ -581,9 +581,20 @@ input[type="number"] {
   box-shadow:
     0 9px 18px rgba(0, 0, 0, 0.52),
     0 1px 0 rgba(255, 255, 255, 0.025),
-    inset 0 1px 0 rgba(255, 245, 235, 0.13),
+    inset 0 1px 0 rgba(255, 245, 235, 0.085),
     inset 0 -1px 0 rgba(0, 0, 0, 0.72);
   color: #c4bfba;
+}
+
+.btn-glass-secondary::before {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.065), transparent 40%),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.024), transparent 18%, transparent 82%, rgba(0, 0, 0, 0.24));
+  opacity: 0.74;
+}
+
+.btn-glass-secondary::after {
+  opacity: 0.44;
 }
 
 .btn-glass-secondary:hover:not(:disabled) {
@@ -592,9 +603,19 @@ input[type="number"] {
   box-shadow:
     0 11px 22px rgba(0, 0, 0, 0.56),
     0 0 0 1px rgba(185, 14, 28, 0.045),
-    inset 0 1px 0 rgba(255, 245, 235, 0.16),
+    inset 0 1px 0 rgba(255, 245, 235, 0.105),
     inset 0 -1px 0 rgba(0, 0, 0, 0.74);
   color: #dfd8d1;
+}
+
+.btn-glass-secondary:hover:not(:disabled)::before {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.085), transparent 42%),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.032), transparent 18%, transparent 82%, rgba(0, 0, 0, 0.26));
+}
+
+.btn-glass-secondary:hover:not(:disabled)::after {
+  opacity: 0.50;
 }
 
 .btn-glass-secondary:active:not(:disabled) {
@@ -680,13 +701,13 @@ input[type="number"] {
   opacity: 1 !important;
   cursor: not-allowed;
   pointer-events: none;
-  filter: saturate(0.42) brightness(0.74);
+  filter: saturate(0.50) brightness(0.84);
   background: linear-gradient(180deg, #181615 0%, #100f0f 52%, #0a0909 100%) !important;
-  border-color: rgba(75, 68, 65, 0.28) !important;
+  border-color: rgba(87, 79, 75, 0.34) !important;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.045),
+    inset 0 1px 0 rgba(255, 255, 255, 0.055),
     inset 0 -1px 0 rgba(0, 0, 0, 0.70) !important;
-  color: #67605c !important;
+  color: #817874 !important;
 }
 
 .btn-glass:disabled::before,
