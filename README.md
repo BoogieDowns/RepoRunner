@@ -10,17 +10,17 @@ RepoRunner is a desktop Electron app for AI-assisted builders, vibe coders, and 
 
 ## What it does
 
-Save a project profile once — repo path, commands, ports, preview URL. Then drive everything from a single control panel:
+Save a project profile once — repo path, commands, ports, and preview URL. Then drive everything from a single control panel:
 
-- **Pull** — `git pull` in your repo directory
-- **Install** — runs your install command (`npm install`, `pnpm install`, etc.)
-- **Start Frontend / Start Backend** — spawns processes with live log output
-- **Stop / Restart** — kills processes cleanly and verifies configured ports where possible
+- **Pull** — runs `git pull` in your repo directory
+- **Install** — runs your install command, such as `npm install` or `pnpm install`
+- **Start Frontend / Start Backend** — starts your configured services with live log output
+- **Stop / Restart** — stops processes cleanly and verifies configured ports where possible
 - **Open** — opens your preview URL in the browser
-- **Logs** — live terminal-style panel with source labels, copy, and clear actions
+- **Logs** — shows terminal-style output with source labels, plus copy and clear actions
 - **Setup validation** — catches missing repo paths before saving bad config
 
-RepoRunner is **not** an IDE, a deployment tool, or an AI assistant.
+RepoRunner is **not** an IDE, deployment platform, or AI assistant.
 
 ---
 
@@ -39,18 +39,18 @@ RepoRunner is **not** an IDE, a deployment tool, or an AI assistant.
 ## Tech stack
 
 - **Electron** + **React** + **Vite** + **TypeScript**
-- `tree-kill` + `tcp-port-used` for reliable process shutdown
-- JSON persistence via Electron's `app.getPath("userData")`
+- `tree-kill` + `tcp-port-used` for process shutdown and port checks
+- JSON persistence via Electron `app.getPath("userData")`
 - GitHub Actions CI for typecheck and build validation
 
 ---
 
 ## Full documentation
 
-See [`artifacts/reporunner/README.md`](artifacts/reporunner/README.md) for complete setup, build, and run instructions.
+See [artifacts/reporunner/README.md](artifacts/reporunner/README.md) for setup, build, and run instructions.
 
 ---
 
 ## Status
 
-V0 desktop build — single-project core workflow is functional and smoke-tested. Electron desktop only.
+V0 desktop build. The single-project core workflow is functional and smoke-tested. Electron desktop only.
