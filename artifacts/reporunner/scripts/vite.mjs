@@ -30,7 +30,7 @@ const child = spawn(pnpm, args, {
   env: {
     ...process.env,
     PORT: process.env.PORT || "5173",
-    BASE_PATH: process.env.BASE_PATH || "/",
+    BASE_PATH: process.env.BASE_PATH || "./",
   },
 });
 
