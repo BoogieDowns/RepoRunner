@@ -63,6 +63,20 @@ RepoRunner is intentionally narrow right now: it focuses on running one local ap
 5. Watch the log panel for real-time output from each service.
 6. Click **Edit Setup** in the header to adjust config at any time.
 
+## Setup notes
+
+On Windows, prefer `.cmd` commands in RepoRunner setup fields:
+
+    npm.cmd install
+    pnpm.cmd install
+    pnpm.cmd run dev
+
+For monorepos and workspaces, use the repo/workspace root as the repo path. If the app lives in a subfolder, use `cd` inside the command:
+
+    cd artifacts\my-app && pnpm.cmd run dev
+
+For common setup problems, see [Known setup issues](docs/known-setup-issues.md).
+
 ---
 
 ## Screenshots

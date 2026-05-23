@@ -106,5 +106,7 @@
     "linux": {
       "target": "AppImage"
     }
-  }
+  },
+  "description": "Desktop control panel for running local repo projects with pull, install, start, stop, restart, preview, and live logs.",
+  "author": "BoogieDowns"
 }

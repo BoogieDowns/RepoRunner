@@ -34,6 +34,12 @@ RepoRunner is **not** an IDE, deployment platform, or AI assistant.
 
 ![Dashboard with logs](artifacts/reporunner/docs/screenshots/dashboard-logs.jpg)
 
+## Download
+
+Download the latest Windows installer from the GitHub Releases page:
+
+[RepoRunner releases](https://github.com/BoogieDowns/RepoRunner/releases/latest)
+
 ---
 
 ## Tech stack
@@ -48,7 +54,7 @@ RepoRunner is **not** an IDE, deployment platform, or AI assistant.
 ## Full documentation
 
 See [artifacts/reporunner/README.md](artifacts/reporunner/README.md) for setup, build, and run instructions.
-
+For common setup problems, see [Known setup issues](artifacts/reporunner/docs/known-setup-issues.md).
 ---
 
 ## Status
