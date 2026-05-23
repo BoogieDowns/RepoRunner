@@ -70,3 +70,5 @@ pnpm-debug.log*
 artifacts/reporunner/.reporunner-data/
 
 artifacts/reporunner/release/
+
+artifacts/mockup-sandbox/
