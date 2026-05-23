@@ -68,3 +68,5 @@ pnpm-debug.log*
 
 # RepoRunner local app data (if written into repo during dev)
 artifacts/reporunner/.reporunner-data/
+
+artifacts/reporunner/release/
