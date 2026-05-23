@@ -459,7 +459,8 @@ function RepoRunnerLogo() {
           height: "auto",
           maxHeight: 50,
           flexShrink: 0,
-          filter: "drop-shadow(0 0 8px rgba(185,12,24,0.55))",
+          filter:
+            "brightness(1.08) contrast(1.08) saturate(1.06) drop-shadow(0 0 4px rgba(185,12,24,0.32))",
           display: "block",
         }}
       />
