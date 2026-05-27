@@ -40,6 +40,8 @@ Download the latest Windows installer from the GitHub Releases page:
 
 [RepoRunner releases](https://github.com/BoogieDowns/RepoRunner/releases/latest)
 
+Windows may show an unsigned-app warning because RepoRunner is not code-signed yet.
+
 ---
 
 ## Tech stack
@@ -60,3 +62,4 @@ For common setup problems, see [Known setup issues](artifacts/reporunner/docs/kn
 ## Status
 
 V0 desktop build. The single-project core workflow is functional and smoke-tested. Electron desktop only.
+
