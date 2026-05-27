@@ -63,3 +63,8 @@ Use the .cmd versions in RepoRunner commands:
 For monorepos:
 
     cd artifacts\my-app && pnpm.cmd run dev
+## Frontend-only apps
+
+RepoRunner can run frontend-only projects.
+
+If your project does not have a backend service, leave the backend command and backend port fields empty in setup. RepoRunner will skip backend startup and only run the frontend command.
