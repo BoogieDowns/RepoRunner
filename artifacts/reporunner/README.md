@@ -69,6 +69,7 @@ On Windows, prefer `.cmd` commands in RepoRunner setup fields:
 
     npm.cmd install
     pnpm.cmd install
+    npm.cmd run dev
     pnpm.cmd run dev
 
 For monorepos and workspaces, use the repo/workspace root as the repo path. If the app lives in a subfolder, use `cd` inside the command:
@@ -121,3 +122,4 @@ For common setup problems, see [Known setup issues](docs/known-setup-issues.md).
 
 ```bash
 pnpm install
+
