@@ -12,7 +12,7 @@ RepoRunner is **not** an IDE, deployment platform, or AI debugging assistant.
 
 - **AI-assisted builders** who received a repo from Cursor, Replit, Claude, ChatGPT, Codex, or another AI coding tool and need to run it locally
 - **Vibe coders** who want to ship without managing shell context all day
-- **Solo founders** who want one project, one panel, and less terminal switching
+- **Solo founders** who want one project, one panel, and fewer terminals
 - **Anyone running a local repo** who does not want Git Bash, npm scripts, and multiple terminals open at the same time
 
 ---
