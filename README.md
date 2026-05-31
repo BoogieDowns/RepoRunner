@@ -8,11 +8,11 @@ RepoRunner v0.1.2 is available for Windows.
 - Latest release: https://github.com/BoogieDowns/RepoRunner/releases/latest
 - Direct installer: https://github.com/BoogieDowns/RepoRunner/releases/download/v0.1.2/RepoRunner.Setup.0.1.2.exe
 
-Note: RepoRunner is currently an unsigned Windows V0, so Windows may show a security warning during install.
+Note: RepoRunner v0.1.2 is currently unsigned, so Windows may show a security warning during install.
 
 > Import your repo once. Save the run setup once. Then pull, install, start, stop, restart, open preview, and inspect logs with buttons.
 
-RepoRunner is a desktop Electron app for AI-assisted builders, vibe coders, and solo founders who want to run local GitHub repos without switching between terminals.
+RepoRunner is a desktop Electron app for AI-assisted builders, vibe coders, and solo founders who want to run local GitHub repos without terminals.
 
 ![Dashboard](artifacts/reporunner/docs/screenshots/dashboard.jpg)
 
@@ -71,7 +71,7 @@ For common setup problems, see [Known setup issues](artifacts/reporunner/docs/kn
 
 ## Status
 
-RepoRunner v0.1.2 is the current Windows desktop release. The single-project core workflow is functional and smoke-tested. Electron desktop only.
+RepoRunner v0.1.2 is the current Windows desktop release. The single-project core workflow is functional and smoke-tested. Windows desktop only.
 
 
 
