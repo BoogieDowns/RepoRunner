@@ -10,7 +10,7 @@ RepoRunner is **not** an IDE, deployment platform, or AI debugging assistant.
 
 Tried RepoRunner? Found a bug or got stuck? Open an issue on GitHub or message [@RepoRunnerApp](https://x.com/RepoRunnerApp) on X.
 
-For setup examples, see the [full documentation](artifacts/reporunner/README.md). For common problems, see [Known setup issues](artifacts/reporunner/docs/known-setup-issues.md).
+For setup examples, see this README. For common problems, see [Known setup issues](docs/known-setup-issues.md).
 
 ---
 
