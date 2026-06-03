@@ -2,18 +2,24 @@
 
 > Import your repo once. Save the run setup once. Then pull, install, start, stop, restart, open preview, and inspect logs with buttons.
 
-RepoRunner is a desktop-style app for AI-assisted builders, vibe coders, and solo founders who want to run local GitHub repos without juggling terminals. Save your project config once, then drive everything from a button panel.
+RepoRunner is a desktop-style app for AI-assisted builders, vibe coders, and solo founders who want to run local GitHub repos without terminals. Save your project config once, then drive everything from a button panel.
 
 RepoRunner is **not** an IDE, deployment platform, or AI debugging assistant.
+
+## Feedback
+
+Tried RepoRunner? Found a bug or got stuck? Open an issue on GitHub or message [@RepoRunnerApp](https://x.com/RepoRunnerApp) on X.
+
+For setup examples, see the [full documentation](artifacts/reporunner/README.md). For common problems, see [Known setup issues](artifacts/reporunner/docs/known-setup-issues.md).
 
 ---
 
 ## Who it's for
 
-- **AI-assisted builders** who received a repo from Cursor, Replit, Claude, ChatGPT, Codex, or another AI coding tool and need to run it locally
-- **Vibe coders** who want to ship without managing shell context all day
-- **Solo founders** who want one project, one panel, and fewer terminals
-- **Anyone running a local repo** who does not want Git Bash, npm scripts, and multiple terminals open at the same time
+- **AI-assisted builders** who received a repo from Cursor, Replit, Claude, ChatGPT, Codex, or another AI coding tool and need to run it locally.
+- **Vibe coders** who want to ship with less setup friction.
+- **Solo founders** who want one project, one panel, and a simpler local run workflow.
+- **Anyone running a local repo** who wants pull, install, start, stop, restart, open preview, and inspect logs in one place.
 
 ---
 
@@ -62,6 +68,114 @@ RepoRunner is intentionally narrow right now: it focuses on running one local ap
    - **Open** to launch your preview URL
 5. Watch the log panel for real-time output from each service.
 6. Click **Edit Setup** in the header to adjust config at any time.
+
+## Example setup recipes
+
+These examples show the kind of commands you can save in RepoRunner. Use the commands that match your own project.
+
+### Vite / React app
+
+Use this for many frontend-only React, Vite, or similar projects.
+
+**Repo path**
+
+`C:\Users\YourName\Desktop\MyViteApp`
+
+**Install command**
+
+`npm.cmd install`
+
+**Frontend command**
+
+`npm.cmd run dev`
+
+**Frontend port**
+
+`5173`
+
+**Preview URL**
+
+`http://localhost:5173`
+
+Leave the backend command and backend port empty.
+
+### Next.js app
+
+Use this for a standard Next.js project.
+
+**Install command**
+
+`npm.cmd install`
+
+**Frontend command**
+
+`npm.cmd run dev`
+
+**Frontend port**
+
+`3000`
+
+**Preview URL**
+
+`http://localhost:3000`
+
+Leave the backend command and backend port empty unless your repo starts a separate backend service.
+
+### pnpm workspace or monorepo app
+
+Use this when your repo has multiple apps or packages and the app lives inside a subfolder.
+
+**Repo path**
+
+`C:\Users\YourName\Desktop\MyMonorepo`
+
+**Install command**
+
+`pnpm.cmd install`
+
+**Frontend command**
+
+`cd apps\web && pnpm.cmd run dev`
+
+**Frontend port**
+
+`3000`
+
+**Preview URL**
+
+`http://localhost:3000`
+
+Change `apps\web` to the folder that contains your actual frontend app.
+
+### Frontend + backend repo
+
+Use this when your project has a frontend and a separate backend service.
+
+**Install command**
+
+`pnpm.cmd install`
+
+**Frontend command**
+
+`cd apps\web && pnpm.cmd run dev`
+
+**Frontend port**
+
+`3000`
+
+**Backend command**
+
+`cd apps\api && pnpm.cmd run dev`
+
+**Backend port**
+
+`4000`
+
+**Preview URL**
+
+`http://localhost:3000`
+
+Make sure both services can already run locally from the command line before saving them in RepoRunner.
 
 ## Setup notes
 
