@@ -1,7 +1,13 @@
 import { ipcMain, dialog, clipboard } from "electron";
 import { spawn } from "child_process";
 import { promisify } from "util";
-import { loadProject, saveProject } from "./projectStore.js";
+import {
+  deleteProject,
+  loadProject,
+  loadProjectState,
+  saveProject,
+  setActiveProject,
+} from "./projectStore.js";
 import {
   startService,
   stopAllServices,
@@ -198,10 +204,28 @@ export function setupIpc() {
     return loadProject();
   });
 
+  ipcMain.handle("load-project-state", async () => {
+    return loadProjectState();
+  });
+
   ipcMain.handle("save-project", async (_event, profile: unknown) => {
     const validatedProfile = validateProjectProfileForSave(profile);
-        await validateRepoPathDirectoryForSave(validatedProfile.repoPath);
-    saveProject(validatedProfile);
+    await validateRepoPathDirectoryForSave(validatedProfile.repoPath);
+    return saveProject(validatedProfile);
+  });
+
+  ipcMain.handle("set-active-project", async (_event, profileId: unknown) => {
+    if (typeof profileId !== "string" || !profileId.trim()) {
+      throw new Error("Saved repo setup not found.");
+    }
+    return setActiveProject(profileId);
+  });
+
+  ipcMain.handle("delete-project", async (_event, profileId: unknown) => {
+    if (typeof profileId !== "string" || !profileId.trim()) {
+      throw new Error("Saved repo setup not found.");
+    }
+    return deleteProject(profileId);
   });
 
   ipcMain.handle("pull-latest", async () => {

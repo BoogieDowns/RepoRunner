@@ -4,13 +4,20 @@
  */
 import {
   LogEntry,
+  MAX_FREE_REPO_PROFILES,
   ProjectProfile,
+  ProjectProfilesState,
   RepoRunnerAPI,
   ServiceStatuses,
   ServiceStatus,
 } from "../types";
 
-const STORAGE_KEY = "reporunner_project";
+const PROJECT_STATE_STORAGE_KEY = "reporunner_project_state";
+const OLD_PROJECT_STORAGE_KEY = "reporunner_project";
+const EMPTY_PROJECT_STATE: ProjectProfilesState = {
+  profiles: [],
+  activeProfileId: null,
+};
 
 let logs: LogEntry[] = [];
 let logCounter = 0;
@@ -101,14 +108,59 @@ async function doFakeStart(
   setStatus(service, "running");
 }
 
-function getProject(): ProjectProfile | null {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw) as ProjectProfile;
-  } catch {
-    return null;
+function normalizeProjectState(input: unknown): ProjectProfilesState {
+  if (
+    typeof input === "object" &&
+    input !== null &&
+    "profiles" in input &&
+    Array.isArray(input.profiles)
+  ) {
+    const profiles = input.profiles as ProjectProfile[];
+    const requestedActiveProfileId =
+      "activeProfileId" in input && typeof input.activeProfileId === "string"
+        ? input.activeProfileId
+        : null;
+    const activeProfileId = profiles.some(
+      (profile) => profile.id === requestedActiveProfileId
+    )
+      ? requestedActiveProfileId
+      : profiles[0]?.id ?? null;
+
+    return { profiles, activeProfileId };
   }
+
+  const profile = input as ProjectProfile;
+  return { profiles: [profile], activeProfileId: profile.id };
+}
+
+function persistProjectState(state: ProjectProfilesState) {
+  localStorage.setItem(PROJECT_STATE_STORAGE_KEY, JSON.stringify(state));
+}
+
+function getProjectState(): ProjectProfilesState {
+  const stateRaw = localStorage.getItem(PROJECT_STATE_STORAGE_KEY);
+  const oldProjectRaw = localStorage.getItem(OLD_PROJECT_STORAGE_KEY);
+  const raw = stateRaw ?? oldProjectRaw;
+  if (!raw) return EMPTY_PROJECT_STATE;
+
+  try {
+    const state = normalizeProjectState(JSON.parse(raw) as unknown);
+    persistProjectState(state);
+    if (!stateRaw && oldProjectRaw) {
+      localStorage.removeItem(OLD_PROJECT_STORAGE_KEY);
+    }
+    return state;
+  } catch {
+    return EMPTY_PROJECT_STATE;
+  }
+}
+
+function getProject(): ProjectProfile | null {
+  const state = getProjectState();
+  return (
+    state.profiles.find((profile) => profile.id === state.activeProfileId) ??
+    null
+  );
 }
 
 export const mockRepoRunnerAPI: RepoRunnerAPI = {
@@ -116,12 +168,67 @@ export const mockRepoRunnerAPI: RepoRunnerAPI = {
     return "/Users/you/projects/my-app";
   },
 
+  async loadProjectState() {
+    return getProjectState();
+  },
+
   async saveProject(profile: ProjectProfile) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
+    const state = getProjectState();
+    const existingIndex = state.profiles.findIndex(
+      (existing) => existing.id === profile.id
+    );
+
+    if (
+      existingIndex === -1 &&
+      state.profiles.length >= MAX_FREE_REPO_PROFILES
+    ) {
+      throw new Error(
+        "Repo limit reached. RepoRunner Free currently supports up to 5 saved repo setups."
+      );
+    }
+
+    const profiles = [...state.profiles];
+    if (existingIndex === -1) {
+      profiles.push(profile);
+    } else {
+      profiles[existingIndex] = profile;
+    }
+
+    const nextState = { profiles, activeProfileId: profile.id };
+    persistProjectState(nextState);
+    return nextState;
   },
 
   async loadProject() {
     return getProject();
+  },
+
+  async setActiveProject(profileId: string) {
+    const state = getProjectState();
+    if (!state.profiles.some((profile) => profile.id === profileId)) {
+      throw new Error("Saved repo setup not found.");
+    }
+    const nextState = { ...state, activeProfileId: profileId };
+    persistProjectState(nextState);
+    return nextState;
+  },
+
+  async deleteProject(profileId: string) {
+    const state = getProjectState();
+    const profiles = state.profiles.filter(
+      (profile) => profile.id !== profileId
+    );
+    if (profiles.length === state.profiles.length) {
+      throw new Error("Saved repo setup not found.");
+    }
+
+    const activeProfileId =
+      state.activeProfileId === profileId
+        ? profiles[0]?.id ?? null
+        : state.activeProfileId;
+    const nextState = { profiles, activeProfileId };
+    persistProjectState(nextState);
+    return nextState;
   },
 
   async pullLatest() {

@@ -32,6 +32,13 @@ export interface ProjectProfile {
   backendPort?: number;
 }
 
+export const MAX_FREE_REPO_PROFILES = 5;
+
+export interface ProjectProfilesState {
+  profiles: ProjectProfile[];
+  activeProfileId: string | null;
+}
+
 export interface ServiceStatuses {
   frontend: ServiceStatus;
   backend: ServiceStatus;
@@ -39,8 +46,11 @@ export interface ServiceStatuses {
 
 export interface RepoRunnerAPI {
   selectFolder(): Promise<string | null>;
-  saveProject(profile: ProjectProfile): Promise<void>;
+  loadProjectState(): Promise<ProjectProfilesState>;
+  saveProject(profile: ProjectProfile): Promise<ProjectProfilesState>;
   loadProject(): Promise<ProjectProfile | null>;
+  setActiveProject(profileId: string): Promise<ProjectProfilesState>;
+  deleteProject(profileId: string): Promise<ProjectProfilesState>;
   pullLatest(): Promise<void>;
   runInstall(): Promise<void>;
   startFrontend(): Promise<void>;
