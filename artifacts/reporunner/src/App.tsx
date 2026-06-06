@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { installMock } from "@/mock/repoRunnerMock";
-import { ProjectProfile } from "@/types";
+import { ProjectProfilesState, ServiceStatuses } from "@/types";
 import { SetupScreen } from "@/components/SetupScreen";
 import { Dashboard } from "@/components/Dashboard";
 
@@ -13,25 +13,88 @@ if (typeof window !== "undefined" && !window.repoRunner && !isElectronRuntime) {
   installMock();
 }
 
+const EMPTY_PROJECT_STATE: ProjectProfilesState = {
+  profiles: [],
+  activeProfileId: null,
+};
+
+const SWITCH_BLOCKED_MESSAGE =
+  "RepoRunner can run one saved repo at a time. Stop the current repo before switching saved setups.";
+
 function App() {
-  const [project, setProject] = useState<ProjectProfile | null>(null);
+  const [projectState, setProjectState] =
+    useState<ProjectProfilesState>(EMPTY_PROJECT_STATE);
+  const [statuses, setStatuses] = useState<ServiceStatuses>({
+    frontend: "unknown",
+    backend: "unknown",
+  });
   const [isEditing, setIsEditing] = useState(false);
   const [editClosing, setEditClosing] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
+
     async function load() {
       try {
-        const loaded = await window.repoRunner.loadProject();
-        setProject(loaded);
+        const loaded = await window.repoRunner.loadProjectState();
+        if (!cancelled) {
+          setProjectState(loaded);
+        }
       } catch (err) {
-        console.error("Failed to load project:", err);
+        console.error("Failed to load project state:", err);
+      }
+
+      try {
+        const loadedStatuses = await window.repoRunner.getStatuses();
+        if (!cancelled) {
+          setStatuses(loadedStatuses);
+        }
+      } catch (err) {
+        console.error("Failed to load service statuses:", err);
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     }
+
+    const unsubscribe = window.repoRunner.onStatus(setStatuses);
     load();
+
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
   }, []);
+
+  const activeProject =
+    projectState.profiles.find(
+      (profile) => profile.id === projectState.activeProfileId
+    ) ?? null;
+  const servicesBusy =
+    statuses.frontend !== "stopped" || statuses.backend !== "stopped";
+
+  const ensureServicesStopped = () => {
+    if (servicesBusy) {
+      throw new Error(SWITCH_BLOCKED_MESSAGE);
+    }
+  };
+
+  const handleSelectProfile = async (profileId: string) => {
+    ensureServicesStopped();
+    const nextState = await window.repoRunner.setActiveProject(profileId);
+    setProjectState(nextState);
+  };
+
+  const handleDeleteProfile = async (profileId: string) => {
+    ensureServicesStopped();
+    const nextState = await window.repoRunner.deleteProject(profileId);
+    setProjectState(nextState);
+    if (!nextState.activeProfileId) {
+      setIsEditing(false);
+    }
+  };
 
   const handleEditOpen = () => {
     setEditClosing(false);
@@ -54,11 +117,22 @@ function App() {
     );
   }
 
-  if (!project) {
+  if (!activeProject) {
     return (
       <TooltipProvider>
         <div className="min-h-screen w-full bg-background text-foreground font-sans">
-          <SetupScreen onSave={(profile) => setProject(profile)} />
+          <SetupScreen
+            profiles={projectState.profiles}
+            activeProfileId={projectState.activeProfileId}
+            activeProject={activeProject}
+            servicesBusy={servicesBusy}
+            onSave={(nextState) => {
+              setProjectState(nextState);
+              setIsEditing(false);
+            }}
+            onSelectProfile={handleSelectProfile}
+            onDeleteProfile={handleDeleteProfile}
+          />
         </div>
         <Toaster />
       </TooltipProvider>
@@ -68,7 +142,7 @@ function App() {
   return (
     <TooltipProvider>
       <div className="min-h-screen w-full bg-background text-foreground font-sans relative">
-        <Dashboard project={project} onEdit={handleEditOpen} />
+        <Dashboard project={activeProject} onEdit={handleEditOpen} />
 
         {isEditing && (
           <>
@@ -98,11 +172,16 @@ function App() {
               <div className="pointer-events-auto w-full max-w-4xl">
                 <SetupScreen
                   overlay
-                  initialProfile={project}
-                  onSave={(profile) => {
-                    setProject(profile);
+                  profiles={projectState.profiles}
+                  activeProfileId={projectState.activeProfileId}
+                  activeProject={activeProject}
+                  servicesBusy={servicesBusy}
+                  onSave={(nextState) => {
+                    setProjectState(nextState);
                     setIsEditing(false);
                   }}
+                  onSelectProfile={handleSelectProfile}
+                  onDeleteProfile={handleDeleteProfile}
                   onClose={handleEditClose}
                 />
               </div>

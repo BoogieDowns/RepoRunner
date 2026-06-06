@@ -1,9 +1,20 @@
 import { useEffect, useState } from "react";
 import * as z from "zod";
-import { Folder, Save, ArrowRight, X } from "lucide-react";
-import { ProjectProfile } from "@/types";
+import { Folder, Save, ArrowRight, Plus, Trash2, X } from "lucide-react";
+import {
+  MAX_FREE_REPO_PROFILES,
+  ProjectProfile,
+  ProjectProfilesState,
+} from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Card,
   CardContent,
@@ -48,6 +59,13 @@ const setupSchema = z.object({
 
 type SetupErrors = Partial<Record<keyof SetupFormState | "form", string>>;
 
+const SWITCH_BLOCKED_MESSAGE =
+  "RepoRunner can run one saved repo at a time. Stop the current repo before switching saved setups.";
+const FREE_REPO_LIMIT_MESSAGE =
+  "Repo limit reached. RepoRunner Free currently supports up to 5 saved repo setups.";
+const DELETE_CONFIRMATION_MESSAGE =
+  "Delete this saved repo setup? This removes the setup from RepoRunner. It does not delete files from your computer.";
+
 const defaultFormValues: SetupFormState = {
   name: "",
   repoPath: "",
@@ -55,6 +73,28 @@ const defaultFormValues: SetupFormState = {
   frontendCommand: "npm run dev",
   backendCommand: "npm start",
   previewUrl: "http://localhost:3000",
+  frontendPort: "3000",
+  backendPort: "3001",
+};
+
+const blankFormValues: SetupFormState = {
+  name: "",
+  repoPath: "",
+  installCommand: "",
+  frontendCommand: "",
+  backendCommand: "",
+  previewUrl: "",
+  frontendPort: "",
+  backendPort: "",
+};
+
+const placeholderExamples: SetupFormState = {
+  name: "My Cool App",
+  repoPath: "C:\\path\\to\\project",
+  previewUrl: "http://localhost:3000",
+  installCommand: "npm install",
+  frontendCommand: "npm run dev",
+  backendCommand: "npm start",
   frontendPort: "3000",
   backendPort: "3001",
 };
@@ -149,27 +189,41 @@ function saveErrorField(message: string): keyof SetupFormState | "form" {
   return message.toLowerCase().includes("repository path") ? "repoPath" : "form";
 }
 export function SetupScreen({
+  profiles,
+  activeProfileId,
+  activeProject,
+  servicesBusy,
   onSave,
+  onSelectProfile,
+  onDeleteProfile,
   onClose,
   overlay = false,
-  initialProfile = null,
 }: {
-  onSave: (profile: ProjectProfile) => void;
+  profiles: ProjectProfile[];
+  activeProfileId: string | null;
+  activeProject: ProjectProfile | null;
+  servicesBusy: boolean;
+  onSave: (state: ProjectProfilesState) => void;
+  onSelectProfile: (profileId: string) => Promise<void>;
+  onDeleteProfile: (profileId: string) => Promise<void>;
   onClose?: () => void;
   overlay?: boolean;
-  initialProfile?: ProjectProfile | null;
 }) {
   const [isSelecting, setIsSelecting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isChangingProfile, setIsChangingProfile] = useState(false);
+  const [isAddingNew, setIsAddingNew] = useState(!activeProject);
   const [formData, setFormData] = useState<SetupFormState>(() =>
-    projectToFormValues(initialProfile),
+    projectToFormValues(activeProject),
   );
   const [errors, setErrors] = useState<SetupErrors>({});
 
   useEffect(() => {
-    setFormData(projectToFormValues(initialProfile));
-    setErrors({});
-  }, [initialProfile]);
+    if (!isAddingNew) {
+      setFormData(projectToFormValues(activeProject));
+      setErrors({});
+    }
+  }, [activeProject, isAddingNew]);
 
   const updateField = (field: keyof SetupFormState, value: string) => {
     setFormData((current) => ({ ...current, [field]: value }));
@@ -204,10 +258,76 @@ export function SetupScreen({
     }
   };
 
+  const handleAddNew = () => {
+    if (servicesBusy) {
+      setErrors({ form: SWITCH_BLOCKED_MESSAGE });
+      return;
+    }
+
+    if (profiles.length >= MAX_FREE_REPO_PROFILES) {
+      setErrors({ form: FREE_REPO_LIMIT_MESSAGE });
+      return;
+    }
+
+    setIsAddingNew(true);
+    setFormData(blankFormValues);
+    setErrors({});
+  };
+
+  const handleSelectProfile = async (profileId: string) => {
+    if (servicesBusy) {
+      setErrors({ form: SWITCH_BLOCKED_MESSAGE });
+      return;
+    }
+
+    const selectedProfile = profiles.find(
+      (profile) => profile.id === profileId
+    );
+    if (!selectedProfile) return;
+
+    setIsChangingProfile(true);
+    try {
+      await onSelectProfile(profileId);
+      setIsAddingNew(false);
+      setFormData(projectToFormValues(selectedProfile));
+      setErrors({});
+    } catch (error) {
+      setErrors({ form: getSaveProjectErrorMessage(error) });
+    } finally {
+      setIsChangingProfile(false);
+    }
+  };
+
+  const handleDeleteProfile = async () => {
+    if (isAddingNew || !activeProfileId) return;
+
+    if (servicesBusy) {
+      setErrors({ form: SWITCH_BLOCKED_MESSAGE });
+      return;
+    }
+
+    if (!window.confirm(DELETE_CONFIRMATION_MESSAGE)) return;
+
+    setIsChangingProfile(true);
+    try {
+      await onDeleteProfile(activeProfileId);
+      setErrors({});
+    } catch (error) {
+      setErrors({ form: getSaveProjectErrorMessage(error) });
+    } finally {
+      setIsChangingProfile(false);
+    }
+  };
+
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (isSaving) return;
+
+    if (isAddingNew && servicesBusy) {
+      setErrors({ form: SWITCH_BLOCKED_MESSAGE });
+      return;
+    }
 
     const result = setupSchema.safeParse(formData);
     if (!result.success) {
@@ -220,13 +340,17 @@ export function SetupScreen({
       return;
     }
 
-    const profile = formValuesToProfile(result.data, initialProfile?.id);
+    const profile = formValuesToProfile(
+      result.data,
+      isAddingNew ? undefined : activeProfileId ?? undefined,
+    );
 
     setIsSaving(true);
 
     try {
-      await window.repoRunner.saveProject(profile);
-      onSave(profile);
+      const nextState = await window.repoRunner.saveProject(profile);
+      setIsAddingNew(false);
+      onSave(nextState);
     } catch (error) {
       const message = getSaveProjectErrorMessage(error);
       const field = saveErrorField(message);
@@ -331,7 +455,7 @@ export function SetupScreen({
             className="text-xl font-semibold tracking-tight"
             style={{ color: "#dedad5", letterSpacing: "-0.01em" }}
           >
-            RepoRunner Setup
+            {overlay ? "Edit RepoRunner Setup" : "RepoRunner Setup"}
           </CardTitle>
           <CardDescription className="text-xs" style={{ color: "#5a5856" }}>
             Save your local app setup once. Run it with buttons after that.
@@ -340,6 +464,85 @@ export function SetupScreen({
 
         <CardContent className="px-5 pb-6 pt-5 sm:px-8 sm:pb-8 sm:pt-6">
           <form onSubmit={onSubmit} className="space-y-6">
+            <div
+              className="grid grid-cols-1 gap-3 rounded-lg p-3 sm:grid-cols-[1fr_auto] sm:items-start"
+              style={{
+                background: "#080808",
+                border: "1px solid #181818",
+              }}
+            >
+              <div className="space-y-1.5">
+                <label className="font-medium" style={labelStyle}>
+                  Saved Repos
+                </label>
+                <Select
+                  value={isAddingNew ? "" : activeProfileId ?? ""}
+                  onValueChange={handleSelectProfile}
+                  disabled={
+                    profiles.length === 0 ||
+                    servicesBusy ||
+                    isChangingProfile
+                  }
+                >
+                  <SelectTrigger
+                    className="h-10 focus:ring-[#4a1218]/35"
+                    style={{
+                      background: "#060606",
+                      border: "1px solid #21191a",
+                      color: "#dedad5",
+                    }}
+                  >
+                    <SelectValue
+                      placeholder={
+                        profiles.length === 0
+                          ? "No saved repos yet"
+                          : "New repo setup"
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {profiles.map((profile) => (
+                      <SelectItem key={profile.id} value={profile.id}>
+                        {profile.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <span
+                  aria-hidden="true"
+                  className="hidden font-medium sm:block sm:invisible"
+                  style={labelStyle}
+                >
+                  Saved Repos
+                </span>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={handleAddNew}
+                  disabled={servicesBusy || isChangingProfile}
+                  className="h-10 whitespace-nowrap px-3 text-xs"
+                  style={{
+                    background: "#0d0d0d",
+                    border: "1px solid #242020",
+                    color: "#9a9896",
+                  }}
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Add new repo
+                </Button>
+              </div>
+              {servicesBusy && (
+                <p
+                  className="text-[0.72rem] leading-snug text-[#d18a90] sm:col-span-2"
+                  role="status"
+                >
+                  {SWITCH_BLOCKED_MESSAGE}
+                </p>
+              )}
+            </div>
+
             {/* Row 1: Project Name | Repo Folder */}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-[0.9fr_1.1fr] md:gap-5">
               <div className="space-y-1.5">
@@ -352,7 +555,7 @@ export function SetupScreen({
                 </label>
                 <Input
                   id="setup-project-name"
-                  placeholder="My Cool App"
+                  placeholder={placeholderExamples.name}
                   value={formData.name}
                   onChange={(event) => updateField("name", event.target.value)}
                   className={inputClassName}
@@ -372,7 +575,7 @@ export function SetupScreen({
                 <div className="flex flex-col gap-2 sm:flex-row">
                   <Input
                     id="setup-repo-path"
-                    placeholder="/path/to/project"
+                    placeholder={placeholderExamples.repoPath}
                     value={formData.repoPath}
                     onChange={(event) =>
                       updateField("repoPath", event.target.value)
@@ -421,6 +624,7 @@ export function SetupScreen({
               </label>
               <Input
                 id="setup-preview-url"
+                placeholder={placeholderExamples.previewUrl}
                 value={formData.previewUrl}
                 onChange={(event) =>
                   updateField("previewUrl", event.target.value)
@@ -448,6 +652,7 @@ export function SetupScreen({
                   </label>
                   <Input
                     id={`setup-${fieldName}`}
+                    placeholder={placeholderExamples[fieldName]}
                     value={formData[fieldName]}
                     onChange={(event) =>
                       updateField(fieldName, event.target.value)
@@ -486,6 +691,7 @@ export function SetupScreen({
                   <Input
                     id={`setup-${fieldName}`}
                     type="number"
+                    placeholder={placeholderExamples[fieldName]}
                     value={formData[fieldName]}
                     onChange={(event) =>
                       updateField(fieldName, event.target.value)
@@ -502,23 +708,54 @@ export function SetupScreen({
               className="pt-6 mt-1"
               style={{ borderTop: "1px solid #161616" }}
             >
-              <button
-                type="submit"
-                disabled={isSaving}
-                className="btn-glass btn-glass-primary w-full justify-center h-10 disabled:cursor-not-allowed disabled:opacity-60"
+              {renderError("form")}
+              {profiles.length >= MAX_FREE_REPO_PROFILES && !isAddingNew && (
+                <p className="mb-3 text-[0.72rem] leading-snug text-[#706d69]">
+                  RepoRunner Free supports up to 5 saved repo setups.
+                </p>
+              )}
+              <div
+                className={
+                  !isAddingNew && activeProfileId
+                    ? "grid grid-cols-1 gap-3 sm:grid-cols-[auto_1fr]"
+                    : ""
+                }
               >
-                <Save className="h-4 w-4 flex-none" strokeWidth={1.5} />
-                <span
-                  style={{
-                    fontSize: "0.63rem",
-                    letterSpacing: "0.03em",
-                    lineHeight: 1,
-                  }}
+                {!isAddingNew && activeProfileId && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={handleDeleteProfile}
+                    disabled={servicesBusy || isChangingProfile || isSaving}
+                    className="h-10 px-3 text-xs"
+                    style={{
+                      background: "#0d0809",
+                      border: "1px solid #351318",
+                      color: "#c85c66",
+                    }}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Delete setup
+                  </Button>
+                )}
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="btn-glass btn-glass-primary w-full justify-center !h-10 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {isSaving ? "Saving..." : "Save Configuration"}
-                </span>
-                <ArrowRight className="h-4 w-4 flex-none" strokeWidth={1.5} />
-              </button>
+                  <Save className="h-4 w-4 flex-none" strokeWidth={1.5} />
+                  <span
+                    style={{
+                      fontSize: "0.63rem",
+                      letterSpacing: "0.03em",
+                      lineHeight: 1,
+                    }}
+                  >
+                    {isSaving ? "Saving..." : "Save Repo Setup"}
+                  </span>
+                  <ArrowRight className="h-4 w-4 flex-none" strokeWidth={1.5} />
+                </button>
+              </div>
             </div>
           </form>
         </CardContent>

@@ -8,7 +8,15 @@ contextBridge.exposeInMainWorld("repoRunner", {
   saveProject: (profile: ProjectProfile) =>
     ipcRenderer.invoke("save-project", profile),
 
+  loadProjectState: () => ipcRenderer.invoke("load-project-state"),
+
   loadProject: () => ipcRenderer.invoke("load-project"),
+
+  setActiveProject: (profileId: string) =>
+    ipcRenderer.invoke("set-active-project", profileId),
+
+  deleteProject: (profileId: string) =>
+    ipcRenderer.invoke("delete-project", profileId),
 
   pullLatest: () => ipcRenderer.invoke("pull-latest"),
 
