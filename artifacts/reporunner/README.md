@@ -18,22 +18,26 @@ For setup examples, see this README. For common problems, see [Known setup issue
 
 - **AI-assisted builders** who received a repo from Cursor, Replit, Claude, ChatGPT, Codex, or another AI coding tool and need to run it locally.
 - **Vibe coders** who want to ship with less setup friction.
-- **Solo founders** who want one project, one panel, and a simpler local run workflow.
+- **Solo founders** who want one active repo, one panel, and a simpler local run workflow.
 - **Anyone running a local repo** who wants pull, install, start, stop, restart, open preview, and inspect logs in one place.
 
 ---
 
 ## Current status
 
-V0 desktop build. The single-project core workflow is functional and has passed a local end-to-end smoke test.
+RepoRunner v0.1.3 desktop build. The multiple saved repo setup workflow is functional and has passed a local end-to-end smoke test.
 
-RepoRunner is intentionally narrow right now: it focuses on running one local app reliably from a desktop control panel.
+RepoRunner is intentionally narrow right now: it keeps up to 5 saved repo setups ready while running one active local app at a time from a desktop control panel.
 
 ---
 
 ## Features
 
-- Save one local project profile: repo path, commands, ports, and preview URL
+- Save up to 5 local repo setups in RepoRunner Free: repo paths, commands, ports, and preview URLs
+- Select between saved setups from the setup screen
+- Only one repo is active/running at a time
+- Switching saved setups is safely blocked while services are running
+- Deleting a saved setup does not delete files from the computer
 - Validate the local repo path before saving setup
 - **Pull latest** — runs `git pull` in your repo directory
 - **Install** — runs your install command, such as `npm install` or `pnpm install`
@@ -46,7 +50,7 @@ RepoRunner is intentionally narrow right now: it focuses on running one local ap
 - **View live logs** — colored by source: git, install, frontend, backend, and system
 - **Copy Logs** — copies full log output to clipboard
 - **Clear Logs** — clears the log panel
-- **Edit Setup** — reopen the config modal without losing running services
+- **Edit Setup** — add, select, update, or delete saved repo setups
 
 ---
 
@@ -58,7 +62,7 @@ RepoRunner is intentionally narrow right now: it focuses on running one local ap
    - Preview URL, such as `http://localhost:3000`
    - Install, frontend, and optional backend commands
    - Frontend and optional backend ports for readiness checks
-3. Click **Save Configuration**. The dashboard loads.
+3. Click **Save Repo Setup**. The dashboard loads.
 4. Use Quick Actions:
    - **Pull** to fetch the latest code
    - **Install** to run your install command
@@ -67,7 +71,9 @@ RepoRunner is intentionally narrow right now: it focuses on running one local ap
    - **Restart** to run a full stop-and-start cycle
    - **Open** to launch your preview URL
 5. Watch the log panel for real-time output from each service.
-6. Click **Edit Setup** in the header to adjust config at any time.
+6. Click **Edit Setup** in the header to update the active setup or add, select, and delete saved repo setups.
+7. Click **Add new repo** to open a blank setup form. Stop running services before switching saved setups.
+8. RepoRunner remembers the selected saved setup between restarts.
 
 ## Example setup recipes
 

@@ -92,6 +92,10 @@ If your project does not have a backend service, leave the backend command and b
 
 RepoRunner will skip backend startup and only run the frontend command.
 
+## Stop services before switching saved setups
+
+RepoRunner can save multiple setups, but it runs one active repo at a time. Stop running services before switching saved setups.
+
 ## Unsigned Windows installer warning
 
 RepoRunner is currently an unsigned Windows V0 app. Windows may show a security warning during install.

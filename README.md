@@ -2,13 +2,13 @@
 
 ## Download
 
-RepoRunner v0.1.2 is available for Windows.
+RepoRunner v0.1.3 is available for Windows.
 
 - Website: https://reporunnerapp.com
 - Latest release: https://github.com/BoogieDowns/RepoRunner/releases/latest
-- Direct installer: https://github.com/BoogieDowns/RepoRunner/releases/download/v0.1.2/RepoRunner.Setup.0.1.2.exe
+- Direct installer: https://github.com/BoogieDowns/RepoRunner/releases/download/v0.1.3/RepoRunner.Setup.0.1.3.exe
 
-Note: RepoRunner v0.1.2 is currently unsigned, so Windows may show a security warning during install.
+Note: RepoRunner v0.1.3 is currently unsigned, so Windows may show a security warning during install.
 
 > Import your repo once. Save the run setup once. Then pull, install, start, stop, restart, open preview, and inspect logs with buttons.
 
@@ -26,8 +26,11 @@ For setup examples, see the [full documentation](artifacts/reporunner/README.md)
 
 ## What it does
 
-Save a project profile once — repo path, commands, ports, and preview URL. Then drive everything from a single control panel:
+Save up to 5 repo setups in RepoRunner Free — repo paths, commands, ports, and preview URLs. Select one active repo, then drive it from a single control panel:
 
+- **Saved repo setups** — add, save, select, and delete setups from Edit RepoRunner Setup
+- **One active repo at a time** — switching saved setups is blocked while services are running
+- **Safe setup deletion** — removes the setup from RepoRunner without deleting project files
 - **Pull** — runs `git pull` in your repo directory
 - **Install** — runs your install command, such as `npm install` or `pnpm install`
 - **Start Frontend / Start Backend** — starts your configured services with live log output
@@ -77,7 +80,7 @@ For common setup problems, see [Known setup issues](artifacts/reporunner/docs/kn
 
 ## Status
 
-RepoRunner v0.1.2 is the current Windows desktop release. The single-project core workflow is functional and smoke-tested. Windows desktop only.
+RepoRunner v0.1.3 is the current Windows desktop release. The multiple saved repo setup workflow is functional and smoke-tested. Windows desktop only.
 
 
 
