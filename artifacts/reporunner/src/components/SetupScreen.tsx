@@ -77,6 +77,28 @@ const defaultFormValues: SetupFormState = {
   backendPort: "3001",
 };
 
+const blankFormValues: SetupFormState = {
+  name: "",
+  repoPath: "",
+  installCommand: "",
+  frontendCommand: "",
+  backendCommand: "",
+  previewUrl: "",
+  frontendPort: "",
+  backendPort: "",
+};
+
+const placeholderExamples: SetupFormState = {
+  name: "My Cool App",
+  repoPath: "C:\\path\\to\\project",
+  previewUrl: "http://localhost:3000",
+  installCommand: "npm install",
+  frontendCommand: "npm run dev",
+  backendCommand: "npm start",
+  frontendPort: "3000",
+  backendPort: "3001",
+};
+
 function isValidPort(value: string) {
   const port = Number(value);
   return Number.isInteger(port) && port > 0 && port <= 65535;
@@ -248,7 +270,7 @@ export function SetupScreen({
     }
 
     setIsAddingNew(true);
-    setFormData(projectToFormValues(null));
+    setFormData(blankFormValues);
     setErrors({});
   };
 
@@ -443,7 +465,7 @@ export function SetupScreen({
         <CardContent className="px-5 pb-6 pt-5 sm:px-8 sm:pb-8 sm:pt-6">
           <form onSubmit={onSubmit} className="space-y-6">
             <div
-              className="grid grid-cols-1 gap-3 rounded-lg p-3 sm:grid-cols-[1fr_auto] sm:items-end"
+              className="grid grid-cols-1 gap-3 rounded-lg p-3 sm:grid-cols-[1fr_auto] sm:items-start"
               style={{
                 background: "#080808",
                 border: "1px solid #181818",
@@ -463,10 +485,10 @@ export function SetupScreen({
                   }
                 >
                   <SelectTrigger
-                    className="h-10"
+                    className="h-10 focus:ring-[#4a1218]/35"
                     style={{
                       background: "#060606",
-                      border: "1px solid #252220",
+                      border: "1px solid #21191a",
                       color: "#dedad5",
                     }}
                   >
@@ -487,21 +509,30 @@ export function SetupScreen({
                   </SelectContent>
                 </Select>
               </div>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={handleAddNew}
-                disabled={servicesBusy || isChangingProfile}
-                className="h-10 whitespace-nowrap px-3 text-xs"
-                style={{
-                  background: "#0d0d0d",
-                  border: "1px solid #242020",
-                  color: "#9a9896",
-                }}
-              >
-                <Plus className="h-3.5 w-3.5" />
-                Add new repo
-              </Button>
+              <div className="space-y-1.5">
+                <span
+                  aria-hidden="true"
+                  className="hidden font-medium sm:block sm:invisible"
+                  style={labelStyle}
+                >
+                  Saved Repos
+                </span>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={handleAddNew}
+                  disabled={servicesBusy || isChangingProfile}
+                  className="h-10 whitespace-nowrap px-3 text-xs"
+                  style={{
+                    background: "#0d0d0d",
+                    border: "1px solid #242020",
+                    color: "#9a9896",
+                  }}
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Add new repo
+                </Button>
+              </div>
               {servicesBusy && (
                 <p
                   className="text-[0.72rem] leading-snug text-[#d18a90] sm:col-span-2"
@@ -524,7 +555,7 @@ export function SetupScreen({
                 </label>
                 <Input
                   id="setup-project-name"
-                  placeholder="My Cool App"
+                  placeholder={placeholderExamples.name}
                   value={formData.name}
                   onChange={(event) => updateField("name", event.target.value)}
                   className={inputClassName}
@@ -544,7 +575,7 @@ export function SetupScreen({
                 <div className="flex flex-col gap-2 sm:flex-row">
                   <Input
                     id="setup-repo-path"
-                    placeholder="/path/to/project"
+                    placeholder={placeholderExamples.repoPath}
                     value={formData.repoPath}
                     onChange={(event) =>
                       updateField("repoPath", event.target.value)
@@ -593,6 +624,7 @@ export function SetupScreen({
               </label>
               <Input
                 id="setup-preview-url"
+                placeholder={placeholderExamples.previewUrl}
                 value={formData.previewUrl}
                 onChange={(event) =>
                   updateField("previewUrl", event.target.value)
@@ -620,6 +652,7 @@ export function SetupScreen({
                   </label>
                   <Input
                     id={`setup-${fieldName}`}
+                    placeholder={placeholderExamples[fieldName]}
                     value={formData[fieldName]}
                     onChange={(event) =>
                       updateField(fieldName, event.target.value)
@@ -658,6 +691,7 @@ export function SetupScreen({
                   <Input
                     id={`setup-${fieldName}`}
                     type="number"
+                    placeholder={placeholderExamples[fieldName]}
                     value={formData[fieldName]}
                     onChange={(event) =>
                       updateField(fieldName, event.target.value)
@@ -707,7 +741,7 @@ export function SetupScreen({
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="btn-glass btn-glass-primary w-full justify-center h-10 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="btn-glass btn-glass-primary w-full justify-center !h-10 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <Save className="h-4 w-4 flex-none" strokeWidth={1.5} />
                   <span
