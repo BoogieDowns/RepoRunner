@@ -1,6 +1,15 @@
 import { useEffect, useState } from "react";
 import * as z from "zod";
-import { Folder, Save, ArrowRight, Plus, Trash2, X } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Folder,
+  HelpCircle,
+  Plus,
+  Save,
+  Trash2,
+  X,
+} from "lucide-react";
 import {
   MAX_FREE_REPO_PROFILES,
   ProjectProfile,
@@ -62,9 +71,34 @@ type SetupErrors = Partial<Record<keyof SetupFormState | "form", string>>;
 const SWITCH_BLOCKED_MESSAGE =
   "RepoRunner can run one saved repo at a time. Stop the current repo before switching saved setups.";
 const FREE_REPO_LIMIT_MESSAGE =
-  "Repo limit reached. RepoRunner Free currently supports up to 5 saved repo setups.";
+  "RepoRunner Free supports up to 5 saved repo setups. RepoRunner Pro will unlock unlimited saved repos and repo library features.";
 const DELETE_CONFIRMATION_MESSAGE =
-  "Delete this saved repo setup? This removes the setup from RepoRunner. It does not delete files from your computer.";
+  "Delete this saved repo setup? This removes the setup from RepoRunner. It does not delete project files from your computer.";
+
+const setupHelpPages = [
+  {
+    title: "Saved repos",
+    content: [
+      "RepoRunner Free supports up to 5 saved repo setups.",
+      "Saved setups remember the local repo folder, install command, frontend/backend commands, ports, and preview URL.",
+      "RepoRunner Free runs one active saved repo at a time.",
+    ],
+  },
+  {
+    title: "Commands",
+    content: [
+      "Use Windows-safe commands such as npm.cmd install, pnpm.cmd install, npm.cmd run dev, or pnpm.cmd run dev.",
+      "For monorepos, commands can include cd, for example: cd apps\\web && pnpm.cmd run dev",
+    ],
+  },
+  {
+    title: "Pull and delete safety",
+    content: [
+      "Pull runs git pull in the active repo folder using that repo's current branch and upstream remote.",
+      "Deleting a saved setup only removes it from RepoRunner. It does not delete project files from the computer.",
+    ],
+  },
+];
 
 const defaultFormValues: SetupFormState = {
   name: "",
@@ -213,10 +247,16 @@ export function SetupScreen({
   const [isSaving, setIsSaving] = useState(false);
   const [isChangingProfile, setIsChangingProfile] = useState(false);
   const [isAddingNew, setIsAddingNew] = useState(!activeProject);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [helpPageIndex, setHelpPageIndex] = useState(0);
   const [formData, setFormData] = useState<SetupFormState>(() =>
     projectToFormValues(activeProject),
   );
   const [errors, setErrors] = useState<SetupErrors>({});
+
+  const currentHelpPage = setupHelpPages[helpPageIndex] ?? setupHelpPages[0];
+  const isFirstHelpPage = helpPageIndex === 0;
+  const isLastHelpPage = helpPageIndex === setupHelpPages.length - 1;
 
   useEffect(() => {
     if (!isAddingNew) {
@@ -422,6 +462,123 @@ export function SetupScreen({
           }}
         />
 
+        {isHelpOpen && (
+          <div
+            className="fixed inset-0 z-30 flex items-center justify-center px-4 py-6 animate-in fade-in duration-150"
+            style={{ background: "rgba(0,0,0,0.72)" }}
+            onClick={() => setIsHelpOpen(false)}
+            role="presentation"
+          >
+            <div
+              className="w-full max-w-md rounded-xl p-5 shadow-2xl"
+              style={{
+                background: "#0a0a0a",
+                border: "1px solid #242020",
+                boxShadow:
+                  "0 24px 80px rgba(0,0,0,0.9), 0 0 0 1px rgba(185,14,28,0.10)",
+              }}
+              onClick={(event) => event.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="setup-help-title"
+            >
+              <div className="mb-4 flex items-start justify-between gap-4">
+                <div>
+                  <p
+                    className="text-[0.68rem] font-medium uppercase"
+                    style={{ color: "#706d69", letterSpacing: "0.08em" }}
+                  >
+                    Setup help {helpPageIndex + 1}/{setupHelpPages.length}
+                  </p>
+                  <h2
+                    id="setup-help-title"
+                    className="mt-1 text-base font-semibold"
+                    style={{ color: "#dedad5" }}
+                  >
+                    {currentHelpPage.title}
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsHelpOpen(false)}
+                  aria-label="Close setup help"
+                  className="flex h-8 w-8 flex-none items-center justify-center rounded-md transition-all duration-150"
+                  style={{
+                    color: "#706d69",
+                    background: "#0d0d0d",
+                    border: "1px solid #242020",
+                  }}
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                {currentHelpPage.content.map((line) => (
+                  <p
+                    key={line}
+                    className="text-sm leading-relaxed"
+                    style={{ color: "#b8b4af" }}
+                  >
+                    {line}
+                  </p>
+                ))}
+              </div>
+
+              <div className="mt-5 flex items-center justify-between gap-3 border-t border-[#161616] pt-4">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() =>
+                    setHelpPageIndex((page) => Math.max(0, page - 1))
+                  }
+                  disabled={isFirstHelpPage}
+                  className="h-9 px-3 text-xs disabled:opacity-40"
+                  style={{
+                    background: "#0d0d0d",
+                    border: "1px solid #242020",
+                    color: "#9a9896",
+                  }}
+                >
+                  <ArrowLeft className="h-3.5 w-3.5" />
+                  Back
+                </Button>
+                <div className="flex gap-1.5" aria-hidden="true">
+                  {setupHelpPages.map((page, index) => (
+                    <span
+                      key={page.title}
+                      className="h-1.5 w-1.5 rounded-full"
+                      style={{
+                        background:
+                          index === helpPageIndex ? "#b90e1c" : "#34302e",
+                      }}
+                    />
+                  ))}
+                </div>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() =>
+                    setHelpPageIndex((page) =>
+                      Math.min(setupHelpPages.length - 1, page + 1),
+                    )
+                  }
+                  disabled={isLastHelpPage}
+                  className="h-9 px-3 text-xs disabled:opacity-40"
+                  style={{
+                    background: "#0d0d0d",
+                    border: "1px solid #242020",
+                    color: "#9a9896",
+                  }}
+                >
+                  Next
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <CardHeader
           className="space-y-1 px-5 pb-5 pt-6 sm:px-8 sm:pt-7 relative"
           style={{ borderBottom: "1px solid #161616" }}
@@ -451,12 +608,39 @@ export function SetupScreen({
               <X className="w-3.5 h-3.5" />
             </button>
           )}
-          <CardTitle
-            className="text-xl font-semibold tracking-tight"
-            style={{ color: "#dedad5", letterSpacing: "-0.01em" }}
+          <div
+            className={`flex items-center gap-2 ${onClose ? "pr-12" : ""}`}
           >
-            {overlay ? "Edit RepoRunner Setup" : "RepoRunner Setup"}
-          </CardTitle>
+            <CardTitle
+              className="text-xl font-semibold tracking-tight"
+              style={{ color: "#dedad5", letterSpacing: "-0.01em" }}
+            >
+              {overlay ? "Edit RepoRunner Setup" : "RepoRunner Setup"}
+            </CardTitle>
+            <button
+              type="button"
+              onClick={() => setIsHelpOpen(true)}
+              aria-label="Open setup help"
+              className="flex h-7 w-7 items-center justify-center rounded-md transition-all duration-150"
+              style={{
+                color: "#706d69",
+                background: "#0d0d0d",
+                border: "1px solid #242020",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = "#dedad5";
+                e.currentTarget.style.background = "rgba(185,14,28,0.08)";
+                e.currentTarget.style.borderColor = "rgba(185,14,28,0.28)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = "#706d69";
+                e.currentTarget.style.background = "#0d0d0d";
+                e.currentTarget.style.borderColor = "#242020";
+              }}
+            >
+              <HelpCircle className="h-3.5 w-3.5" />
+            </button>
+          </div>
           <CardDescription className="text-xs" style={{ color: "#5a5856" }}>
             Save your local app setup once. Run it with buttons after that.
           </CardDescription>
@@ -711,7 +895,7 @@ export function SetupScreen({
               {renderError("form")}
               {profiles.length >= MAX_FREE_REPO_PROFILES && !isAddingNew && (
                 <p className="mb-3 text-[0.72rem] leading-snug text-[#706d69]">
-                  RepoRunner Free supports up to 5 saved repo setups.
+                  {FREE_REPO_LIMIT_MESSAGE}
                 </p>
               )}
               <div
@@ -751,7 +935,11 @@ export function SetupScreen({
                       lineHeight: 1,
                     }}
                   >
-                    {isSaving ? "Saving..." : "Save Repo Setup"}
+                    {isSaving
+                      ? "Saving..."
+                      : isAddingNew
+                        ? "Save Repo Setup"
+                        : "Update Repo Setup"}
                   </span>
                   <ArrowRight className="h-4 w-4 flex-none" strokeWidth={1.5} />
                 </button>
