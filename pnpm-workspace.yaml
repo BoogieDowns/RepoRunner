@@ -70,8 +70,10 @@ autoInstallPeers: false
 
 onlyBuiltDependencies:
   - '@swc/core'
+  - electron
   - esbuild
   - msw
+  - sharp
   - unrs-resolver
 
 overrides:

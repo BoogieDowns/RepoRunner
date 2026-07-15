@@ -23,6 +23,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectSeparator,
 } from "@/components/ui/select";
 import {
   Card,
@@ -31,6 +32,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 
 type SetupFormState = {
   name: string;
@@ -80,22 +82,23 @@ const setupHelpPages = [
     title: "Saved repos",
     content: [
       "RepoRunner Free supports up to 5 saved repo setups.",
-      "Saved setups remember the local repo folder, install command, frontend/backend commands, ports, and preview URL.",
-      "RepoRunner Free runs one active saved repo at a time.",
+      "Each setup remembers the local repo folder, install command, frontend and backend commands, ports, and preview URL.",
+      "RepoRunner runs one active saved repo at a time. Stop any running services before switching to another setup.",
     ],
   },
   {
     title: "Commands",
     content: [
-      "Use Windows-safe commands such as npm.cmd install, pnpm.cmd install, npm.cmd run dev, or pnpm.cmd run dev.",
-      "For monorepos, commands can include cd, for example: cd apps\\web && pnpm.cmd run dev",
+      "On Windows, use commands such as npm.cmd install, pnpm.cmd install, npm.cmd run dev, or pnpm.cmd run dev.",
+      "Choose the actual repo root folder. For monorepos or apps inside subfolders, include cd in the command, for example:",
+      "cd apps\\web && pnpm.cmd run dev",
     ],
   },
   {
     title: "Pull and delete safety",
     content: [
-      "Pull runs git pull in the active repo folder using that repo's current branch and upstream remote.",
-      "Deleting a saved setup only removes it from RepoRunner. It does not delete project files from the computer.",
+      "Pull runs git pull in the active repo folder using its currently checked-out branch and configured upstream remote.",
+      "Deleting a saved setup only removes it from RepoRunner. It does not delete the repository or any project files from your computer.",
     ],
   },
 ];
@@ -247,6 +250,7 @@ export function SetupScreen({
   const [isSaving, setIsSaving] = useState(false);
   const [isChangingProfile, setIsChangingProfile] = useState(false);
   const [isAddingNew, setIsAddingNew] = useState(!activeProject);
+  const NEW_REPO_OPTION = "__new_repo_setup";
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [helpPageIndex, setHelpPageIndex] = useState(0);
   const [formData, setFormData] = useState<SetupFormState>(() =>
@@ -315,6 +319,23 @@ export function SetupScreen({
   };
 
   const handleSelectProfile = async (profileId: string) => {
+    if (profileId === NEW_REPO_OPTION) {
+      if (servicesBusy) {
+        setErrors({ form: SWITCH_BLOCKED_MESSAGE });
+        return;
+      }
+
+      if (profiles.length >= MAX_FREE_REPO_PROFILES) {
+        setErrors({ form: FREE_REPO_LIMIT_MESSAGE });
+        return;
+      }
+
+      setIsAddingNew(true);
+      setFormData(blankFormValues);
+      setErrors({});
+      return;
+    }
+
     if (servicesBusy) {
       setErrors({ form: SWITCH_BLOCKED_MESSAGE });
       return;
@@ -474,15 +495,20 @@ export function SetupScreen({
               style={{
                 background: "#0a0a0a",
                 border: "1px solid #242020",
-                boxShadow:
-                  "0 24px 80px rgba(0,0,0,0.9), 0 0 0 1px rgba(185,14,28,0.10)",
+                boxShadow: "0 24px 80px rgba(0,0,0,0.9), 0 0 0 1px rgba(185,14,28,0.10)",
+                display: "flex",
+                flexDirection: "column",
+                width: "100%",
+                maxWidth: "520px",
+                height: "360px",
+                minHeight: "320px",
               }}
               onClick={(event) => event.stopPropagation()}
               role="dialog"
               aria-modal="true"
               aria-labelledby="setup-help-title"
             >
-              <div className="mb-4 flex items-start justify-between gap-4">
+              <div className="mb-4 flex items-start justify-between gap-4" style={{ flex: "0 0 auto" }}>
                 <div>
                   <p
                     className="text-[0.68rem] font-medium uppercase"
@@ -498,34 +524,46 @@ export function SetupScreen({
                     {currentHelpPage.title}
                   </h2>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setIsHelpOpen(false)}
-                  aria-label="Close setup help"
-                  className="flex h-8 w-8 flex-none items-center justify-center rounded-md transition-all duration-150"
-                  style={{
-                    color: "#706d69",
-                    background: "#0d0d0d",
-                    border: "1px solid #242020",
-                  }}
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              </div>
-
-              <div className="space-y-3">
-                {currentHelpPage.content.map((line) => (
-                  <p
-                    key={line}
-                    className="text-sm leading-relaxed"
-                    style={{ color: "#b8b4af" }}
+                  <button
+                    type="button"
+                    onClick={() => setIsHelpOpen(false)}
+                    aria-label="Close setup help"
+                    className="flex h-8 w-8 flex-none items-center justify-center rounded-md transition-all duration-150"
+                    style={{
+                      color: "#706d69",
+                      background: "#0d0d0d",
+                      border: "1px solid #242020",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color = "#b90e1c";
+                      e.currentTarget.style.background = "rgba(185,14,28,0.08)";
+                      e.currentTarget.style.borderColor = "rgba(185,14,28,0.28)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = "#706d69";
+                      e.currentTarget.style.background = "#0d0d0d";
+                      e.currentTarget.style.borderColor = "#242020";
+                    }}
                   >
-                    {line}
-                  </p>
-                ))}
+                    <X className="h-3.5 w-3.5" />
+                  </button>
               </div>
 
-              <div className="mt-5 flex items-center justify-between gap-3 border-t border-[#161616] pt-4">
+              <div style={{ flex: "1 1 auto", overflowY: "auto", paddingRight: 4 }}>
+                <div className="space-y-3">
+                  {currentHelpPage.content.map((line) => (
+                    <p
+                      key={line}
+                      className="text-sm leading-relaxed"
+                      style={{ color: "#b8b4af" }}
+                    >
+                      {line}
+                    </p>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-5 flex items-center justify-between gap-3 border-t border-[#161616] pt-4" style={{ flex: "0 0 auto" }}>
                 <Button
                   type="button"
                   variant="secondary"
@@ -538,6 +576,21 @@ export function SetupScreen({
                     background: "#0d0d0d",
                     border: "1px solid #242020",
                     color: "#9a9896",
+                  }}
+                  onMouseEnter={(e) => {
+                    if ((e.currentTarget as HTMLButtonElement).disabled) return;
+                    e.currentTarget.style.borderColor = "rgba(185,14,28,0.18)";
+                    e.currentTarget.style.color = "#d9b0b3";
+                    e.currentTarget.style.boxShadow = "0 0 10px rgba(185,14,28,0.06)";
+                    const icon = e.currentTarget.querySelector("svg");
+                    if (icon) (icon as SVGElement).style.opacity = "1";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = "#242020";
+                    e.currentTarget.style.color = "#9a9896";
+                    e.currentTarget.style.boxShadow = "none";
+                    const icon = e.currentTarget.querySelector("svg");
+                    if (icon) (icon as SVGElement).style.opacity = "";
                   }}
                 >
                   <ArrowLeft className="h-3.5 w-3.5" />
@@ -569,6 +622,21 @@ export function SetupScreen({
                     background: "#0d0d0d",
                     border: "1px solid #242020",
                     color: "#9a9896",
+                  }}
+                  onMouseEnter={(e) => {
+                    if ((e.currentTarget as HTMLButtonElement).disabled) return;
+                    e.currentTarget.style.borderColor = "rgba(185,14,28,0.18)";
+                    e.currentTarget.style.color = "#d9b0b3";
+                    e.currentTarget.style.boxShadow = "0 0 10px rgba(185,14,28,0.06)";
+                    const icon = e.currentTarget.querySelector("svg");
+                    if (icon) (icon as SVGElement).style.opacity = "1";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = "#242020";
+                    e.currentTarget.style.color = "#9a9896";
+                    e.currentTarget.style.boxShadow = "none";
+                    const icon = e.currentTarget.querySelector("svg");
+                    if (icon) (icon as SVGElement).style.opacity = "";
                   }}
                 >
                   Next
@@ -615,7 +683,7 @@ export function SetupScreen({
               className="text-xl font-semibold tracking-tight"
               style={{ color: "#dedad5", letterSpacing: "-0.01em" }}
             >
-              {overlay ? "Edit RepoRunner Setup" : "RepoRunner Setup"}
+              {overlay ? "Edit Repo Setup" : "RepoRunner Setup"}
             </CardTitle>
             <button
               type="button"
@@ -649,7 +717,7 @@ export function SetupScreen({
         <CardContent className="px-5 pb-6 pt-5 sm:px-8 sm:pb-8 sm:pt-6">
           <form onSubmit={onSubmit} className="space-y-6">
             <div
-              className="grid grid-cols-1 gap-3 rounded-lg p-3 sm:grid-cols-[1fr_auto] sm:items-start"
+              className="grid grid-cols-1 gap-3 rounded-lg p-3 sm:grid-cols-1 sm:items-start"
               style={{
                 background: "#080808",
                 border: "1px solid #181818",
@@ -662,14 +730,10 @@ export function SetupScreen({
                 <Select
                   value={isAddingNew ? "" : activeProfileId ?? ""}
                   onValueChange={handleSelectProfile}
-                  disabled={
-                    profiles.length === 0 ||
-                    servicesBusy ||
-                    isChangingProfile
-                  }
+                  disabled={servicesBusy || isChangingProfile}
                 >
                   <SelectTrigger
-                    className="h-10 focus:ring-[#4a1218]/35"
+                    className="h-10 w-full focus:ring-[#4a1218]/35"
                     style={{
                       background: "#060606",
                       border: "1px solid #21191a",
@@ -679,8 +743,8 @@ export function SetupScreen({
                     <SelectValue
                       placeholder={
                         profiles.length === 0
-                          ? "No saved repos yet"
-                          : "New repo setup"
+                          ? "New repo setup"
+                          : "Select a saved repo"
                       }
                     />
                   </SelectTrigger>
@@ -690,41 +754,34 @@ export function SetupScreen({
                         {profile.name}
                       </SelectItem>
                     ))}
+                    <SelectSeparator />
+                    <SelectItem
+                      value={NEW_REPO_OPTION}
+                      className="text-[#c8c0ba] italic"
+                      disabled={profiles.length >= MAX_FREE_REPO_PROFILES}
+                    >
+                      + New repo setup
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-1.5">
-                <span
-                  aria-hidden="true"
-                  className="hidden font-medium sm:block sm:invisible"
-                  style={labelStyle}
-                >
-                  Saved Repos
-                </span>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={handleAddNew}
-                  disabled={servicesBusy || isChangingProfile}
-                  className="h-10 whitespace-nowrap px-3 text-xs"
-                  style={{
-                    background: "#0d0d0d",
-                    border: "1px solid #242020",
-                    color: "#9a9896",
-                  }}
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  Add new repo
-                </Button>
-              </div>
               {servicesBusy && (
                 <p
-                  className="text-[0.72rem] leading-snug text-[#d18a90] sm:col-span-2"
+                  className="text-[0.72rem] leading-snug text-[#d18a90]"
                   role="status"
                 >
                   {SWITCH_BLOCKED_MESSAGE}
                 </p>
               )}
+            </div>
+            <Separator className="border-[#161616]" />
+            <div className="pb-2">
+              <p
+                className="text-xs font-medium uppercase tracking-[0.16em]"
+                style={{ color: "#6a6864" }}
+              >
+                Setup Details
+              </p>
             </div>
 
             {/* Row 1: Project Name | Repo Folder */}
@@ -790,7 +847,7 @@ export function SetupScreen({
                     }}
                   >
                     <Folder className="h-3.5 w-3.5 mr-1.5 flex-none" />
-                    Choose
+                    Choose Folder
                   </Button>
                 </div>
                 {renderError("repoPath")}

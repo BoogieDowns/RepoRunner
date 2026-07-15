@@ -30,6 +30,7 @@ function App() {
   });
   const [isEditing, setIsEditing] = useState(false);
   const [editClosing, setEditClosing] = useState(false);
+  const [showSetup, setShowSetup] = useState(true);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -91,8 +92,15 @@ function App() {
     ensureServicesStopped();
     const nextState = await window.repoRunner.deleteProject(profileId);
     setProjectState(nextState);
+    // Close edit overlay when deleting the active profile (edit modal flow)
     if (!nextState.activeProfileId) {
       setIsEditing(false);
+    }
+    // If there are no saved profiles left and the full-screen setup overlay
+    // is open (showSetup), close it so the dashboard shell (with pulse)
+    // becomes visible immediately.
+    if ((nextState.profiles ?? []).length === 0) {
+      setShowSetup(false);
     }
   };
 
@@ -118,21 +126,61 @@ function App() {
   }
 
   if (!activeProject) {
+    const placeholderProject = {
+      id: "",
+      name: "No repo selected",
+      repoPath: "",
+      installCommand: "",
+      frontendCommand: "",
+      backendCommand: "",
+      previewUrl: "",
+      frontendPort: undefined,
+      backendPort: undefined,
+    };
+
     return (
       <TooltipProvider>
-        <div className="min-h-screen w-full bg-background text-foreground font-sans">
-          <SetupScreen
-            profiles={projectState.profiles}
-            activeProfileId={projectState.activeProfileId}
-            activeProject={activeProject}
-            servicesBusy={servicesBusy}
-            onSave={(nextState) => {
-              setProjectState(nextState);
-              setIsEditing(false);
-            }}
-            onSelectProfile={handleSelectProfile}
-            onDeleteProfile={handleDeleteProfile}
+        <div className="min-h-screen w-full bg-background text-foreground font-sans relative">
+          <Dashboard
+            project={placeholderProject}
+            onEdit={() => setShowSetup(true)}
+            controlsDisabled={true}
+            showNoRepoPulse={projectState.profiles.length === 0}
+            showPlaceholderProjectName={true}
           />
+
+          {showSetup && (
+            <>
+              <div
+                className="fixed inset-0 z-40"
+                style={{
+                  background: "rgba(0,0,0,0.45)",
+                  backdropFilter: "blur(2px)",
+                  WebkitBackdropFilter: "blur(2px)",
+                }}
+                onClick={() => setShowSetup(false)}
+                aria-hidden="true"
+              />
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8 pointer-events-none">
+                <div className="pointer-events-auto w-full max-w-4xl">
+                  <SetupScreen
+                    overlay
+                    profiles={projectState.profiles}
+                    activeProfileId={projectState.activeProfileId}
+                    activeProject={activeProject}
+                    servicesBusy={servicesBusy}
+                    onSave={(nextState) => {
+                      setProjectState(nextState);
+                      setShowSetup(false);
+                    }}
+                    onSelectProfile={handleSelectProfile}
+                    onDeleteProfile={handleDeleteProfile}
+                    onClose={() => setShowSetup(false)}
+                  />
+                </div>
+              </div>
+            </>
+          )}
         </div>
         <Toaster />
       </TooltipProvider>
