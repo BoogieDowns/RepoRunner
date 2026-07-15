@@ -540,6 +540,9 @@ function StatusTextFade({
 interface DashboardProps {
   project: ProjectProfile;
   onEdit: () => void;
+  controlsDisabled?: boolean;
+  showNoRepoPulse?: boolean;
+  showPlaceholderProjectName?: boolean;
 }
 
 const MONO: React.CSSProperties = { fontFamily: "'JetBrains Mono', monospace" };
@@ -551,7 +554,8 @@ const LABEL: React.CSSProperties = {
   textTransform: "uppercase",
 };
 
-export function Dashboard({ project, onEdit }: DashboardProps) {
+export function Dashboard({ project, onEdit, controlsDisabled = false, showNoRepoPulse = false, showPlaceholderProjectName = false }: DashboardProps) {
+  // showNoRepoPulse is applied via the `rr-no-repo-pulse` class below.
   const { toast } = useToast();
   const [statuses, setStatuses] = useState<ServiceStatuses>({
     frontend: "stopped",
@@ -922,7 +926,11 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
         <div className="flex flex-col justify-center min-w-0 flex-1">
           <span
             className="text-[17px] leading-tight truncate"
-            style={{ fontWeight: 600, color: "#dedad5" }}
+            style={{
+              fontWeight: showPlaceholderProjectName ? 400 : 600,
+              color: showPlaceholderProjectName ? "#9a9896" : "#dedad5",
+              fontStyle: showPlaceholderProjectName ? "italic" : "normal",
+            }}
           >
             {project.name}
           </span>
@@ -935,18 +943,28 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
           </span>
         </div>
 
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onEdit}
-          className="flex-none h-8 px-3 gap-1.5 text-[12px] font-medium"
-          style={{ color: "#4a4845", background: "transparent" }}
-          onMouseEnter={(e) => { e.currentTarget.style.color = "#9a9896"; e.currentTarget.style.background = "#111"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.color = "#4a4845"; e.currentTarget.style.background = "transparent"; }}
-        >
-          <Settings2 className="w-3.5 h-3.5" />
-          Edit Setup
-        </Button>
+        <>
+        <style>{`@keyframes rr-slow-pulse { 0% { box-shadow: 0 0 0 0 rgba(185,14,28,0); border-color: rgba(185,14,28,0.06); } 50% { box-shadow: 0 0 28px 4px rgba(230,14,34,0.25); border-color: rgba(230,14,34,0.62); } 100% { box-shadow: 0 0 0 0 rgba(185,14,28,0); border-color: rgba(185,14,28,0.06); } } .rr-no-repo-pulse { animation: rr-slow-pulse 3s ease-in-out infinite; will-change: box-shadow, border-color; } .rr-no-repo-pulse { border-color: rgba(185,14,28,0.06) !important; }`}</style>
+        {(() => {
+          const base = { color: "#4a4845", background: "transparent", borderColor: "rgba(185,14,28,0.06)" } as React.CSSProperties;
+          const buttonStyle = base;
+
+          return (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onEdit}
+              className={`flex-none h-8 px-3 gap-1.5 text-[12px] font-medium ${showNoRepoPulse ? "rr-no-repo-pulse" : ""}`}
+              style={buttonStyle}
+              onMouseEnter={(e) => { e.currentTarget.style.color = "#9a9896"; e.currentTarget.style.background = "#111"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = "#4a4845"; e.currentTarget.style.background = "transparent"; }}
+            >
+              <Settings2 className="w-3.5 h-3.5" />
+              Edit Setup
+            </Button>
+          );
+        })()}
+        </>
       </header>
 
       {/* ── Main content ── */}
@@ -976,7 +994,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                       label="Start Frontend"
                       icon={Play}
                       onClick={wrapAction("startFront", window.repoRunner.startFrontend)}
-                      disabled={statuses.frontend === "running" || statuses.frontend === "starting"}
+                      disabled={controlsDisabled || statuses.frontend === "running" || statuses.frontend === "starting"}
                       loading={actionLoading["startFront"]}
                       variant="default"
                       style={{ flex: "1 1 0", justifyContent: "center", padding: "0 1rem" }}
@@ -985,7 +1003,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                       label="Start Backend"
                       icon={Play}
                       onClick={wrapAction("startBack", window.repoRunner.startBackend)}
-                      disabled={!hasBackend || statuses.backend === "running" || statuses.backend === "starting"}
+                      disabled={controlsDisabled || !hasBackend || statuses.backend === "running" || statuses.backend === "starting"}
                       loading={actionLoading["startBack"]}
                       variant="default"
                       style={{ flex: "1 1 0", justifyContent: "center", padding: "0 1rem" }}
@@ -1008,6 +1026,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                       icon={GitPullRequest}
                       onClick={wrapAction("pull", window.repoRunner.pullLatest)}
                       loading={actionLoading["pull"]}
+                      disabled={controlsDisabled}
                       variant="outline"
                       style={{ flex: "1 1 0", justifyContent: "center", padding: "0 1rem" }}
                     />
@@ -1016,6 +1035,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                       icon={Webhook}
                       onClick={wrapAction("install", window.repoRunner.runInstall)}
                       loading={actionLoading["install"]}
+                      disabled={controlsDisabled}
                       variant="outline"
                       style={{ flex: "1 1 0", justifyContent: "center", padding: "0 1rem" }}
                     />
@@ -1024,6 +1044,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                       icon={Orbit}
                       onClick={wrapAction("restart", window.repoRunner.restartAll)}
                       loading={actionLoading["restart"]}
+                      disabled={controlsDisabled}
                       variant="outline"
                       style={{ flex: "1 1 0", justifyContent: "center", padding: "0 1rem" }}
                     />
@@ -1032,6 +1053,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
                       icon={Heart}
                       onClick={wrapAction("preview", window.repoRunner.openPreview)}
                       loading={actionLoading["preview"]}
+                      disabled={controlsDisabled}
                       variant="outline"
                       style={{ flex: "1 1 0", justifyContent: "center", padding: "0 1rem" }}
                     />
@@ -1131,6 +1153,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
               style={{ color: "#4a4846" }}
               onMouseEnter={(e) => { e.currentTarget.style.color = "#9a9896"; e.currentTarget.style.background = "#111"; }}
               onMouseLeave={(e) => { e.currentTarget.style.color = "#4a4846"; e.currentTarget.style.background = "transparent"; }}
+              disabled={controlsDisabled}
             >
               <Copy className="w-3 h-3" />
               Copy
@@ -1143,6 +1166,7 @@ export function Dashboard({ project, onEdit }: DashboardProps) {
               style={{ color: "#4a4846" }}
               onMouseEnter={(e) => { e.currentTarget.style.color = "#9a9896"; e.currentTarget.style.background = "#111"; }}
               onMouseLeave={(e) => { e.currentTarget.style.color = "#4a4846"; e.currentTarget.style.background = "transparent"; }}
+              disabled={controlsDisabled}
             >
               <Trash2 className="w-3 h-3" />
               Clear
