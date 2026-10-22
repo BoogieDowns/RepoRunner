@@ -273,10 +273,17 @@ export function setupIpc() {
   });
 
   ipcMain.handle("stop-services", async () => {
-    const project = loadProject();
-    if (!project) throw new Error("No project configured");
+    // Stop only ever terminates processes RepoRunner tracks (ports are used for
+    // diagnostics), so it must keep working when the saved setups can't be
+    // read or no setup is active.
+    let project: ProjectProfile | null = null;
+    try {
+      project = loadProject();
+    } catch {
+      emitLog("system", "Saved repo setups are unavailable; stopping tracked services only.");
+    }
     emitLog("system", "Stopping services...");
-    await stopAllServices(project.frontendPort, project.backendPort);
+    await stopAllServices(project?.frontendPort, project?.backendPort);
     emitLog("system", "Services stopped.");
   });
 

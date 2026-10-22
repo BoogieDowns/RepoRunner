@@ -1,5 +1,4 @@
 import fs from "fs";
-import crypto from "crypto";
 import type { ProjectProfile } from "../src/types.js";
 import { sanitizeCommandInput } from "./commandUtils.js";
 
@@ -134,13 +133,18 @@ export function validateProjectProfileForSave(input: unknown): ProjectProfile {
   };
 }
 
+/**
+ * Validates one stored profile. Returns `id: ""` when the entry has no stored
+ * ID; the store assigns a stable fallback ID instead of a random one so that
+ * loading never has to rewrite the file. Error messages name only the field,
+ * never the stored value.
+ */
 export function validateProjectProfileForLoad(input: unknown): ProjectProfile {
   if (!isRecord(input)) {
     throw new Error("Invalid project profile: Expected an object");
   }
 
-  const storedId = readOptionalString(input, "id");
-  const id = storedId || crypto.randomUUID();
+  const id = readOptionalString(input, "id");
   const name = readRequiredString(input, "name", "Project name");
   const repoPath = readRequiredString(input, "repoPath", "Repository path");
   const installCommand = readRequiredCommand(input, "installCommand", "Install command");

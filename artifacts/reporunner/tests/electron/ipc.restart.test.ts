@@ -199,4 +199,29 @@ describe("Stop Engine IPC", () => {
     expect(h.waitUntilPortIsFree).not.toHaveBeenCalled();
     expect(processManager.getStatuses()).toEqual({ frontend: "stopped", backend: "stopped" });
   });
+
+  it("still stops tracked services when the saved setups can't be read", async () => {
+    await run(handler("start-frontend")());
+    const [frontPid] = [...children.keys()];
+    h.loadProject.mockImplementation(() => {
+      throw new Error("RepoRunner found a problem with your saved repo setups");
+    });
+
+    await run(handler("stop-services")());
+
+    expect(h.treeKill.mock.calls.map(([pid]) => pid)).toEqual([frontPid]);
+    expect(processManager.getStatuses()).toEqual({ frontend: "stopped", backend: "stopped" });
+  });
+
+  it("runs no command at all when the saved setups can't be read", async () => {
+    h.loadProject.mockImplementation(() => {
+      throw new Error("RepoRunner found a problem with your saved repo setups");
+    });
+
+    for (const channel of ["start-frontend", "start-backend", "restart-all", "run-install", "pull-latest", "open-preview"]) {
+      await expect(run(handler(channel)())).rejects.toThrow("problem with your saved repo setups");
+    }
+    expect(h.spawn).not.toHaveBeenCalled();
+    expect(h.treeKill).not.toHaveBeenCalled();
+  });
 });
