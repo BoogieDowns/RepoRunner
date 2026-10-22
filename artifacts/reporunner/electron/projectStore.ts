@@ -7,9 +7,13 @@ import {
   MAX_FREE_REPO_PROFILES,
   ProjectProfile,
   ProjectProfilesState,
+  PROJECT_STORE_ERROR_MESSAGES,
+  ProjectStoreErrorCode,
   ProjectStoreRecoveryAction,
   ProjectStoreStatus,
 } from "../src/types.js";
+
+export type { ProjectStoreErrorCode };
 import { validateProjectProfileForLoad } from "./projectProfileValidation.js";
 
 /*
@@ -66,53 +70,13 @@ const NOT_FOUND_MESSAGE = "Saved repo setup not found.";
 /** Leave the stored activeProfileId exactly as it is. */
 const KEEP_ACTIVE = Symbol("keep-active");
 
-export type ProjectStoreErrorCode =
-  | "needs-recovery"
-  | "unreadable"
-  | "unsupported-version"
-  | "conflict"
-  | "backup-failed"
-  | "write-failed"
-  | "write-unverified"
-  | "profile-unavailable"
-  | "recovery-not-available"
-  | "backup-unavailable"
-  | "recovery-copy-failed";
-
-const STORE_ERROR_MESSAGES: Record<ProjectStoreErrorCode, string> = {
-  "needs-recovery":
-    "RepoRunner found a problem with your saved repo setups and has paused saving so nothing is overwritten. Your saved file has not been changed.",
-  unreadable:
-    "RepoRunner couldn't open your saved repo setups file. Saving is paused so nothing is overwritten. Your saved file has not been changed.",
-  "unsupported-version":
-    "Your saved repo setups were created by a newer version of RepoRunner. This version won't change or run them. Update RepoRunner to continue.",
-  // Rejected before the primary file was replaced.
-  conflict:
-    "Your saved repo setups changed since RepoRunner last read them, so this change was not saved. The newer saved setups were kept. Reopen RepoRunner and try again.",
-  "backup-failed":
-    "RepoRunner couldn't back up your saved repo setups, so it didn't save the change. Your saved setups were not changed.",
-  // Failed before the primary file was replaced.
-  "write-failed":
-    "RepoRunner couldn't save your repo setups. Your previously saved setups were not changed.",
-  // The primary file was replaced, but reading it back did not match.
-  "write-unverified":
-    "Your change may have been saved, but RepoRunner couldn't confirm it. Reopen RepoRunner and check your saved repo setups before making more changes.",
-  "profile-unavailable":
-    "This saved repo setup can't be used because its saved details are incomplete or invalid.",
-  "recovery-not-available":
-    "That recovery option isn't available for your saved repo setups right now. Nothing was changed.",
-  "backup-unavailable":
-    "RepoRunner couldn't find a usable backup of your saved repo setups. Nothing was changed.",
-  "recovery-copy-failed":
-    "RepoRunner couldn't save a copy of your current saved repo setups, so it didn't make any changes.",
-};
 
 /** Errors carry fixed messages only: no paths, file contents or commands. */
 export class ProjectStoreError extends Error {
   readonly code: ProjectStoreErrorCode;
 
   constructor(code: ProjectStoreErrorCode) {
-    super(STORE_ERROR_MESSAGES[code]);
+    super(PROJECT_STORE_ERROR_MESSAGES[code]);
     // `name` stays "Error": Electron prefixes it to messages crossing IPC and
     // the renderer only strips "Error:".
     this.code = code;

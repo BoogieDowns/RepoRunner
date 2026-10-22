@@ -1,10 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { installMock } from "@/mock/repoRunnerMock";
-import { ProjectProfilesState, ServiceStatuses } from "@/types";
+import { ProjectProfilesState, ProjectStoreStatus, ServiceStatuses } from "@/types";
 import { SetupScreen } from "@/components/SetupScreen";
 import { Dashboard } from "@/components/Dashboard";
+import {
+  displayErrorMessage,
+  isStoreBlocked,
+  readStoreForDisplay,
+  recoveryRevision,
+  runStoreMutation,
+  type ProjectStoreNoticeAction,
+} from "@/lib/projectStoreRecovery";
 
 const isElectronRuntime =
   typeof navigator !== "undefined" && navigator.userAgent.includes("Electron");
@@ -32,18 +40,39 @@ function App() {
   const [editClosing, setEditClosing] = useState(false);
   const [showSetup, setShowSetup] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [storeStatus, setStoreStatus] = useState<ProjectStoreStatus | null>(null);
+  const [storeActionError, setStoreActionError] = useState<string | null>(null);
+
+  /**
+   * Re-reads the saved-setups status and, when the file is usable, the saved
+   * setups. A blocked file never replaces what is shown with an empty list.
+   * Only reads; recovery actions run solely from handleStoreAction.
+   */
+  const refreshStore = useCallback(async () => {
+    const { status, state } = await readStoreForDisplay(window.repoRunner);
+    setStoreStatus(status);
+    if (state) setProjectState(state);
+    return { status, state };
+  }, []);
+
+  const refreshStoreStatus = useCallback(async () => {
+    try {
+      setStoreStatus(await window.repoRunner.getProjectStoreStatus());
+    } catch (err) {
+      console.error("Failed to read saved setups status:", err);
+    }
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
 
     async function load() {
-      try {
-        const loaded = await window.repoRunner.loadProjectState();
-        if (!cancelled) {
-          setProjectState(loaded);
-        }
-      } catch (err) {
-        console.error("Failed to load project state:", err);
+      // Status and setups are read before the first render so a damaged file
+      // is never shown as an empty first launch.
+      const { status, state } = await readStoreForDisplay(window.repoRunner);
+      if (!cancelled) {
+        setStoreStatus(status);
+        if (state) setProjectState(state);
       }
 
       try {
@@ -84,14 +113,22 @@ function App() {
 
   const handleSelectProfile = async (profileId: string) => {
     ensureServicesStopped();
-    const nextState = await window.repoRunner.setActiveProject(profileId);
+    const nextState = await runStoreMutation(
+      () => window.repoRunner.setActiveProject(profileId, projectState.revision),
+      refreshStore,
+    );
     setProjectState(nextState);
+    void refreshStoreStatus();
   };
 
   const handleDeleteProfile = async (profileId: string) => {
     ensureServicesStopped();
-    const nextState = await window.repoRunner.deleteProject(profileId);
+    const nextState = await runStoreMutation(
+      () => window.repoRunner.deleteProject(profileId, projectState.revision),
+      refreshStore,
+    );
     setProjectState(nextState);
+    void refreshStoreStatus();
     // Close edit overlay when deleting the active profile (edit modal flow)
     if (!nextState.activeProfileId) {
       setIsEditing(false);
@@ -104,9 +141,51 @@ function App() {
     }
   };
 
+  const handleStoreAction = async (action: ProjectStoreNoticeAction) => {
+    setStoreActionError(null);
+
+    if (action === "reveal") {
+      try {
+        await window.repoRunner.revealProjectStoreFile();
+      } catch {
+        setStoreActionError("RepoRunner couldn't show the saved setups file location.");
+      }
+      return;
+    }
+
+    const status = storeStatus;
+    if (!status) return;
+
+    try {
+      await window.repoRunner.resolveProjectStoreIssue(action, recoveryRevision(action, status));
+    } catch (err) {
+      setStoreActionError(displayErrorMessage(err, "The recovery action didn't complete."));
+    }
+    // Always show the file as it is now, whether the action worked or not.
+    const { state } = await refreshStore();
+    if (state && !state.profiles.some((profile) => profile.id === state.activeProfileId)) {
+      setShowSetup(true);
+    }
+  };
+
+  const handleSaved = (nextState: ProjectProfilesState) => {
+    setProjectState(nextState);
+    void refreshStoreStatus();
+  };
+
+  const storeProps = {
+    revision: projectState.revision,
+    storeStatus,
+    storeActionError,
+    onStoreAction: handleStoreAction,
+    onStoreError: refreshStore,
+  };
+
   const handleEditOpen = () => {
     setEditClosing(false);
     setIsEditing(true);
+    // Pick up problems that appeared since startup (read-only check).
+    void refreshStoreStatus();
   };
 
   const handleEditClose = () => {
@@ -145,7 +224,7 @@ function App() {
             project={placeholderProject}
             onEdit={() => setShowSetup(true)}
             controlsDisabled={true}
-            showNoRepoPulse={projectState.profiles.length === 0}
+            showNoRepoPulse={projectState.profiles.length === 0 && !isStoreBlocked(storeStatus)}
             showPlaceholderProjectName={true}
           />
 
@@ -162,7 +241,7 @@ function App() {
                 aria-hidden="true"
               />
               <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8 pointer-events-none">
-                <div className="pointer-events-auto w-full max-w-4xl">
+                <div className="pointer-events-auto w-full max-w-4xl max-h-full overflow-y-auto rounded-xl">
                   <SetupScreen
                     overlay
                     profiles={projectState.profiles}
@@ -170,12 +249,13 @@ function App() {
                     activeProject={activeProject}
                     servicesBusy={servicesBusy}
                     onSave={(nextState) => {
-                      setProjectState(nextState);
+                      handleSaved(nextState);
                       setShowSetup(false);
                     }}
                     onSelectProfile={handleSelectProfile}
                     onDeleteProfile={handleDeleteProfile}
                     onClose={() => setShowSetup(false)}
+                    {...storeProps}
                   />
                 </div>
               </div>
@@ -217,7 +297,7 @@ function App() {
                   : "rr-modal-in 0.18s cubic-bezier(0.16,1,0.3,1) forwards",
               }}
             >
-              <div className="pointer-events-auto w-full max-w-4xl">
+              <div className="pointer-events-auto w-full max-w-4xl max-h-full overflow-y-auto rounded-xl">
                 <SetupScreen
                   overlay
                   profiles={projectState.profiles}
@@ -225,12 +305,13 @@ function App() {
                   activeProject={activeProject}
                   servicesBusy={servicesBusy}
                   onSave={(nextState) => {
-                    setProjectState(nextState);
+                    handleSaved(nextState);
                     setIsEditing(false);
                   }}
                   onSelectProfile={handleSelectProfile}
                   onDeleteProfile={handleDeleteProfile}
                   onClose={handleEditClose}
+                  {...storeProps}
                 />
               </div>
             </div>
