@@ -91,6 +91,26 @@ function intercept<K extends "readFileSync" | "openSync" | "renameSync" | "write
   return vi.spyOn(fs, name as never).mockImplementation(((...args: unknown[]) => fail(args, real)) as never);
 }
 
+/**
+ * Runs `onFlush` instead of the real fsync when the new primary file's temp
+ * copy is flushed. Identified by file descriptor rather than call order:
+ * POSIX also fsyncs the folder after renames, Windows doesn't.
+ */
+function onPrimaryTempFlush(onFlush: (real: AnyFn, args: unknown[]) => unknown) {
+  const primaryTempFds = new Set<number>();
+  intercept("openSync", (args, real) => {
+    const fd = real(...args) as number;
+    const name = path.basename(String(args[0]));
+    if (name.startsWith(`${STORE_FILE}.`) && !name.startsWith(BACKUP_FILE) && name.endsWith(".tmp")) {
+      primaryTempFds.add(fd);
+    }
+    return fd;
+  });
+  intercept("fsyncSync", (args, real) =>
+    primaryTempFds.has(args[0] as number) ? onFlush(real, args) : real(...args),
+  );
+}
+
 beforeEach(() => {
   h.userData = fs.mkdtempSync(path.join(os.tmpdir(), "rr-p0b-"));
   vi.spyOn(console, "error").mockImplementation(() => {});
@@ -612,10 +632,8 @@ describe("write failures leave the original intact", () => {
   });
 
   it("failed flush", () => {
-    let calls = 0;
-    intercept("fsyncSync", (args, real) => {
-      if (++calls === 2) throw errnoError("EIO");
-      return real(...args);
+    onPrimaryTempFlush(() => {
+      throw errnoError("EIO");
     });
 
     expectStoreError(() => saveProject(profile("c")), "write-failed");
@@ -792,11 +810,10 @@ describe("revision and conflict detection", () => {
 
   it("an external change between load and replace is detected; the external data wins", () => {
     const external = JSON.stringify({ profiles: [profile("external")], activeProfileId: "external" });
-    let calls = 0;
-    intercept("fsyncSync", (args, real) => {
+    onPrimaryTempFlush((real, args) => {
       real(...args);
       // While the new primary temp file is being written, another program edits the store.
-      if (++calls === 2) fs.writeFileSync(file(), external);
+      fs.writeFileSync(file(), external);
     });
 
     expectStoreError(() => saveProject(profile("b")), "conflict");
@@ -821,10 +838,9 @@ describe("revision and conflict detection", () => {
   });
 
   it("the store file being deleted externally mid-save is a conflict, not a fresh start", () => {
-    let calls = 0;
-    intercept("fsyncSync", (args, real) => {
+    onPrimaryTempFlush((real, args) => {
       real(...args);
-      if (++calls === 2) fs.unlinkSync(file());
+      fs.unlinkSync(file());
     });
 
     expectStoreError(() => saveProject(profile("b")), "conflict");
