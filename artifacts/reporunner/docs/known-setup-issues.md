@@ -96,6 +96,43 @@ RepoRunner will skip backend startup and only run the frontend command.
 
 RepoRunner can save multiple setups, but it runs one active repo at a time. Stop running services before switching saved setups.
 
+## If saved repos can't be loaded
+
+RepoRunner never treats a damaged saved-repos file as "no saved repos", and it never overwrites it on its own. If the file can't be read safely, the setup screen shows a notice instead of an empty setup, and saving, switching and deleting are paused until you choose what to do. Stop Engine keeps working, so anything already running can still be stopped.
+
+The notice only offers the options that are safe for the problem it found:
+
+- **Retry** reads the file again and changes nothing. Use it after closing a program that was using the file (antivirus, a sync tool) or fixing its permissions.
+- **Restore Backup** appears only when RepoRunner has a backup that loads cleanly. It replaces the damaged file with the most recent backup. Changes made after that backup are not included.
+- **Start Fresh** creates a new, empty saved-repos file. Nothing is deleted: the damaged file and the backup are kept as recovery copies first.
+- **Show File Location** opens the folder that contains the saved-repos file.
+
+Restore Backup and Start Fresh always ask you to confirm first, because they replace the file RepoRunner uses. They never run automatically and never start a repo.
+
+### Some saved repos are unavailable
+
+If only some saved repos have incomplete or invalid details, the others keep working. The notice shows how many can't be used and which field is the problem; the unavailable entries are not deleted and still count toward the 5-repo limit.
+
+**Discard Unavailable Entries** removes them after you confirm. A full copy of the file is kept first. If the selected repo was one of the discarded entries, no repo is selected afterwards — RepoRunner won't pick a different one for you.
+
+### Files from a newer RepoRunner
+
+If the saved-repos file was written by a newer version of RepoRunner, this version can't be sure it understands it. It won't change the file or run commands from it. Update RepoRunner to use these saved repos again.
+
+### Where backups and recovery copies are kept
+
+Everything stays next to the saved-repos file (`reporunner-project.json`) in RepoRunner's app data folder:
+
+- `reporunner-project.json.bak`: backup of the previous version, updated on each successful save.
+- `reporunner-project.legacy.json`: one-time copy made when an older single-repo file is converted.
+- `reporunner-project.recovery-<date>-<reason>-<id>.json`: copies made before Restore Backup, Start Fresh or Discard Unavailable Entries.
+
+RepoRunner never deletes recovery copies. You can remove old ones yourself once you no longer need them.
+
+### Only one RepoRunner window
+
+RepoRunner runs as a single instance. Opening it again brings the existing window to the front instead of starting a second copy that could edit the same saved repos or lose track of running services.
+
 ## Unsigned Windows installer warning
 
 RepoRunner is currently an unsigned Windows V0 app. Windows may show a security warning during install.

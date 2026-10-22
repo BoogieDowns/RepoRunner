@@ -88,14 +88,16 @@ Source label colors — do not change:
 
 ---
 
-## Files that must never be modified
+## Protected shared files
 
 | File | Reason |
 |---|---|
 | `src/types.ts` | Shared type contract used by renderer, Electron, and mock |
 | `src/mock/repoRunnerMock.ts` | Browser mock for Replit preview — must stay in sync with the real IPC surface |
 
-If you need new types, add them. Do not modify existing type definitions unless explicitly instructed.
+Do not modify these files unless the task explicitly authorizes it.
+
+When a feature is explicitly authorized and needs them, **additive** changes are permitted: new shared types or constants, new optional fields, new `RepoRunnerAPI` methods or optional parameters, and the matching mock implementations. Do not remove, rename or change the meaning of existing definitions unless explicitly instructed, and do not make unrelated edits to either file.
 
 ---
 
@@ -106,7 +108,7 @@ If you need new types, add them. Do not modify existing type definitions unless 
 - Do not change functionality during visual polish passes
 - Do not "improve" completed areas unless explicitly asked
 - Keep the browser mock (`repoRunnerMock.ts`) in sync with any IPC surface changes
-- When adding a new IPC handler: update `ipc.ts`, `preload.ts`, `types.ts` (the `RepoRunnerAPI` interface), and `repoRunnerMock.ts` together
+- When adding a new IPC handler: update `ipc.ts`, `preload.cts`, `types.ts` (the `RepoRunnerAPI` interface), and `repoRunnerMock.ts` together
 - Avoid broad refactors during small, scoped tasks
 - If a change affects the Electron main process, rebuild with `electron:build-main` before testing
 
@@ -114,7 +116,7 @@ If you need new types, add them. Do not modify existing type definitions unless 
 
 ## IPC surface
 
-All renderer ↔ main communication goes through `window.repoRunner` (injected via `contextBridge` in `preload.ts`).
+All renderer ↔ main communication goes through `window.repoRunner` (injected via `contextBridge` in `preload.cts`).
 
 Current API methods:
 - `selectFolder()` — native folder picker
