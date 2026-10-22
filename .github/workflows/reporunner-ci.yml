@@ -49,6 +49,10 @@ jobs:
         working-directory: artifacts/reporunner
         run: pnpm run typecheck
 
+      - name: Test RepoRunner
+        working-directory: artifacts/reporunner
+        run: pnpm run test
+
       - name: Build Electron main process
         working-directory: artifacts/reporunner
         run: pnpm run electron:build-main

@@ -1,8 +1,9 @@
-import { exec } from "child_process";
+import { execFile } from "child_process";
 import { promisify } from "util";
 import tcpPortUsed from "tcp-port-used";
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
+const PORT_OWNER_LOOKUP_TIMEOUT_MS = 5000;
 
 export async function isPortInUse(port: number): Promise<boolean> {
   // Check both addresses — dev servers may bind to either
@@ -69,68 +70,88 @@ function getExactLocalPort(localAddress: string): number | null {
   return Number(portText);
 }
 
-function netstatRowOwnsPort(line: string, targetPort: number): string | null {
+// A listening socket's foreign address is a wildcard on every Windows locale,
+// whereas the State column ("LISTENING") is translated on non-English systems.
+const LISTENING_FOREIGN_ADDRESSES = new Set(["0.0.0.0:0", "[::]:0"]);
+
+/**
+ * Returns the PID from a `netstat -ano` row only when that row is a TCP
+ * listener bound to exactly `targetPort` on its local address. Rows where the
+ * port only appears in the foreign address (client connections such as a
+ * browser tab), partial port matches (80 vs 8080), UDP rows, and PID 0 are
+ * rejected.
+ */
+export function netstatRowOwnsPort(line: string, targetPort: number): string | null {
   const parts = line.trim().split(/\s+/);
-  if (parts.length < 4) {
+  if (parts.length < 5) {
     return null;
   }
 
   const protocol = parts[0]?.toUpperCase();
+  if (protocol !== "TCP") {
+    return null;
+  }
+
   const localAddress = parts[1];
+  const foreignAddress = parts[2];
+  const state = parts[parts.length - 2]?.toUpperCase();
   const pid = parts[parts.length - 1];
 
   if (!pid || !/^\d+$/.test(pid) || pid === "0") {
     return null;
   }
 
-  const localPort = getExactLocalPort(localAddress);
-  if (localPort !== targetPort) {
+  if (getExactLocalPort(localAddress) !== targetPort) {
     return null;
   }
 
-  if (protocol === "TCP") {
-    if (parts.length < 5) {
-      return null;
-    }
+  const isListening =
+    state === "LISTENING" || LISTENING_FOREIGN_ADDRESSES.has(foreignAddress);
 
-    const state = parts[parts.length - 2]?.toUpperCase();
-    return state === "LISTENING" ? pid : null;
-  }
-
-  if (protocol === "UDP") {
-    return pid;
-  }
-
-  return null;
+  return isListening ? pid : null;
 }
-export async function killProcessUsingPort(port: number): Promise<void> {
-  const platform = process.platform;
+
+export function parseListeningPids(netstatOutput: string, port: number): number[] {
+  const pids = new Set<number>();
+  for (const line of netstatOutput.split(/\r?\n/)) {
+    const pid = netstatRowOwnsPort(line, port);
+    if (pid) pids.add(Number(pid));
+  }
+  return [...pids];
+}
+
+/**
+ * DIAGNOSTIC ONLY. Looks up which PIDs are listening on `port` so RepoRunner
+ * can tell the user what is holding it. Callers must never terminate a PID
+ * returned from here: a port listener is not proof that RepoRunner started it.
+ * Returns an empty list when the lookup fails for any reason.
+ */
+export async function findListeningPids(port: number): Promise<number[]> {
   try {
-    if (platform === "win32") {
-      const { stdout } = await execAsync(`netstat -ano | findstr :${port}`);
-      const lines = stdout.trim().split("\n");
-      const pids = new Set<string>();
-      for (const line of lines) {
-        const parts = line.trim().split(/\s+/);
-        const pid = parts[parts.length - 1];
-        if (pid && /^\d+$/.test(pid) && pid !== "0") {
-          pids.add(pid);
-        }
-      }
-      for (const pid of pids) {
-        await execAsync(`taskkill /PID ${pid} /T /F`).catch(() => {});
-      }
-    } else {
-      const { stdout } = await execAsync(`lsof -ti tcp:${port}`);
-      const pids = stdout.trim().split("\n").filter(Boolean);
-      for (const pid of pids) {
-        await execAsync(`kill -TERM ${pid}`).catch(() => {});
-        await new Promise((r) => setTimeout(r, 500));
-        await execAsync(`kill -KILL ${pid}`).catch(() => {});
-      }
+    if (process.platform === "win32") {
+      const { stdout } = await execFileAsync("netstat", ["-ano"], {
+        timeout: PORT_OWNER_LOOKUP_TIMEOUT_MS,
+        windowsHide: true,
+      });
+      return parseListeningPids(stdout, port);
     }
+
+    const { stdout } = await execFileAsync(
+      "lsof",
+      ["-nP", `-iTCP:${port}`, "-sTCP:LISTEN", "-t"],
+      { timeout: PORT_OWNER_LOOKUP_TIMEOUT_MS }
+    );
+    return [
+      ...new Set(
+        stdout
+          .split(/\r?\n/)
+          .map((line) => line.trim())
+          .filter((line) => /^\d+$/.test(line) && line !== "0")
+          .map(Number)
+      ),
+    ];
   } catch {
-    // No process found or already gone
+    return [];
   }
 }
 
