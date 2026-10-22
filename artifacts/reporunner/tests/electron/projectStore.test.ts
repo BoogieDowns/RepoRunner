@@ -2,6 +2,7 @@
 // revision checks. Every test uses its own temp directory as Electron's
 // userData; failures are injected by spying on fs, never by damaging real
 // files outside that directory.
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -48,6 +49,7 @@ const write = (content: string | Buffer, name = STORE_FILE) => fs.writeFileSync(
 const writeJson = (value: unknown, name = STORE_FILE) => write(JSON.stringify(value, null, 2), name);
 const ids = (state: { profiles: { id: string }[] }) => state.profiles.map((p) => p.id);
 const storedIds = () => readJson().profiles.map((p: { id?: string }) => p.id);
+const revisionOfFile = () => createHash("sha256").update(fs.readFileSync(file())).digest("hex");
 const tempFiles = () => fs.readdirSync(h.userData).filter((name) => name.endsWith(".tmp"));
 
 function errnoError(code: string): NodeJS.ErrnoException {
@@ -101,7 +103,7 @@ afterEach(() => {
 
 describe("loading", () => {
   it("missing file with no recovery data is a genuine first launch", () => {
-    expect(loadProjectState()).toEqual({ profiles: [], activeProfileId: null });
+    expect(loadProjectState()).toEqual({ profiles: [], activeProfileId: null, revision: null });
     expect(inspectProjectStore().state).toBe("missing");
   });
 
@@ -169,7 +171,7 @@ describe("loading", () => {
   it("valid file loads profiles and active ID", () => {
     writeJson({ profiles: [profile("a"), profile("b")], activeProfileId: "b" });
 
-    expect(loadProjectState()).toEqual({ profiles: [profile("a"), profile("b")], activeProfileId: "b" });
+    expect(loadProjectState()).toEqual({ profiles: [profile("a"), profile("b")], activeProfileId: "b", revision: revisionOfFile() });
     expect(loadProject()?.id).toBe("b");
   });
 
@@ -243,10 +245,28 @@ describe("loading", () => {
     expectStoreError(() => setActiveProject("broken"), "profile-unavailable");
   });
 
-  it("active ID that matches nothing falls back to the first profile (previous behaviour)", () => {
-    writeJson({ profiles: [profile("a"), profile("b")], activeProfileId: "gone" });
+  it.each([
+    ["a removed profile", "gone"],
+    ["an explicit null", null],
+    ["an empty string", ""],
+    ["a non-string value", 42],
+  ])("a stored active ID naming %s selects no repo, never another one", (_label, active) => {
+    writeJson({ profiles: [profile("a"), profile("b")], activeProfileId: active });
+
+    expect(loadProjectState().activeProfileId).toBeNull();
+    expect(loadProject()).toBeNull();
+  });
+
+  it("only a file with no activeProfileId field at all falls back to the first profile (previous behaviour)", () => {
+    writeJson({ profiles: [profile("a"), profile("b")] });
 
     expect(loadProjectState().activeProfileId).toBe("a");
+  });
+
+  it("a file with no activeProfileId field and a held-back entry selects no repo", () => {
+    writeJson({ profiles: [{ name: "broken" }, profile("a")] });
+
+    expect(loadProjectState().activeProfileId).toBeNull();
   });
 
   it("UTF-8 BOM is accepted", () => {
@@ -276,7 +296,7 @@ describe("loading", () => {
   it("valid legacy single-profile file loads as the active profile", () => {
     writeJson(profile("legacy"));
 
-    expect(loadProjectState()).toEqual({ profiles: [profile("legacy")], activeProfileId: "legacy" });
+    expect(loadProjectState()).toEqual({ profiles: [profile("legacy")], activeProfileId: "legacy", revision: revisionOfFile() });
   });
 
   it("files with more than five entries still load in full", () => {
@@ -311,7 +331,7 @@ describe("writing", () => {
   it("first save creates the file without a backup", () => {
     const state = saveProject(profile("a"));
 
-    expect(state).toEqual({ profiles: [profile("a")], activeProfileId: "a" });
+    expect(state).toEqual({ profiles: [profile("a")], activeProfileId: "a", revision: revisionOfFile() });
     expect(readJson()).toEqual({ profiles: [profile("a")], activeProfileId: "a" });
     expect(fs.existsSync(file(BACKUP_FILE))).toBe(false);
     expect(tempFiles()).toEqual([]);
@@ -344,7 +364,7 @@ describe("writing", () => {
     saveProject(profile("b"));
     fs.copyFileSync(file(BACKUP_FILE), file());
 
-    expect(loadProjectState()).toEqual({ profiles: [profile("a")], activeProfileId: "a" });
+    expect(loadProjectState()).toEqual({ profiles: [profile("a")], activeProfileId: "a", revision: revisionOfFile() });
   });
 
   it("unknown top-level and profile fields survive writes", () => {

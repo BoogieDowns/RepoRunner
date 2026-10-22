@@ -1,10 +1,14 @@
-import { ipcMain, dialog, clipboard } from "electron";
+import { ipcMain, dialog, clipboard, shell } from "electron";
 import { spawn } from "child_process";
 import { promisify } from "util";
 import {
   deleteProject,
+  getProjectStoreRevealTarget,
+  inspectProjectStore,
   loadProject,
   loadProjectState,
+  ProjectStoreWriteOptions,
+  resolveProjectStoreIssue,
   saveProject,
   setActiveProject,
 } from "./projectStore.js";
@@ -19,7 +23,12 @@ import {
   prepareCommandForExecution,
   sanitizeCommandInput,
 } from "./commandUtils.js";
-import { ProjectProfile, LogEntry, LogSource } from "../src/types.js";
+import {
+  ProjectProfile,
+  ProjectStoreRecoveryAction,
+  LogEntry,
+  LogSource,
+} from "../src/types.js";
 import { BrowserWindow } from "electron";
 import {
   validateProjectProfileForSave,
@@ -175,6 +184,33 @@ function runStreamingInstall(
 function isBackendConfigured(project: ProjectProfile): boolean {
   return project.backendCommand.trim().length > 0;
 }
+
+const STORE_REVISION_PATTERN = /^[0-9a-f]{64}$/;
+const RECOVERY_ACTIONS: readonly ProjectStoreRecoveryAction[] = [
+  "retry",
+  "restore-backup",
+  "start-fresh",
+  "discard-invalid-entries",
+];
+
+/**
+ * Optional expected revision from the renderer: omitted (no check), null (no
+ * file expected) or a sha256 hex digest. Anything else is rejected.
+ */
+function readExpectedRevision(value: unknown): ProjectStoreWriteOptions | undefined {
+  if (value === undefined) return undefined;
+  if (value === null || (typeof value === "string" && STORE_REVISION_PATTERN.test(value))) {
+    return { expectedRevision: value };
+  }
+  throw new Error("Invalid saved repo setups revision.");
+}
+
+function readRecoveryAction(value: unknown): ProjectStoreRecoveryAction {
+  if (typeof value === "string" && (RECOVERY_ACTIONS as readonly string[]).includes(value)) {
+    return value as ProjectStoreRecoveryAction;
+  }
+  throw new Error("Unknown recovery action.");
+}
 export function setupIpc() {
   ipcMain.handle("select-folder", async (event) => {
     const parentWindow =
@@ -208,24 +244,54 @@ export function setupIpc() {
     return loadProjectState();
   });
 
-  ipcMain.handle("save-project", async (_event, profile: unknown) => {
+  ipcMain.handle("save-project", async (_event, profile: unknown, expectedRevision?: unknown) => {
+    const options = readExpectedRevision(expectedRevision);
     const validatedProfile = validateProjectProfileForSave(profile);
     await validateRepoPathDirectoryForSave(validatedProfile.repoPath);
-    return saveProject(validatedProfile);
+    return saveProject(validatedProfile, options);
   });
 
-  ipcMain.handle("set-active-project", async (_event, profileId: unknown) => {
+  ipcMain.handle("set-active-project", async (_event, profileId: unknown, expectedRevision?: unknown) => {
+    const options = readExpectedRevision(expectedRevision);
     if (typeof profileId !== "string" || !profileId.trim()) {
       throw new Error("Saved repo setup not found.");
     }
-    return setActiveProject(profileId);
+    return setActiveProject(profileId, options);
   });
 
-  ipcMain.handle("delete-project", async (_event, profileId: unknown) => {
+  ipcMain.handle("delete-project", async (_event, profileId: unknown, expectedRevision?: unknown) => {
+    const options = readExpectedRevision(expectedRevision);
     if (typeof profileId !== "string" || !profileId.trim()) {
       throw new Error("Saved repo setup not found.");
     }
-    return deleteProject(profileId);
+    return deleteProject(profileId, options);
+  });
+
+  ipcMain.handle("get-project-store-status", async () => {
+    return inspectProjectStore();
+  });
+
+  // Recovery actions only ever run from this explicit call. Every action
+  // except "retry" must carry the revision of the status the user confirmed.
+  ipcMain.handle("resolve-project-store-issue", async (_event, action: unknown, expectedRevision?: unknown) => {
+    const recoveryAction = readRecoveryAction(action);
+    const options = readExpectedRevision(expectedRevision);
+    if (recoveryAction !== "retry" && !options) {
+      throw new Error("Recovery actions require the saved repo setups revision.");
+    }
+    return resolveProjectStoreIssue(recoveryAction, options);
+  });
+
+  // Reveals RepoRunner's own store location; takes no path from the renderer.
+  ipcMain.handle("reveal-project-store-file", async (_event, ...args: unknown[]) => {
+    if (args.length > 0) throw new Error("Unexpected arguments.");
+    const target = getProjectStoreRevealTarget();
+    if (target.kind === "file") {
+      shell.showItemInFolder(target.path);
+      return;
+    }
+    const failure = await shell.openPath(target.path);
+    if (failure) throw new Error("RepoRunner couldn't open the saved repo setups folder.");
   });
 
   ipcMain.handle("pull-latest", async () => {

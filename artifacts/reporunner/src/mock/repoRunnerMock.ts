@@ -7,6 +7,8 @@ import {
   MAX_FREE_REPO_PROFILES,
   ProjectProfile,
   ProjectProfilesState,
+  ProjectStoreRecoveryAction,
+  ProjectStoreStatus,
   RepoRunnerAPI,
   ServiceStatuses,
   ServiceStatus,
@@ -163,6 +165,22 @@ function getProject(): ProjectProfile | null {
   );
 }
 
+// The browser preview keeps setups in localStorage, which has no damaged-file
+// states, so the mock store is always healthy and only "retry" applies.
+function getMockStoreStatus(): ProjectStoreStatus {
+  return {
+    state: localStorage.getItem(PROJECT_STATE_STORAGE_KEY) ? "ok" : "missing",
+    reason: null,
+    recoveryRequired: false,
+    readOnly: false,
+    backupAvailable: false,
+    revision: null,
+    totalEntries: getProjectState().profiles.length,
+    unavailableEntries: [],
+    availableActions: ["retry"],
+  };
+}
+
 export const mockRepoRunnerAPI: RepoRunnerAPI = {
   async selectFolder() {
     return "/Users/you/projects/my-app";
@@ -201,6 +219,23 @@ export const mockRepoRunnerAPI: RepoRunnerAPI = {
 
   async loadProject() {
     return getProject();
+  },
+
+  async getProjectStoreStatus() {
+    return getMockStoreStatus();
+  },
+
+  async resolveProjectStoreIssue(action: ProjectStoreRecoveryAction) {
+    if (action !== "retry") {
+      throw new Error(
+        "That recovery option isn't available for your saved repo setups right now. Nothing was changed."
+      );
+    }
+    return getMockStoreStatus();
+  },
+
+  async revealProjectStoreFile() {
+    emitLog("system", "Revealing the saved setups file is only available in the desktop app.");
   },
 
   async setActiveProject(profileId: string) {

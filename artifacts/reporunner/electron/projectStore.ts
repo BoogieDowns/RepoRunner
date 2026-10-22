@@ -7,6 +7,8 @@ import {
   MAX_FREE_REPO_PROFILES,
   ProjectProfile,
   ProjectProfilesState,
+  ProjectStoreRecoveryAction,
+  ProjectStoreStatus,
 } from "../src/types.js";
 import { validateProjectProfileForLoad } from "./projectProfileValidation.js";
 
@@ -23,6 +25,11 @@ import { validateProjectProfileForLoad } from "./projectProfileValidation.js";
  * - Every write goes through commitStore(): revision check, rolling backup of
  *   the current (successfully loaded) bytes, exclusive temp file, fsync,
  *   read-back verification, a second revision check, then rename.
+ *
+ * Recovery actions (resolveProjectStoreIssue) run only when explicitly
+ * requested, never during loading. Before replacing or discarding anything
+ * they copy the current bytes to a new, uniquely named recovery file that is
+ * created exclusively and never overwritten or deleted.
  *
  * Atomicity limits: rename over an existing file is a single metadata
  * operation on NTFS and POSIX filesystems, so readers see the old or the new
@@ -67,7 +74,10 @@ export type ProjectStoreErrorCode =
   | "backup-failed"
   | "write-failed"
   | "write-unverified"
-  | "profile-unavailable";
+  | "profile-unavailable"
+  | "recovery-not-available"
+  | "backup-unavailable"
+  | "recovery-copy-failed";
 
 const STORE_ERROR_MESSAGES: Record<ProjectStoreErrorCode, string> = {
   "needs-recovery":
@@ -89,6 +99,12 @@ const STORE_ERROR_MESSAGES: Record<ProjectStoreErrorCode, string> = {
     "Your change may have been saved, but RepoRunner couldn't confirm it. Reopen RepoRunner and check your saved repo setups before making more changes.",
   "profile-unavailable":
     "This saved repo setup can't be used because its saved details are incomplete or invalid.",
+  "recovery-not-available":
+    "That recovery option isn't available for your saved repo setups right now. Nothing was changed.",
+  "backup-unavailable":
+    "RepoRunner couldn't find a usable backup of your saved repo setups. Nothing was changed.",
+  "recovery-copy-failed":
+    "RepoRunner couldn't save a copy of your current saved repo setups, so it didn't make any changes.",
 };
 
 /** Errors carry fixed messages only: no paths, file contents or commands. */
@@ -147,15 +163,6 @@ type StoreSnapshot =
   | { kind: "unsupported-version"; revision: string };
 
 type WritableSnapshot = Extract<StoreSnapshot, { kind: "missing" | "ok" }>;
-
-export interface ProjectStoreStatus {
-  state: StoreSnapshot["kind"];
-  /** sha256 of the stored bytes; null when there is no file or it can't be read. */
-  revision: string | null;
-  reason?: string;
-  totalEntries: number;
-  unavailableEntries: { index: number; reason: string }[];
-}
 
 export interface ProjectStoreWriteOptions {
   /** When given, the write is rejected unless the file still has this revision. */
@@ -247,17 +254,27 @@ function buildEntries(rawEntries: unknown[]): StoreEntry[] {
   return entries;
 }
 
-function resolveActiveProfileId(entries: StoreEntry[], requested: unknown): string | null {
-  const requestedId = typeof requested === "string" ? requested.trim() : "";
+/**
+ * A stored `activeProfileId` is honoured exactly: if it doesn't name a usable
+ * entry (null, removed, or invalid), no repo is selected and RepoRunner never
+ * switches to another one on a guess. Earlier versions rewrote the file on
+ * every load so that it always named a profile (or was null with no
+ * profiles), so this never changes a previously working selection.
+ *
+ * Only when the field is absent altogether (hand-made or very old files) does
+ * the original fallback to the first profile apply, and only if no entry is
+ * held back.
+ */
+function resolveActiveProfileId(entries: StoreEntry[], top: UnknownRecord): string | null {
   const valid = entries.filter((entry): entry is ValidEntry => entry.status === "valid");
 
-  if (requestedId && valid.some((entry) => entry.profile.id === requestedId)) {
-    return requestedId;
+  if (!("activeProfileId" in top)) {
+    if (entries.some((entry) => entry.status === "unavailable")) return null;
+    return valid[0]?.profile.id ?? null;
   }
-  // The requested setup may be one of the unavailable entries: never switch
-  // the user to a different repo on a guess.
-  if (entries.some((entry) => entry.status === "unavailable")) return null;
-  return valid[0]?.profile.id ?? null;
+
+  const requestedId = typeof top.activeProfileId === "string" ? top.activeProfileId.trim() : "";
+  return requestedId && valid.some((entry) => entry.profile.id === requestedId) ? requestedId : null;
 }
 
 function classifyBytes(bytes: Buffer): Exclude<StoreSnapshot, { kind: "missing" | "unreadable" }> {
@@ -299,7 +316,7 @@ function classifyBytes(bytes: Buffer): Exclude<StoreSnapshot, { kind: "missing" 
         format: "profiles",
         top: parsed,
         entries,
-        activeProfileId: resolveActiveProfileId(entries, parsed.activeProfileId),
+        activeProfileId: resolveActiveProfileId(entries, parsed),
       },
     };
   }
@@ -372,12 +389,13 @@ function readStoreForWrite(options?: ProjectStoreWriteOptions): WritableSnapshot
   return requireWritable(readStoreSnapshot(), options);
 }
 
-function toPublicState(document: StoreDocument): ProjectProfilesState {
+function toPublicState(document: StoreDocument, revision: string | null): ProjectProfilesState {
   return {
     profiles: document.entries
       .filter((entry): entry is ValidEntry => entry.status === "valid")
       .map((entry) => entry.profile),
     activeProfileId: document.activeProfileId,
+    revision,
   };
 }
 
@@ -567,9 +585,21 @@ function commitStore(snapshot: WritableSnapshot, nextBytes: Buffer, convertingLe
     }
   }
 
+  replacePrimary(snapshot.revision, nextBytes);
+  return toPublicState(next.document, sha256(nextBytes));
+}
+
+/**
+ * Final step of every write and recovery action: verified temp file,
+ * revision re-check, rename, read-back.
+ */
+function replacePrimary(expectedRevision: string | null, nextBytes: Buffer): void {
+  const dir = getStoreDir();
+  const target = path.join(dir, STORE_FILE);
+
   try {
     replaceFileAtomically(dir, STORE_FILE, nextBytes, () => {
-      assertRevision(readCurrentBytes(target), snapshot.revision);
+      assertRevision(readCurrentBytes(target), expectedRevision);
     });
   } catch (error) {
     throw wrapStoreError(error, "write-failed");
@@ -583,8 +613,6 @@ function commitStore(snapshot: WritableSnapshot, nextBytes: Buffer, convertingLe
     // Reported below.
   }
   if (!written || !written.equals(nextBytes)) throw new ProjectStoreError("write-unverified");
-
-  return toPublicState(next.document);
 }
 
 function findValidIndex(entries: StoreEntry[], profileId: string): number {
@@ -595,19 +623,177 @@ function isUnavailableId(entries: StoreEntry[], profileId: string): boolean {
   return entries.some((entry) => entry.status === "unavailable" && entry.rawId === profileId);
 }
 
-/** Classified, read-only view of the store for diagnostics and recovery. */
-export function inspectProjectStore(): ProjectStoreStatus {
-  const snapshot = readStoreSnapshot();
+/** The rolling backup, only if it exists and loads cleanly. Never modifies files. */
+function readValidatedBackup(): Buffer | null {
+  let bytes: Buffer;
+  try {
+    bytes = withTransientRetry(() => fs.readFileSync(path.join(getStoreDir(), BACKUP_FILE)));
+  } catch {
+    return null;
+  }
+  return classifyBytes(bytes).kind === "ok" ? bytes : null;
+}
+
+function availableActions(snapshot: StoreSnapshot, backupAvailable: boolean): ProjectStoreRecoveryAction[] {
+  switch (snapshot.kind) {
+    case "needs-recovery":
+      return backupAvailable ? ["retry", "restore-backup", "start-fresh"] : ["retry", "start-fresh"];
+    case "ok":
+      return snapshot.document.entries.some((entry) => entry.status === "unavailable")
+        ? ["retry", "discard-invalid-entries"]
+        : ["retry"];
+    default:
+      // missing: nothing to recover. unreadable: usually a lock or permission
+      // problem outside RepoRunner. unsupported-version: update RepoRunner.
+      return ["retry"];
+  }
+}
+
+function statusOf(snapshot: StoreSnapshot): ProjectStoreStatus {
   const entries = snapshot.kind === "ok" || snapshot.kind === "missing" ? snapshot.document.entries : [];
+  const backupAvailable = readValidatedBackup() !== null;
   return {
     state: snapshot.kind,
+    reason: "reason" in snapshot ? snapshot.reason : null,
+    recoveryRequired: snapshot.kind === "needs-recovery" || snapshot.kind === "unreadable",
+    readOnly: snapshot.kind !== "ok" && snapshot.kind !== "missing",
+    backupAvailable,
     revision: snapshot.revision,
-    ...("reason" in snapshot ? { reason: snapshot.reason } : {}),
     totalEntries: entries.length,
     unavailableEntries: entries.flatMap((entry, index) =>
       entry.status === "unavailable" ? [{ index, reason: entry.reason }] : [],
     ),
+    availableActions: availableActions(snapshot, backupAvailable),
   };
+}
+
+/** Classified, read-only view of the store for diagnostics and recovery. */
+export function inspectProjectStore(): ProjectStoreStatus {
+  return statusOf(readStoreSnapshot());
+}
+
+/**
+ * What to reveal in the OS file manager: the store file if present, else its
+ * folder. Determined here, never taken from or sent to the renderer.
+ */
+export function getProjectStoreRevealTarget(): { kind: "file" | "folder"; path: string } {
+  const dir = getStoreDir();
+  const file = path.join(dir, STORE_FILE);
+  return fs.existsSync(file) ? { kind: "file", path: file } : { kind: "folder", path: dir };
+}
+
+/** Copies `bytes` to a new, uniquely named recovery file. Never overwrites. */
+function preserveRecoveryCopy(dir: string, bytes: Buffer, label: string): void {
+  const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\..*$/, "");
+  for (let attempt = 0; ; attempt++) {
+    const name = `${RECOVERY_FILE_PREFIX}${stamp}-${label}-${crypto.randomBytes(4).toString("hex")}.json`;
+    try {
+      writeNewFileVerified(path.join(dir, name), bytes);
+      syncDirectory(dir);
+      return;
+    } catch (error) {
+      if (errorCode(error) !== "EEXIST" || attempt >= 3) throw error;
+    }
+  }
+}
+
+function preserveOrFail(dir: string, bytes: Buffer, label: string): void {
+  try {
+    preserveRecoveryCopy(dir, bytes, label);
+  } catch (error) {
+    throw wrapStoreError(error, "recovery-copy-failed");
+  }
+}
+
+/** Re-reads the primary, checks it still has `revision`, and returns its bytes (null if absent). */
+function readPrimaryAtRevision(revision: string | null): Buffer | null {
+  try {
+    const current = readCurrentBytes(path.join(getStoreDir(), STORE_FILE));
+    assertRevision(current, revision);
+    return current;
+  } catch (error) {
+    throw wrapStoreError(error, "write-failed");
+  }
+}
+
+function restoreBackup(snapshot: StoreSnapshot): void {
+  if (snapshot.kind !== "needs-recovery") throw new ProjectStoreError("recovery-not-available");
+  const backup = readValidatedBackup();
+  if (!backup) throw new ProjectStoreError("backup-unavailable");
+
+  const dir = getStoreDir();
+  const current = readPrimaryAtRevision(snapshot.revision);
+  if (current) preserveOrFail(dir, current, "damaged");
+  // The backup itself stays in place; after restoring it equals the primary.
+  replacePrimary(snapshot.revision, backup);
+}
+
+function startFresh(snapshot: StoreSnapshot): void {
+  if (snapshot.kind !== "needs-recovery") throw new ProjectStoreError("recovery-not-available");
+
+  const dir = getStoreDir();
+  const current = readPrimaryAtRevision(snapshot.revision);
+  if (current) preserveOrFail(dir, current, "damaged");
+  // The next ordinary save rotates the backup, so keep a permanent copy of it
+  // too, valid or not: it may be all that is left of the old setups.
+  let backup: Buffer | null = null;
+  try {
+    backup = withTransientRetry(() => fs.readFileSync(path.join(dir, BACKUP_FILE)));
+  } catch (error) {
+    if (errorCode(error) !== "ENOENT") throw wrapStoreError(error, "recovery-copy-failed");
+  }
+  if (backup) preserveOrFail(dir, backup, "backup");
+
+  replacePrimary(snapshot.revision, serializeDocument(emptyDocument(), [], null));
+}
+
+function discardInvalidEntries(snapshot: StoreSnapshot): void {
+  if (snapshot.kind !== "ok" || !snapshot.document.entries.some((entry) => entry.status === "unavailable")) {
+    throw new ProjectStoreError("recovery-not-available");
+  }
+  const { document } = snapshot;
+  const current = readPrimaryAtRevision(snapshot.revision);
+  if (current) preserveOrFail(getStoreDir(), current, "before-discard");
+
+  const entries = document.entries.filter((entry) => entry.status === "valid");
+  // Keep the stored active setup only if it is one of the kept entries.
+  const activeProfileId =
+    document.activeProfileId !== null && findValidIndex(entries, document.activeProfileId) !== -1
+      ? document.activeProfileId
+      : null;
+  commitStore(snapshot, serializeDocument(document, entries, activeProfileId), document.format === "legacy");
+}
+
+/**
+ * Explicit recovery entry point; never called during loading. Only "retry"
+ * may run without the revision of the status the user acted on; every other
+ * action is rejected as a conflict if the file has changed since.
+ */
+export function resolveProjectStoreIssue(
+  action: ProjectStoreRecoveryAction,
+  options?: ProjectStoreWriteOptions,
+): ProjectStoreStatus {
+  const snapshot = readStoreSnapshot();
+  if (action === "retry") return statusOf(snapshot);
+
+  if (!options || options.expectedRevision === undefined || options.expectedRevision !== snapshot.revision) {
+    throw new ProjectStoreError("conflict");
+  }
+
+  switch (action) {
+    case "restore-backup":
+      restoreBackup(snapshot);
+      break;
+    case "start-fresh":
+      startFresh(snapshot);
+      break;
+    case "discard-invalid-entries":
+      discardInvalidEntries(snapshot);
+      break;
+    default:
+      throw new ProjectStoreError("recovery-not-available");
+  }
+  return inspectProjectStore();
 }
 
 /**
@@ -619,7 +805,7 @@ export function loadProjectState(): ProjectProfilesState {
   if (snapshot.kind !== "missing" && snapshot.kind !== "ok") {
     throw new ProjectStoreError(snapshot.kind);
   }
-  return toPublicState(snapshot.document);
+  return toPublicState(snapshot.document, snapshot.revision);
 }
 
 export function saveProject(

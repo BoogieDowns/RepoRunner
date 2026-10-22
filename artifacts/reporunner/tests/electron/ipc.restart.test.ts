@@ -219,7 +219,11 @@ describe("Stop Engine IPC", () => {
     });
 
     for (const channel of ["start-frontend", "start-backend", "restart-all", "run-install", "pull-latest", "open-preview"]) {
-      await expect(run(handler(channel)())).rejects.toThrow("problem with your saved repo setups");
+      // Attach the rejection handler before advancing timers, otherwise the
+      // rejection is reported as unhandled.
+      const refused = expect(handler(channel)()).rejects.toThrow("problem with your saved repo setups");
+      await vi.runAllTimersAsync();
+      await refused;
     }
     expect(h.spawn).not.toHaveBeenCalled();
     expect(h.treeKill).not.toHaveBeenCalled();
