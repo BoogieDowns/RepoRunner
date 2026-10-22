@@ -1,22 +1,41 @@
 import { contextBridge, ipcRenderer } from "electron";
 import type { IpcRendererEvent } from "electron";
-import type { ProjectProfile, LogEntry, ServiceStatuses } from "../src/types.js";
+import type {
+  ProjectProfile,
+  ProjectStoreRecoveryAction,
+  LogEntry,
+  ServiceStatuses,
+} from "../src/types.js";
+
+// Revisions are only forwarded when given, so existing calls are unchanged.
+const withRevision = (args: unknown[], expectedRevision?: string | null) =>
+  expectedRevision === undefined ? args : [...args, expectedRevision];
 
 contextBridge.exposeInMainWorld("repoRunner", {
   selectFolder: () => ipcRenderer.invoke("select-folder"),
 
-  saveProject: (profile: ProjectProfile) =>
-    ipcRenderer.invoke("save-project", profile),
+  saveProject: (profile: ProjectProfile, expectedRevision?: string | null) =>
+    ipcRenderer.invoke("save-project", ...withRevision([profile], expectedRevision)),
 
   loadProjectState: () => ipcRenderer.invoke("load-project-state"),
 
   loadProject: () => ipcRenderer.invoke("load-project"),
 
-  setActiveProject: (profileId: string) =>
-    ipcRenderer.invoke("set-active-project", profileId),
+  setActiveProject: (profileId: string, expectedRevision?: string | null) =>
+    ipcRenderer.invoke("set-active-project", ...withRevision([profileId], expectedRevision)),
 
-  deleteProject: (profileId: string) =>
-    ipcRenderer.invoke("delete-project", profileId),
+  deleteProject: (profileId: string, expectedRevision?: string | null) =>
+    ipcRenderer.invoke("delete-project", ...withRevision([profileId], expectedRevision)),
+
+  getProjectStoreStatus: () => ipcRenderer.invoke("get-project-store-status"),
+
+  resolveProjectStoreIssue: (
+    action: ProjectStoreRecoveryAction,
+    expectedRevision?: string | null
+  ) =>
+    ipcRenderer.invoke("resolve-project-store-issue", ...withRevision([action], expectedRevision)),
+
+  revealProjectStoreFile: () => ipcRenderer.invoke("reveal-project-store-file"),
 
   pullLatest: () => ipcRenderer.invoke("pull-latest"),
 

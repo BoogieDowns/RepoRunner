@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as z from "zod";
 import {
   ArrowLeft,
@@ -14,6 +14,7 @@ import {
   MAX_FREE_REPO_PROFILES,
   ProjectProfile,
   ProjectProfilesState,
+  ProjectStoreStatus,
 } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +34,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { ProjectStoreNotice } from "@/components/ProjectStoreNotice";
+import {
+  classifyStoreError,
+  isStoreBlocked,
+  runStoreMutation,
+  type ProjectStoreNoticeAction,
+} from "@/lib/projectStoreRecovery";
 
 type SetupFormState = {
   name: string;
@@ -74,6 +82,8 @@ const SWITCH_BLOCKED_MESSAGE =
   "RepoRunner can run one saved repo at a time. Stop the current repo before switching saved setups.";
 const FREE_REPO_LIMIT_MESSAGE =
   "RepoRunner Free supports up to 5 saved repo setups. RepoRunner Pro will unlock unlimited saved repos and repo library features.";
+const SAVING_PAUSED_MESSAGE =
+  "Saving is paused until the problem with your saved repo setups is resolved. Your entries in this form are kept.";
 const DELETE_CONFIRMATION_MESSAGE =
   "Delete this saved repo setup? This removes the setup from RepoRunner. It does not delete project files from your computer.";
 
@@ -235,6 +245,11 @@ export function SetupScreen({
   onDeleteProfile,
   onClose,
   overlay = false,
+  revision,
+  storeStatus = null,
+  storeActionError = null,
+  onStoreAction,
+  onStoreError,
 }: {
   profiles: ProjectProfile[];
   activeProfileId: string | null;
@@ -245,6 +260,13 @@ export function SetupScreen({
   onDeleteProfile: (profileId: string) => Promise<void>;
   onClose?: () => void;
   overlay?: boolean;
+  /** Revision of the saved setups the form was loaded from. */
+  revision?: string | null;
+  storeStatus?: ProjectStoreStatus | null;
+  storeActionError?: string | null;
+  onStoreAction?: (action: ProjectStoreNoticeAction) => Promise<void>;
+  /** Re-reads saved setups and their status after a saved-setups error. */
+  onStoreError?: () => Promise<unknown>;
 }) {
   const [isSelecting, setIsSelecting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -257,6 +279,13 @@ export function SetupScreen({
     projectToFormValues(activeProject),
   );
   const [errors, setErrors] = useState<SetupErrors>({});
+  const mutationsBlocked = isStoreBlocked(storeStatus);
+  // After a conflict or unverified save the persisted state is re-read; keep
+  // what the user typed instead of resetting the form to the re-read values.
+  const keepFormForProfileId = useRef<string | null | undefined>(undefined);
+  // ID of a new setup whose save could not be confirmed. If the re-read shows
+  // it was saved, switch to editing it so a retry can't create a duplicate.
+  const unverifiedNewProfileId = useRef<string | null>(null);
 
   const currentHelpPage = setupHelpPages[helpPageIndex] ?? setupHelpPages[0];
   const isFirstHelpPage = helpPageIndex === 0;
@@ -264,10 +293,27 @@ export function SetupScreen({
 
   useEffect(() => {
     if (!isAddingNew) {
+      if (keepFormForProfileId.current !== undefined) {
+        const keep = keepFormForProfileId.current === (activeProject?.id ?? null);
+        keepFormForProfileId.current = undefined;
+        // Same setup still selected: keep the user's unsaved values. A
+        // different setup is now selected: show it, so an update can never
+        // be applied to the wrong setup.
+        if (keep) return;
+      }
       setFormData(projectToFormValues(activeProject));
       setErrors({});
     }
   }, [activeProject, isAddingNew]);
+
+  useEffect(() => {
+    const pendingId = unverifiedNewProfileId.current;
+    if (pendingId && profiles.some((profile) => profile.id === pendingId)) {
+      unverifiedNewProfileId.current = null;
+      keepFormForProfileId.current = pendingId;
+      setIsAddingNew(false);
+    }
+  }, [profiles]);
 
   const updateField = (field: keyof SetupFormState, value: string) => {
     setFormData((current) => ({ ...current, [field]: value }));
@@ -385,6 +431,11 @@ export function SetupScreen({
 
     if (isSaving) return;
 
+    if (mutationsBlocked) {
+      setErrors({ form: SAVING_PAUSED_MESSAGE });
+      return;
+    }
+
     if (isAddingNew && servicesBusy) {
       setErrors({ form: SWITCH_BLOCKED_MESSAGE });
       return;
@@ -409,11 +460,22 @@ export function SetupScreen({
     setIsSaving(true);
 
     try {
-      const nextState = await window.repoRunner.saveProject(profile);
+      const nextState = await runStoreMutation(
+        () => window.repoRunner.saveProject(profile, revision),
+        async () => {
+          // Re-read after a saved-setups error, keeping the form as typed.
+          keepFormForProfileId.current = isAddingNew ? undefined : activeProfileId;
+          await onStoreError?.();
+        },
+      );
+      keepFormForProfileId.current = undefined;
       setIsAddingNew(false);
       onSave(nextState);
     } catch (error) {
       const message = getSaveProjectErrorMessage(error);
+      if (classifyStoreError(error) === "write-unverified" && isAddingNew) {
+        unverifiedNewProfileId.current = profile.id;
+      }
       const field = saveErrorField(message);
       setErrors({ [field]: message });
     } finally {
@@ -716,6 +778,13 @@ export function SetupScreen({
 
         <CardContent className="px-5 pb-6 pt-5 sm:px-8 sm:pb-8 sm:pt-6">
           <form onSubmit={onSubmit} className="space-y-6">
+            {onStoreAction && (
+              <ProjectStoreNotice
+                status={storeStatus}
+                error={storeActionError}
+                onAction={onStoreAction}
+              />
+            )}
             <div
               className="grid grid-cols-1 gap-3 rounded-lg p-3 sm:grid-cols-1 sm:items-start"
               style={{
@@ -730,7 +799,7 @@ export function SetupScreen({
                 <Select
                   value={isAddingNew ? "" : activeProfileId ?? ""}
                   onValueChange={handleSelectProfile}
-                  disabled={servicesBusy || isChangingProfile}
+                  disabled={servicesBusy || isChangingProfile || mutationsBlocked}
                 >
                   <SelectTrigger
                     className="h-10 w-full focus:ring-[#4a1218]/35"
@@ -742,9 +811,11 @@ export function SetupScreen({
                   >
                     <SelectValue
                       placeholder={
-                        profiles.length === 0
-                          ? "New repo setup"
-                          : "Select a saved repo"
+                        mutationsBlocked
+                          ? "Saved repos unavailable"
+                          : profiles.length === 0
+                            ? "New repo setup"
+                            : "Select a saved repo"
                       }
                     />
                   </SelectTrigger>
@@ -967,7 +1038,7 @@ export function SetupScreen({
                     type="button"
                     variant="secondary"
                     onClick={handleDeleteProfile}
-                    disabled={servicesBusy || isChangingProfile || isSaving}
+                    disabled={servicesBusy || isChangingProfile || isSaving || mutationsBlocked}
                     className="h-10 px-3 text-xs"
                     style={{
                       background: "#0d0809",
@@ -981,7 +1052,8 @@ export function SetupScreen({
                 )}
                 <button
                   type="submit"
-                  disabled={isSaving}
+                  disabled={isSaving || mutationsBlocked}
+                  data-testid="setup-save"
                   className="btn-glass btn-glass-primary w-full justify-center !h-10 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <Save className="h-4 w-4 flex-none" strokeWidth={1.5} />
@@ -994,7 +1066,9 @@ export function SetupScreen({
                   >
                     {isSaving
                       ? "Saving..."
-                      : isAddingNew
+                      : mutationsBlocked
+                        ? "Saving Paused"
+                        : isAddingNew
                         ? "Save Repo Setup"
                         : "Update Repo Setup"}
                   </span>

@@ -5,8 +5,11 @@
 import {
   LogEntry,
   MAX_FREE_REPO_PROFILES,
+  PROJECT_STORE_ERROR_MESSAGES,
   ProjectProfile,
   ProjectProfilesState,
+  ProjectStoreRecoveryAction,
+  ProjectStoreStatus,
   RepoRunnerAPI,
   ServiceStatuses,
   ServiceStatus,
@@ -14,6 +17,9 @@ import {
 
 const PROJECT_STATE_STORAGE_KEY = "reporunner_project_state";
 const OLD_PROJECT_STORAGE_KEY = "reporunner_project";
+// Simulated file revision: bumped on every write so stale-revision conflicts
+// behave like the desktop app.
+const PROJECT_REVISION_STORAGE_KEY = "reporunner_project_revision";
 const EMPTY_PROJECT_STATE: ProjectProfilesState = {
   profiles: [],
   activeProfileId: null,
@@ -120,11 +126,15 @@ function normalizeProjectState(input: unknown): ProjectProfilesState {
       "activeProfileId" in input && typeof input.activeProfileId === "string"
         ? input.activeProfileId
         : null;
+    // Same rule as the desktop store: a stored selection is honoured exactly
+    // (no repo if it no longer exists); only a missing field falls back.
     const activeProfileId = profiles.some(
       (profile) => profile.id === requestedActiveProfileId
     )
       ? requestedActiveProfileId
-      : profiles[0]?.id ?? null;
+      : "activeProfileId" in input
+        ? null
+        : profiles[0]?.id ?? null;
 
     return { profiles, activeProfileId };
   }
@@ -133,25 +143,45 @@ function normalizeProjectState(input: unknown): ProjectProfilesState {
   return { profiles: [profile], activeProfileId: profile.id };
 }
 
-function persistProjectState(state: ProjectProfilesState) {
-  localStorage.setItem(PROJECT_STATE_STORAGE_KEY, JSON.stringify(state));
+function currentRevision(): string | null {
+  if (!localStorage.getItem(PROJECT_STATE_STORAGE_KEY)) return null;
+  return `mock-${localStorage.getItem(PROJECT_REVISION_STORAGE_KEY) ?? "0"}`;
+}
+
+function persistProjectState(state: ProjectProfilesState, bumpRevision = true) {
+  const { profiles, activeProfileId } = state;
+  localStorage.setItem(PROJECT_STATE_STORAGE_KEY, JSON.stringify({ profiles, activeProfileId }));
+  if (bumpRevision) {
+    const next = Number(localStorage.getItem(PROJECT_REVISION_STORAGE_KEY) ?? "0") + 1;
+    localStorage.setItem(PROJECT_REVISION_STORAGE_KEY, String(next));
+  }
+}
+
+function assertRevision(expectedRevision?: string | null) {
+  if (expectedRevision !== undefined && expectedRevision !== currentRevision()) {
+    throw new Error(PROJECT_STORE_ERROR_MESSAGES.conflict);
+  }
+}
+
+function withRevision(state: ProjectProfilesState): ProjectProfilesState {
+  return { profiles: state.profiles, activeProfileId: state.activeProfileId, revision: currentRevision() };
 }
 
 function getProjectState(): ProjectProfilesState {
   const stateRaw = localStorage.getItem(PROJECT_STATE_STORAGE_KEY);
   const oldProjectRaw = localStorage.getItem(OLD_PROJECT_STORAGE_KEY);
   const raw = stateRaw ?? oldProjectRaw;
-  if (!raw) return EMPTY_PROJECT_STATE;
+  if (!raw) return { ...EMPTY_PROJECT_STATE, revision: null };
 
   try {
     const state = normalizeProjectState(JSON.parse(raw) as unknown);
-    persistProjectState(state);
+    persistProjectState(state, false);
     if (!stateRaw && oldProjectRaw) {
       localStorage.removeItem(OLD_PROJECT_STORAGE_KEY);
     }
-    return state;
+    return withRevision(state);
   } catch {
-    return EMPTY_PROJECT_STATE;
+    return { ...EMPTY_PROJECT_STATE, revision: null };
   }
 }
 
@@ -163,6 +193,22 @@ function getProject(): ProjectProfile | null {
   );
 }
 
+// The browser preview keeps setups in localStorage, which has no damaged-file
+// states, so the mock store is always healthy and only "retry" applies.
+function getMockStoreStatus(): ProjectStoreStatus {
+  return {
+    state: localStorage.getItem(PROJECT_STATE_STORAGE_KEY) ? "ok" : "missing",
+    reason: null,
+    recoveryRequired: false,
+    readOnly: false,
+    backupAvailable: false,
+    revision: currentRevision(),
+    totalEntries: getProjectState().profiles.length,
+    unavailableEntries: [],
+    availableActions: ["retry"],
+  };
+}
+
 export const mockRepoRunnerAPI: RepoRunnerAPI = {
   async selectFolder() {
     return "/Users/you/projects/my-app";
@@ -172,7 +218,8 @@ export const mockRepoRunnerAPI: RepoRunnerAPI = {
     return getProjectState();
   },
 
-  async saveProject(profile: ProjectProfile) {
+  async saveProject(profile: ProjectProfile, expectedRevision?: string | null) {
+    assertRevision(expectedRevision);
     const state = getProjectState();
     const existingIndex = state.profiles.findIndex(
       (existing) => existing.id === profile.id
@@ -196,24 +243,41 @@ export const mockRepoRunnerAPI: RepoRunnerAPI = {
 
     const nextState = { profiles, activeProfileId: profile.id };
     persistProjectState(nextState);
-    return nextState;
+    return withRevision(nextState);
   },
 
   async loadProject() {
     return getProject();
   },
 
-  async setActiveProject(profileId: string) {
+  async getProjectStoreStatus() {
+    return getMockStoreStatus();
+  },
+
+  async resolveProjectStoreIssue(action: ProjectStoreRecoveryAction) {
+    if (action !== "retry") {
+      throw new Error(PROJECT_STORE_ERROR_MESSAGES["recovery-not-available"]);
+    }
+    return getMockStoreStatus();
+  },
+
+  async revealProjectStoreFile() {
+    emitLog("system", "Revealing the saved setups file is only available in the desktop app.");
+  },
+
+  async setActiveProject(profileId: string, expectedRevision?: string | null) {
+    assertRevision(expectedRevision);
     const state = getProjectState();
     if (!state.profiles.some((profile) => profile.id === profileId)) {
       throw new Error("Saved repo setup not found.");
     }
     const nextState = { ...state, activeProfileId: profileId };
     persistProjectState(nextState);
-    return nextState;
+    return withRevision(nextState);
   },
 
-  async deleteProject(profileId: string) {
+  async deleteProject(profileId: string, expectedRevision?: string | null) {
+    assertRevision(expectedRevision);
     const state = getProjectState();
     const profiles = state.profiles.filter(
       (profile) => profile.id !== profileId
@@ -228,7 +292,7 @@ export const mockRepoRunnerAPI: RepoRunnerAPI = {
         : state.activeProfileId;
     const nextState = { profiles, activeProfileId };
     persistProjectState(nextState);
-    return nextState;
+    return withRevision(nextState);
   },
 
   async pullLatest() {

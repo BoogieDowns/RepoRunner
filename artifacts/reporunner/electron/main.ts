@@ -54,22 +54,57 @@ function createWindow() {
   });
 }
 
-app.whenReady().then(() => {
-  setupIpc();
-  createWindow();
+/**
+ * Brings the running instance's window forward when RepoRunner is launched
+ * again. If the window doesn't exist yet (second launch during startup),
+ * there is nothing to do: the first instance shows its window when ready.
+ */
+function focusExistingWindow() {
+  const window = mainWindow && !mainWindow.isDestroyed() ? mainWindow : null;
 
-  app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
+  if (!window) {
+    // macOS keeps the app running with no windows; recreate one there.
+    if (app.isReady() && BrowserWindow.getAllWindows().length === 0) {
       createWindow();
     }
-  });
-});
-
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit();
+    return;
   }
-});
+
+  if (window.isMinimized()) window.restore();
+  if (!window.isVisible()) window.show();
+  window.focus();
+}
+
+// Only one RepoRunner may run per user-data folder: two instances would
+// track separate process lists and edit the same saved setups file.
+const hasSingleInstanceLock = app.requestSingleInstanceLock();
+
+if (!hasSingleInstanceLock) {
+  // Another instance is running and receives "second-instance". Exit before
+  // registering IPC handlers, reading saved setups or creating a window.
+  app.quit();
+} else {
+  app.on("second-instance", () => {
+    focusExistingWindow();
+  });
+
+  app.whenReady().then(() => {
+    setupIpc();
+    createWindow();
+
+    app.on("activate", () => {
+      if (BrowserWindow.getAllWindows().length === 0) {
+        createWindow();
+      }
+    });
+  });
+
+  app.on("window-all-closed", () => {
+    if (process.platform !== "darwin") {
+      app.quit();
+    }
+  });
+}
 
 
 
