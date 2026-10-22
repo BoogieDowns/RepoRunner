@@ -1,4 +1,5 @@
-import { spawn, ChildProcess } from "child_process";
+import { spawn, execFile, ChildProcess } from "child_process";
+import { promisify } from "util";
 import { prepareCommandForExecution } from "./commandUtils.js";
 import { emitLog } from "./logSink.js";
 import treeKill from "tree-kill";
@@ -6,23 +7,198 @@ import { BrowserWindow } from "electron";
 import {
   isPortInUse,
   waitUntilPortIsFree,
-  killProcessUsingPort,
   waitUntilPortIsReachable,
+  findListeningPids,
 } from "./portManager.js";
 import {
-  LogEntry,
   LogSource,
   ServiceStatus,
   ServiceStatuses,
 } from "../src/types.js";
 
+type ServiceName = "frontend" | "backend";
+
+const execFileAsync = promisify(execFile);
+
+// How long to wait for the tracked root process to exit after each
+// termination attempt, and for snapshotted descendants (POSIX) to exit.
+const TERMINATE_GRACE_MS = 5000;
+const FORCE_TERMINATE_GRACE_MS = 3000;
+const DESCENDANT_EXIT_GRACE_MS = 3000;
+const PORT_RELEASE_TIMEOUT_MS = 8000;
+// tree-kill runs taskkill (Windows) or ps/pgrep (POSIX) without a timeout of
+// its own. Bound it so a hung helper can never leave a Stop lock held forever.
+const TREE_KILL_TIMEOUT_MS = 10000;
+
 function treeKillAsync(pid: number, signal: string): Promise<void> {
   return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error(`process tree termination did not finish within ${TREE_KILL_TIMEOUT_MS / 1000} seconds`));
+    }, TREE_KILL_TIMEOUT_MS);
     treeKill(pid, signal, (error) => {
+      clearTimeout(timer);
       if (error) reject(error);
       else resolve();
     });
   });
+}
+
+function serviceLabel(service: ServiceName): string {
+  return service.charAt(0).toUpperCase() + service.slice(1);
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+type LiveChildProcess = ChildProcess & { pid: number };
+
+function isProcessAlive(proc: ChildProcess | null): proc is LiveChildProcess {
+  return (
+    proc !== null &&
+    typeof proc.pid === "number" &&
+    proc.exitCode === null &&
+    proc.signalCode === null
+  );
+}
+
+function waitForExit(proc: ChildProcess, timeoutMs: number): Promise<boolean> {
+  if (!isProcessAlive(proc)) return Promise.resolve(true);
+
+  return new Promise((resolve) => {
+    const onExit = () => {
+      clearTimeout(timer);
+      resolve(true);
+    };
+    const timer = setTimeout(() => {
+      proc.off("exit", onExit);
+      resolve(!isProcessAlive(proc));
+    }, timeoutMs);
+    proc.once("exit", onExit);
+  });
+}
+
+function isPidAlive(pid: number): boolean {
+  try {
+    // Signal 0 only checks for existence; it does not affect the process.
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    return (error as NodeJS.ErrnoException).code === "EPERM";
+  }
+}
+
+/**
+ * POSIX only: records the descendants of a live tracked root so that, after
+ * termination, RepoRunner can check whether any of them outlived the root.
+ * Returns null when the snapshot is unavailable (including on Windows, where
+ * `taskkill /T /F` terminates the tree and reports failures itself).
+ */
+async function snapshotDescendantPids(rootPid: number): Promise<number[] | null> {
+  if (process.platform === "win32") return null;
+
+  try {
+    const { stdout } = await execFileAsync("ps", ["-A", "-o", "pid=,ppid="], {
+      timeout: 5000,
+    });
+    const childrenByParent = new Map<number, number[]>();
+    for (const line of stdout.split(/\r?\n/)) {
+      const [pid, ppid] = line.trim().split(/\s+/).map(Number);
+      if (!Number.isInteger(pid) || !Number.isInteger(ppid)) continue;
+      const siblings = childrenByParent.get(ppid) ?? [];
+      siblings.push(pid);
+      childrenByParent.set(ppid, siblings);
+    }
+
+    const descendants: number[] = [];
+    const queue = [rootPid];
+    while (queue.length > 0) {
+      const parent = queue.shift()!;
+      for (const child of childrenByParent.get(parent) ?? []) {
+        if (child === rootPid || descendants.includes(child)) continue;
+        descendants.push(child);
+        queue.push(child);
+      }
+    }
+    return descendants;
+  } catch {
+    return null;
+  }
+}
+
+async function waitForPidsToExit(pids: number[], timeoutMs: number): Promise<number[]> {
+  const deadline = Date.now() + timeoutMs;
+  let alive = pids.filter(isPidAlive);
+  while (alive.length > 0 && Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, 200));
+    alive = alive.filter(isPidAlive);
+  }
+  return alive;
+}
+
+interface TerminationResult {
+  rootExited: boolean;
+  // True only when RepoRunner has positive evidence that the whole tracked
+  // tree is gone, not merely that the root process exited.
+  treeVerified: boolean;
+  survivingDescendants: number[];
+}
+
+/**
+ * Terminates ONLY the tracked process and its descendants. tree-kill resolves
+ * the tree from the live root PID (`taskkill /T /F` on Windows, ps/pgrep on
+ * POSIX), so nothing outside the tracked tree is ever targeted.
+ */
+async function terminateTrackedProcessTree(
+  service: ServiceName,
+  proc: LiveChildProcess,
+): Promise<TerminationResult> {
+  const pid = proc.pid;
+  const descendants = await snapshotDescendantPids(pid);
+
+  let lastAttemptFailed = false;
+  try {
+    await treeKillAsync(pid, "SIGTERM");
+  } catch (error) {
+    lastAttemptFailed = true;
+    emitLog("system", `Stopping ${service} process tree (PID ${pid}) reported an error: ${errorMessage(error)}`);
+  }
+
+  let rootExited = await waitForExit(proc, TERMINATE_GRACE_MS);
+
+  if (!rootExited && isProcessAlive(proc)) {
+    emitLog("system", `${serviceLabel(service)} (PID ${pid}) has not exited. Retrying termination of its process tree...`);
+    try {
+      await treeKillAsync(pid, "SIGKILL");
+      lastAttemptFailed = false;
+    } catch (error) {
+      lastAttemptFailed = true;
+      emitLog("system", `Retry for ${service} process tree (PID ${pid}) reported an error: ${errorMessage(error)}`);
+    }
+    rootExited = await waitForExit(proc, FORCE_TERMINATE_GRACE_MS);
+  }
+
+  if (!rootExited) {
+    return { rootExited, treeVerified: false, survivingDescendants: [] };
+  }
+
+  if (descendants === null) {
+    // Windows: taskkill /T /F walks the live parent/child chain from the root
+    // and exits non-zero when any member it found could not be terminated, so
+    // a clean result is evidence the reachable tree is gone. Descendants that
+    // were already orphaned (their parent exited earlier) are not reachable;
+    // the port check in performStop is the backstop for those.
+    // POSIX without a snapshot: root exit alone proves nothing.
+    const treeVerified = process.platform === "win32" && !lastAttemptFailed;
+    return { rootExited, treeVerified, survivingDescendants: [] };
+  }
+
+  const survivingDescendants = await waitForPidsToExit(descendants, DESCENDANT_EXIT_GRACE_MS);
+  return {
+    rootExited,
+    treeVerified: survivingDescendants.length === 0,
+    survivingDescendants,
+  };
 }
 
 // Per-service process handles and run IDs
@@ -44,6 +220,19 @@ const runIds: Record<"frontend" | "backend", number> = {
 const statuses: ServiceStatuses = {
   frontend: "stopped",
   backend: "stopped",
+};
+
+// Main-process lifecycle locks, set synchronously before any await so that
+// Start and Stop for the same service can never interleave, regardless of
+// renderer button state.
+const startInProgress: Record<ServiceName, boolean> = {
+  frontend: false,
+  backend: false,
+};
+
+const stopInProgress: Record<ServiceName, Promise<void> | null> = {
+  frontend: null,
+  backend: null,
 };
 
 // Resolvers for waitForServiceSettled — fulfilled when a service leaves "starting"
@@ -118,28 +307,52 @@ export async function startService(
   cwd: string,
   port?: number,
 ): Promise<void> {
-  if (statuses[service] === "running" || statuses[service] === "starting") {
+  if (stopInProgress[service]) {
+    emitLog("system", `${service} is stopping. Wait for it to stop before starting it again.`);
+    return;
+  }
+
+  if (
+    startInProgress[service] ||
+    statuses[service] === "running" ||
+    statuses[service] === "starting"
+  ) {
     emitLog("system", `${service} is already running or starting.`);
     return;
   }
 
-  if (port) {
-    const inUse = await isPortInUse(port);
-    if (inUse) {
-      const label = service.charAt(0).toUpperCase() + service.slice(1);
-      emitLog(
-        "system",
-        `${label} port ${port} is already in use. Stop services first or free the port.`,
-      );
-      setStatus(service, "failed");
-      return;
-    }
+  const trackedProc = processes[service];
+  if (isProcessAlive(trackedProc)) {
+    emitLog(
+      "system",
+      `RepoRunner is still tracking a running ${service} process (PID ${trackedProc.pid}). Click Stop Engine to stop it before starting again.`,
+    );
+    return;
   }
 
   // Issue a new run ID for this invocation. Any callbacks from a previous
   // (now-killed) process will see their captured runId no longer matches
-  // and will silently bail out without touching status.
+  // and will silently bail out without touching status. A Stop issued while
+  // this start is still checking the port also invalidates it.
+  startInProgress[service] = true;
   const runId = ++runIds[service];
+
+  try {
+    if (port) {
+      const inUse = await isPortInUse(port);
+      if (runIds[service] !== runId) return;
+      if (inUse) {
+        emitLog(
+          "system",
+          `${serviceLabel(service)} port ${port} is already in use. Stop services first or free the port.`,
+        );
+        setStatus(service, "failed");
+        return;
+      }
+    }
+  } finally {
+    startInProgress[service] = false;
+  }
 
   setStatus(service, "starting");
   emitLog(service as LogSource, `Starting ${service}: ${command}`);
@@ -169,19 +382,40 @@ export async function startService(
   });
 
   proc.on("exit", (code, signal) => {
-    if (runIds[service] !== runId) return; // stale event — ignore entirely
-
-    // Only null the process slot if it still refers to this process
+    // The root handle is useless once the root has exited, so release it even
+    // for stale runs. Only null the slot if it still refers to this process.
     if (processes[service] === proc) processes[service] = null;
 
-    // If we were intentionally stopping, stopService handles the status
-    if (statuses[service] === "stopping") return;
+    if (runIds[service] !== runId) return; // stale event — stopService owns status
 
     emitLog(
       service as LogSource,
       `Process exited with code ${code}${signal ? ` (signal ${signal})` : ""}`,
     );
-    setStatus(service, code === 0 ? "stopped" : "failed");
+
+    const exitedBeforeReady = statuses[service] === "starting";
+    const exitStatus: ServiceStatus =
+      exitedBeforeReady || code !== 0 ? "failed" : "stopped";
+
+    if (!port) {
+      setStatus(service, exitStatus);
+      return;
+    }
+
+    // Root exit does not prove its descendants exited. If the port is still
+    // held, report uncertainty instead of claiming the service stopped.
+    void isPortInUse(port).then((inUse) => {
+      if (runIds[service] !== runId) return;
+      if (inUse) {
+        emitLog(
+          "system",
+          `${serviceLabel(service)} process exited, but port ${port} is still in use. Child processes may still be running. RepoRunner will not stop processes it cannot identify; click Stop Engine to re-check the port.`,
+        );
+        setStatus(service, "unknown");
+      } else {
+        setStatus(service, exitStatus);
+      }
+    });
   });
 
   // --- Readiness check ---
@@ -191,16 +425,18 @@ export async function startService(
     // After the async wait, check if this invocation is still the current one
     if (runIds[service] !== runId) return;
 
-    if (reachable) {
-      emitLog(service as LogSource, `${service} is ready on port ${port}.`);
-      setStatus(service, "running");
-    } else if (proc.exitCode !== null) {
-      // Process already died while we were waiting
+    if (!isProcessAlive(proc)) {
+      // The tracked process exited while we were waiting; the exit handler
+      // owns the status (including the port-still-held check). A port that
+      // became reachable afterwards belongs to something RepoRunner no longer
+      // tracks, so it must not be reported as a running service.
       emitLog(
         service as LogSource,
         `${service} process exited before becoming ready on port ${port}.`,
       );
-      setStatus(service, "failed");
+    } else if (reachable) {
+      emitLog(service as LogSource, `${service} is ready on port ${port}.`);
+      setStatus(service, "running");
     } else {
       // Process still alive but port never opened — mark unknown
       emitLog(
@@ -214,59 +450,107 @@ export async function startService(
     await new Promise((r) => setTimeout(r, 3000));
     if (runIds[service] !== runId) return;
 
-    if (proc.exitCode === null) {
+    if (isProcessAlive(proc)) {
       emitLog(service as LogSource, `${service} appears to be running.`);
       setStatus(service, "running");
-    } else {
+    } else if (getStatuses()[service] === "starting") {
       setStatus(service, "failed");
     }
   }
 }
 
-export async function stopService(
-  service: "frontend" | "backend",
+/**
+ * Stops a service. Only the process RepoRunner spawned and still tracks (and
+ * its process tree) is ever terminated. The configured port is inspected for
+ * diagnostics only; whatever is listening on it is never killed.
+ *
+ * Concurrent Stop calls for the same service share one in-flight operation.
+ */
+export function stopService(
+  service: ServiceName,
   port?: number,
 ): Promise<void> {
+  const inFlight = stopInProgress[service];
+  if (inFlight) {
+    emitLog("system", `${serviceLabel(service)} is already stopping.`);
+    return inFlight;
+  }
+
+  const operation: Promise<void> = performStop(service, port).finally(() => {
+    if (stopInProgress[service] === operation) stopInProgress[service] = null;
+  });
+  stopInProgress[service] = operation;
+  return operation;
+}
+
+async function performStop(service: ServiceName, port?: number): Promise<void> {
   const proc = processes[service];
 
   // Bump run ID so any in-flight startService for this service becomes stale
-  runIds[service]++;
+  const stopRunId = ++runIds[service];
 
   setStatus(service, "stopping");
   emitLog(service as LogSource, `Stopping ${service}...`);
 
-  if (proc && proc.pid) {
-    try {
-      await treeKillAsync(proc.pid, "SIGTERM");
-    } catch {
-      try {
-        await treeKillAsync(proc.pid, "SIGKILL");
-      } catch {
-        // ignore
-      }
+  const tracked = isProcessAlive(proc);
+  let treeVerified = true;
+
+  if (tracked) {
+    const result = await terminateTrackedProcessTree(service, proc);
+
+    if (!result.rootExited) {
+      // Keep the handle: the process may still be alive, and the handle is
+      // the only safe identity for a retry.
+      emitLog(
+        "system",
+        `Could not confirm that ${service} (PID ${proc.pid}) stopped. RepoRunner is still tracking it; click Stop Engine again to retry. No other processes were touched.`,
+      );
+      if (runIds[service] === stopRunId) setStatus(service, "unknown");
+      return;
+    }
+
+    if (processes[service] === proc) processes[service] = null;
+
+    treeVerified = result.treeVerified;
+    if (!treeVerified) {
+      emitLog(
+        "system",
+        result.survivingDescendants.length > 0
+          ? `${serviceLabel(service)} root process exited, but child processes are still running (PID ${result.survivingDescendants.join(", ")}). RepoRunner did not force-stop them.`
+          : `${serviceLabel(service)} root process exited, but RepoRunner could not confirm that all of its child processes exited.`,
+      );
+    }
+  } else if (proc && processes[service] === proc) {
+    // Stale handle for a root that already exited; it identifies nothing.
+    processes[service] = null;
+  }
+
+  if (runIds[service] !== stopRunId) return;
+
+  if (port) {
+    const portFree = tracked
+      ? await waitUntilPortIsFree(port, PORT_RELEASE_TIMEOUT_MS)
+      : !(await isPortInUse(port));
+    if (runIds[service] !== stopRunId) return;
+
+    if (!portFree) {
+      const listeners = await findListeningPids(port);
+      if (runIds[service] !== stopRunId) return;
+      const holder = listeners.length > 0 ? ` by PID ${listeners.join(", ")}` : "";
+      emitLog(
+        "system",
+        tracked
+          ? `Port ${port} is still in use${holder} after stopping ${service}. RepoRunner cannot confirm that process belongs to this repo, so it was left running. If it is a leftover dev server, close it manually.`
+          : `Port ${port} is in use${holder}, but RepoRunner is not tracking a ${service} process, so nothing was stopped. Close that process manually or change the ${service} port.`,
+      );
+      setStatus(service, tracked ? "unknown" : "stopped");
+      return;
     }
   }
 
-  processes[service] = null;
-
-  if (port) {
-    const freed = await waitUntilPortIsFree(port, 8000);
-    if (!freed) {
-      emitLog(
-        "system",
-        `Port ${port} still in use after stopping ${service}. Attempting force kill...`,
-      );
-      await killProcessUsingPort(port);
-      const freedAfterKill = await waitUntilPortIsFree(port, 5000);
-      if (!freedAfterKill) {
-        emitLog(
-          "system",
-          `Warning: Could not verify port ${port} is free. Status set to unknown.`,
-        );
-        setStatus(service, "unknown");
-        return;
-      }
-    }
+  if (!treeVerified) {
+    setStatus(service, "unknown");
+    return;
   }
 
   setStatus(service, "stopped");
