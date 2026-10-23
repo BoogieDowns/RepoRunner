@@ -11,7 +11,7 @@ import type { RepoScanResult } from "../../types";
 export type Membership =
   | { status: "member"; pattern: string }
   | { status: "not-member"; reason: "no-workspaces" | "no-pattern-matches" }
-  | { status: "unknown"; reason: "workspace-file-unread" | "pattern-unsupported" | "patterns-truncated" | "negated-pattern" | "scan-incomplete" | "match-budget-exceeded" }
+  | { status: "unknown"; reason: "workspace-file-unread" | "pattern-unsupported" | "patterns-truncated" | "patterns-altered" | "negated-pattern" | "scan-incomplete" | "match-budget-exceeded" }
   /** A "workspaces" pattern matches, but a workspace file RepoRunner doesn't read decides membership instead. */
   | { status: "unknown"; reason: "workspace-file-governs"; pattern: string; file: string };
 
@@ -120,28 +120,40 @@ export function workspaceMembership(result: RepoScanResult, ancestor: string, di
   const ancestorPkg = result.packages.find((p) => p.path === ancestorPath);
   if (!relative || !ancestorPkg) return { status: "not-member", reason: "no-workspaces" };
 
+  // Verified-membership gate. A "workspaces" list decides anything only when
+  // it is known to be complete, exactly as written and fully interpretable;
+  // otherwise it is neither matched nor used to rule membership out. (Some
+  // real memberships are given up as unknown rather than risk a false one.)
+  if (ancestorPkg.workspacesTruncated || (ancestor === "." && result.workspace.patternsTruncated)) return { status: "unknown", reason: "patterns-truncated" };
+  if (ancestorPkg.workspacesExact !== true) return { status: "unknown", reason: "patterns-altered" };
+  const positives: { pattern: string; segments: string[] }[] = [];
+  for (const pattern of ancestorPkg.workspaces) {
+    if (pattern.startsWith("!")) continue;
+    const segments = patternSegments(pattern);
+    if (!segments) return { status: "unknown", reason: "pattern-unsupported" };
+    positives.push({ pattern, segments });
+  }
+  const negated = positives.length < ancestorPkg.workspaces.length;
   const governing = result.manifests.find((m) => {
     const slash = m.path.lastIndexOf("/");
     const dir = slash < 0 ? "." : m.path.slice(0, slash);
     return GOVERNING_FILES.has(m.path.slice(slash + 1).toLowerCase()) && (dir === "." || dir === ancestor || ancestor.startsWith(`${dir}/`));
   });
-  const negations = ancestorPkg.workspaces.filter((w) => w.trim().startsWith("!"));
-  let unsupported = false;
+  const scanIncomplete = result.status !== "complete" || result.manifestsTruncated || result.packagesTruncated;
+
   const budget = { remaining: matchBudget };
-  for (const pattern of ancestorPkg.workspaces) {
-    if (pattern.trim().startsWith("!")) continue;
-    const segments = patternSegments(pattern);
-    if (!segments) {
-      unsupported = true;
-      continue;
-    }
+  for (const { pattern, segments } of positives) {
     const outcome = matchSegments(segments, relative, budget);
     // Patterns left unchecked could still match it.
     if (outcome === "budget-exceeded") return { status: "unknown", reason: "match-budget-exceeded" };
     if (outcome === "match") {
+      // The rest of the gate: nothing that wasn't examined may overrule the match.
       if (governing) return { status: "unknown", reason: "workspace-file-governs", pattern, file: governing.path };
-      // A negation could exclude it; RepoRunner doesn't interpret exclusions.
-      return negations.length > 0 ? { status: "unknown", reason: "negated-pattern" } : { status: "member", pattern };
+      // RepoRunner doesn't interpret exclusions.
+      if (negated) return { status: "unknown", reason: "negated-pattern" };
+      // A file that decides membership may be among what wasn't scanned.
+      if (scanIncomplete) return { status: "unknown", reason: "scan-incomplete" };
+      return { status: "member", pattern };
     }
   }
 
@@ -153,9 +165,7 @@ export function workspaceMembership(result: RepoScanResult, ancestor: string, di
     return dir === ancestor && MEMBERSHIP_FILES.has(m.path.slice(slash + 1).toLowerCase());
   });
   if (workspaceFileHere) return { status: "unknown", reason: "workspace-file-unread" };
-  if (unsupported) return { status: "unknown", reason: "pattern-unsupported" };
-  if (ancestorPkg.workspacesTruncated || (ancestor === "." && result.workspace.patternsTruncated)) return { status: "unknown", reason: "patterns-truncated" };
-  if (result.status !== "complete" || result.manifestsTruncated || result.packagesTruncated) return { status: "unknown", reason: "scan-incomplete" };
+  if (scanIncomplete) return { status: "unknown", reason: "scan-incomplete" };
   return { status: "not-member", reason: ancestorPkg.workspaces.length > 0 ? "no-pattern-matches" : "no-workspaces" };
 }
 
@@ -163,6 +173,7 @@ const UNKNOWN_TEXT: Record<Exclude<Extract<Membership, { status: "unknown" }>["r
   "workspace-file-unread": "workspace membership is set in a workspace file RepoRunner doesn't read",
   "pattern-unsupported": "a workspaces pattern uses syntax RepoRunner doesn't interpret",
   "patterns-truncated": "the workspaces list was cut short",
+  "patterns-altered": "the workspaces list had characters or entries RepoRunner removed for display, so it can't be matched as written",
   "negated-pattern": "the workspaces list has exclusions RepoRunner doesn't interpret",
   "scan-incomplete": "the analysis didn't finish",
   "match-budget-exceeded": "the workspaces patterns were too complex to check completely",

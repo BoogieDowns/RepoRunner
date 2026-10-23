@@ -13,6 +13,7 @@ export interface PkgOptions {
   workspaces?: string[];
   scriptsTruncated?: boolean;
   dependenciesTruncated?: boolean;
+  workspacesExact?: boolean;
 }
 
 export function pkg(path: string, options: PkgOptions = {}): PackageSummary {
@@ -31,6 +32,7 @@ export function pkg(path: string, options: PkgOptions = {}): PackageSummary {
     dependenciesTruncated: options.dependenciesTruncated ?? false,
     workspaces: options.workspaces ?? [],
     workspacesTruncated: false,
+    workspacesExact: options.workspacesExact ?? true,
   };
 }
 

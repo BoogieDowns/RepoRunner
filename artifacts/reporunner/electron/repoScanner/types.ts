@@ -94,6 +94,14 @@ export interface PackageSummary {
   workspaces: string[];
   /** More workspace patterns were declared than are listed. */
   workspacesTruncated: boolean;
+  /**
+   * True only when every listed pattern is exactly the package.json string and
+   * no declared entry was left out other than by the count limit (which is
+   * `workspacesTruncated`). False when cleaning for display changed or dropped
+   * an entry, or "workspaces" had an unexpected shape: the list then can't be
+   * matched as written.
+   */
+  workspacesExact: boolean;
 }
 
 export interface RepoScanResult {

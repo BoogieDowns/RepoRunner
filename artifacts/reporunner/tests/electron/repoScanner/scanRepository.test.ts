@@ -62,6 +62,7 @@ describe("ordinary repositories", () => {
         dependenciesTruncated: false,
         workspaces: [],
         workspacesTruncated: false,
+        workspacesExact: true,
       },
     ]);
     expect(result.packageManager).toEqual({ lockfiles: [{ path: "pnpm-lock.yaml", manager: "pnpm" }], declared: "pnpm@9.1.0" });

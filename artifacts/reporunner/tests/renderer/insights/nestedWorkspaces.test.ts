@@ -100,14 +100,18 @@ describe("nested workspace install scopes", () => {
     expect(codes(at(list, "packages/mono/apps/web"))).toContain("workspace-ownership-ambiguous");
   });
 
-  it("9. partial evidence: truncated nested patterns are unknown; an incomplete scan keeps positive direct matches", () => {
+  it("9. partial evidence: truncated nested patterns are unknown; an incomplete scan confirms no membership", () => {
     const truncated = nested(["package-lock.json"], ["packages/*"], ["libs/*"]);
     truncated.packages![1] = { ...truncated.packages![1], workspacesTruncated: true };
     expect(codes(at(installs(truncated), "packages/mono/apps/web"))).toContain("workspace-membership-unknown");
 
     const partial = installs({ ...nested(["package-lock.json"]), status: "truncated", limitsHit: ["entries"] });
-    expect(partial.map((s) => s.directory)).toEqual([".", "packages/mono"]);
-    for (const s of partial) expect(["medium", "low"]).toContain(s.confidence);
+    // A file that decides membership may not have been scanned, so every package keeps a qualified install.
+    expect(partial.map((s) => [s.directory, s.confidence])).toEqual([
+      [".", "medium"],
+      ["packages/mono", "low"],
+      ["packages/mono/apps/web", "low"],
+    ]);
   });
 
   it("10. conflicting package managers: every alternative for the nested root, ambiguous and at most low", () => {

@@ -70,14 +70,15 @@ function dependencyNames(value: unknown, limit: number): { names: string[]; trun
   };
 }
 
-function workspacePatterns(value: unknown): { patterns: string[]; truncated: boolean } {
+function workspacePatterns(value: unknown): { patterns: string[]; truncated: boolean; exact: boolean } {
   const list = Array.isArray(value) ? value : isRecord(value) && Array.isArray(value.packages) ? value.packages : [];
+  const recognized = value === undefined || Array.isArray(value) || (isRecord(value) && (value.packages === undefined || Array.isArray(value.packages)));
   const declared = list.filter((pattern): pattern is string => typeof pattern === "string");
-  const patterns = declared
-    .slice(0, SCAN_LIMITS.maxWorkspacePatterns)
-    .map((pattern) => sanitizeText(pattern, TEXT_LIMITS.workspacePattern))
-    .filter((pattern) => pattern.length > 0);
-  return { patterns, truncated: declared.length > SCAN_LIMITS.maxWorkspacePatterns };
+  const kept = declared.slice(0, SCAN_LIMITS.maxWorkspacePatterns);
+  const patterns = kept.map((pattern) => sanitizeText(pattern, TEXT_LIMITS.workspacePattern)).filter((pattern) => pattern.length > 0);
+  // Nothing dropped (so positions line up) and nothing changed.
+  const exact = recognized && declared.length === list.length && patterns.length === kept.length && patterns.every((p, i) => p === kept[i]);
+  return { patterns, truncated: declared.length > SCAN_LIMITS.maxWorkspacePatterns, exact };
 }
 
 export type PackageJsonParseResult =
@@ -135,6 +136,7 @@ export function parsePackageJson(
       dependenciesTruncated: dependencies.truncated || devDependencies.truncated,
       workspaces: workspaces.patterns,
       workspacesTruncated: workspaces.truncated,
+      workspacesExact: workspaces.exact,
     },
   };
 }

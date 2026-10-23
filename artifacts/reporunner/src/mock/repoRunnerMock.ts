@@ -252,6 +252,7 @@ function sampleScanResult(rootName: string, cancelled: boolean): RepoScanResult 
             dependenciesTruncated: false,
             workspaces: [],
             workspacesTruncated: false,
+            workspacesExact: true,
           },
         ],
     packagesTruncated: false,

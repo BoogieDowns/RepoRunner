@@ -98,8 +98,9 @@ describe("workspaceMembership", () => {
     expect(member(workspaces, dir).status).toBe(status);
   });
 
-  it("an unsupported pattern is never read as an exclusion, but a supported match is still positive", () => {
-    expect(member(["{apps,libs}/*", "tools/*"], "tools/cli").status).toBe("member");
+  it("an unsupported pattern is never read as an exclusion, and makes the whole list unverified", () => {
+    // The unsupported pattern could be an exclusion, so even a supported match isn't confirmed.
+    expect(member(["{apps,libs}/*", "tools/*"], "tools/cli")).toEqual({ status: "unknown", reason: "pattern-unsupported" });
     expect(member(["{apps,libs}/*"], "tools/cli")).toEqual({ status: "unknown", reason: "pattern-unsupported" });
   });
 

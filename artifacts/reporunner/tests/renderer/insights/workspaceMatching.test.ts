@@ -206,9 +206,9 @@ describe("indeterminate matching in install suggestions", () => {
     expect(workspaceMembership(result, ".", "tools/cli")).toEqual({ status: "unknown", reason: "patterns-truncated" });
   });
 
-  it("12. partial scans keep positive matches and leave non-matches unknown", () => {
+  it("12. partial scans confirm nothing: matches and non-matches are unknown", () => {
     const partial = { status: "truncated" as const, limitsHit: ["entries" as const] };
-    expect(member(["apps/*"], "apps/web", partial).status).toBe("member");
+    expect(member(["apps/*"], "apps/web", partial)).toEqual({ status: "unknown", reason: "scan-incomplete" });
     expect(member(["apps/*"], "tools/cli", partial)).toEqual({ status: "unknown", reason: "scan-incomplete" });
     expect(member(HOSTILE, DEEP, partial)).toEqual({ status: "unknown", reason: "match-budget-exceeded" });
   });
