@@ -12,7 +12,7 @@ beforeAll(() => {
 afterAll(() => space.cleanup());
 
 describe("suggestions from real scans", () => {
-  it("pnpm monorepo: per-app run commands, root orchestration, one root install, hooks named", async () => {
+  it("pnpm monorepo: per-app run commands, root orchestration, root install plus qualified app installs, hooks named", async () => {
     const root = space.repo("suggest monorepo", {
       "package.json": pkg({ name: "mono", private: true, workspaces: ["apps/*"], packageManager: "pnpm@9.12.0", scripts: { dev: "turbo run dev", postinstall: "husky" } }),
       "pnpm-lock.yaml": "lockfileVersion: '9.0'",
@@ -35,10 +35,16 @@ describe("suggestions from real scans", () => {
       ["apps/web", "pnpm run dev", "high"],
       [".", "pnpm run dev", "low"],
       [".", "pnpm install", "high"],
+      // pnpm decides membership from pnpm-workspace.yaml, which isn't read, so
+      // the "workspaces" match doesn't prove the root install covers the apps.
+      ["apps/api", "pnpm install", "low"],
+      ["apps/web", "pnpm install", "low"],
     ]);
+    const appInstall = set.suggestions.find((s) => s.directory === "apps/web" && s.purpose === "install")!;
+    expect(appInstall.caveats.find((c) => c.code === "workspace-membership-unknown")?.text).toContain('it matches the "workspaces" pattern "apps/*", but pnpm-workspace.yaml decides workspace membership');
     const web = set.suggestions.find((s) => s.directory === "apps/web")!;
     expect(web.caveats.find((c) => c.code === "lifecycle-hooks")?.text).toContain("predev");
-    const install = set.suggestions.find((s) => s.purpose === "install")!;
+    const install = set.suggestions.find((s) => s.purpose === "install" && s.directory === ".")!;
     expect(install.caveats.find((c) => c.code === "install-runs-project-scripts")?.text).toContain("postinstall");
     expect(JSON.stringify(set)).not.toContain("CANARY-SUGGEST-1");
     expect(JSON.stringify(set)).not.toContain(root);

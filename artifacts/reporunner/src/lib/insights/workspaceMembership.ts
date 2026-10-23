@@ -11,10 +11,20 @@ import type { RepoScanResult } from "../../types";
 export type Membership =
   | { status: "member"; pattern: string }
   | { status: "not-member"; reason: "no-workspaces" | "no-pattern-matches" }
-  | { status: "unknown"; reason: "workspace-file-unread" | "pattern-unsupported" | "patterns-truncated" | "negated-pattern" | "scan-incomplete" | "match-budget-exceeded" };
+  | { status: "unknown"; reason: "workspace-file-unread" | "pattern-unsupported" | "patterns-truncated" | "negated-pattern" | "scan-incomplete" | "match-budget-exceeded" }
+  /** A "workspaces" pattern matches, but a workspace file RepoRunner doesn't read decides membership instead. */
+  | { status: "unknown"; reason: "workspace-file-governs"; pattern: string; file: string };
 
 /** Workspace files that define membership themselves; RepoRunner doesn't read them. (turbo.json and nx.json don't define it.) */
 const MEMBERSHIP_FILES = new Set(["pnpm-workspace.yaml", "lerna.json", "rush.json"]);
+/**
+ * Of those, the files that replace package.json "workspaces" for installing:
+ * pnpm reads only pnpm-workspace.yaml (it ignores "workspaces"), and Rush
+ * installs its own projects from rush.json. lerna.json isn't one: npm and Yarn
+ * still install from "workspaces". Such a file governs everything below its
+ * folder, so a matching "workspaces" pattern there proves nothing.
+ */
+const GOVERNING_FILES = new Set(["pnpm-workspace.yaml", "rush.json"]);
 const MAX_SEGMENTS = 16;
 /**
  * Most pattern-matching work spent on one membership decision (one ancestor,
@@ -110,6 +120,11 @@ export function workspaceMembership(result: RepoScanResult, ancestor: string, di
   const ancestorPkg = result.packages.find((p) => p.path === ancestorPath);
   if (!relative || !ancestorPkg) return { status: "not-member", reason: "no-workspaces" };
 
+  const governing = result.manifests.find((m) => {
+    const slash = m.path.lastIndexOf("/");
+    const dir = slash < 0 ? "." : m.path.slice(0, slash);
+    return GOVERNING_FILES.has(m.path.slice(slash + 1).toLowerCase()) && (dir === "." || dir === ancestor || ancestor.startsWith(`${dir}/`));
+  });
   const negations = ancestorPkg.workspaces.filter((w) => w.trim().startsWith("!"));
   let unsupported = false;
   const budget = { remaining: matchBudget };
@@ -124,6 +139,7 @@ export function workspaceMembership(result: RepoScanResult, ancestor: string, di
     // Patterns left unchecked could still match it.
     if (outcome === "budget-exceeded") return { status: "unknown", reason: "match-budget-exceeded" };
     if (outcome === "match") {
+      if (governing) return { status: "unknown", reason: "workspace-file-governs", pattern, file: governing.path };
       // A negation could exclude it; RepoRunner doesn't interpret exclusions.
       return negations.length > 0 ? { status: "unknown", reason: "negated-pattern" } : { status: "member", pattern };
     }
@@ -143,7 +159,7 @@ export function workspaceMembership(result: RepoScanResult, ancestor: string, di
   return { status: "not-member", reason: ancestorPkg.workspaces.length > 0 ? "no-pattern-matches" : "no-workspaces" };
 }
 
-const UNKNOWN_TEXT: Record<Extract<Membership, { status: "unknown" }>["reason"], string> = {
+const UNKNOWN_TEXT: Record<Exclude<Extract<Membership, { status: "unknown" }>["reason"], "workspace-file-governs">, string> = {
   "workspace-file-unread": "workspace membership is set in a workspace file RepoRunner doesn't read",
   "pattern-unsupported": "a workspaces pattern uses syntax RepoRunner doesn't interpret",
   "patterns-truncated": "the workspaces list was cut short",
@@ -153,5 +169,8 @@ const UNKNOWN_TEXT: Record<Extract<Membership, { status: "unknown" }>["reason"],
 };
 
 export function unknownMembershipText(membership: Extract<Membership, { status: "unknown" }>): string {
+  if (membership.reason === "workspace-file-governs") {
+    return `it matches the "workspaces" pattern "${membership.pattern}", but ${membership.file} decides workspace membership for the package manager, and RepoRunner doesn't read it`;
+  }
   return UNKNOWN_TEXT[membership.reason];
 }
