@@ -548,7 +548,7 @@ describe("reload and navigation of the calling page", () => {
 
 describe("races around cancellation and completion", () => {
   it("cancelling at varied moments always yields complete or cancelled, and the next scan is unaffected", async () => {
-    slowScans(5);
+    const concurrency = slowScans(5);
     for (const delay of [0, 1, 3, 8, 15, 30, 60, 120]) {
       const scanning = analyze(legitEvent(), repo);
       setTimeout(() => void cancel(legitEvent()), delay);
@@ -556,8 +556,11 @@ describe("races around cancellation and completion", () => {
       expect(["complete", "cancelled"]).toContain(result.status);
       expect(result.partial).toBe(result.status !== "complete");
       await tick(delay + 5); // let the cancel land, even after completion
-      expect(service.isScanning).toBe(false);
+      // A cancelled answer can arrive while the scan's last filesystem call is
+      // still in flight; ownership is held until it returns, then released.
+      await vi.waitFor(() => expect(service.isScanning).toBe(false), { timeout: 2000, interval: 5 });
     }
+    expect(concurrency.max).toBe(1); // no two scans' filesystem work ever overlapped
     vi.restoreAllMocks();
     const next = await analyze(legitEvent(), repo);
     expect(next.status).toBe("complete");
