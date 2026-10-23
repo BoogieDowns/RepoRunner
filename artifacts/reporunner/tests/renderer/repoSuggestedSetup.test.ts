@@ -59,7 +59,7 @@ describe("applications", () => {
     expect(t).toContain("repository root");
     expect(t).toContain("High confidence");
     expect(t).toContain("Why this suggestion?");
-    expect(t).toContain('Script "dev" invokes React + Vite');
+    expect(t).toContain(`Script "dev" starts React + Vite's development server`);
     expect(t).toContain("pnpm-lock.yaml is present");
     expect(t).toContain("The script runs: vite");
     expect(t).toContain("This runs a script defined by the repository, which can execute any command.");

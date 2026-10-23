@@ -21,7 +21,7 @@
 // therefore say "may run".
 import type { PackageManagerName, PackageSummary, RepoScanResult } from "../../types";
 import { detectProjects, directoryOf } from "./detectProjects";
-import { BUN_RUNNERS, FRAMEWORK_RULES, NODE_RUNNERS, invokedTool } from "./frameworkRules";
+import { classifyScript, runEvidenceText, runStrength } from "./frameworkRules";
 import type {
   Caveat,
   CommandSuggestion,
@@ -133,6 +133,10 @@ function scriptSuggestions(insight: PackageInsight, pkg: PackageSummary, insight
     if (insight.role === "workspace-root") {
       return skip("workspace-root-without-run-script", `${insight.packagePath} is the workspace root and has no script that runs the apps; see the individual packages.`);
     }
+    const buildOnly = insight.runnability.buildOnlyScripts;
+    if (buildOnly.length > 0) {
+      return skip("no-run-script", `${insight.packagePath} has no script that starts a server: ${buildOnly.join(", ")} only ${buildOnly.length > 1 ? "build" : "builds"}.`);
+    }
     return skip("no-run-script", `${insight.packagePath} defines no dev, start, serve, develop, start:dev or preview script.`);
   }
 
@@ -140,6 +144,14 @@ function scriptSuggestions(insight: PackageInsight, pkg: PackageSummary, insight
   for (const name of names) {
     const script = pkg.scripts.find((s) => s.name === name);
     if (!script) continue; // never invented
+    // A script that runs a recognized-but-unsupported framework (Nuxt, Astro,
+    // Remix) isn't suggested, even when the package also uses a supported one.
+    const classification = classifyScript(script.command, insight.frameworks.map((f) => f.id));
+    const owner = insight.frameworks.find((f) => f.id === classification.frameworkId);
+    if (owner && !owner.suggestionsSupported) {
+      skip("unsupported-framework", `Script "${name}" in ${insight.packagePath} runs ${owner.label}, which RepoRunner doesn't suggest commands for yet.`);
+      continue;
+    }
     const orchestration = orchestrated.find((o) => o.scriptName === name)?.tool ?? null;
     out.push(...forEachManager(insight, pkg, name, script.command, orchestration));
   }
@@ -147,21 +159,29 @@ function scriptSuggestions(insight: PackageInsight, pkg: PackageSummary, insight
 }
 
 /** How strongly the script itself points to a runnable app (independent of the package manager). */
-function scriptStrength(insight: PackageInsight, name: string, command: string): { strength: Confidence; evidence: Evidence[] } {
+/**
+ * How strongly the script's command supports the suggestion's purpose
+ * (independent of the package manager). What the command does decides, not
+ * the script's name: a development server for "develop", a production server
+ * for "start". A mismatch (dev: "next start") is at most medium; a preview,
+ * a build or an unclassified invocation is low.
+ */
+function scriptStrength(
+  insight: PackageInsight,
+  name: string,
+  command: string,
+  purpose: SuggestionPurpose,
+): { strength: Confidence; evidence: Evidence[]; servesPreview: boolean } {
+  const classification = classifyScript(command, insight.frameworks.map((f) => f.id));
   const evidence: Evidence[] = [];
-  for (const framework of insight.frameworks) {
-    const rule = FRAMEWORK_RULES.find((r) => r.id === framework.id);
-    if (rule && rule.scriptTools.length > 0 && invokedTool(command, rule.scriptTools)) {
-      evidence.push({ kind: "script", text: `Script ${quote(name)} invokes ${framework.label}'s command-line tool` });
-      return { strength: framework.confidence === "high" ? "high" : "medium", evidence };
-    }
+  if (classification.kind !== null) evidence.push({ kind: "script", text: runEvidenceText(name, classification) });
+  let strength = runStrength(classification, insight.frameworks);
+  const serves = classification.kind === "develop" ? "develop" : classification.kind === "start" ? "start" : null;
+  if (serves && serves !== purpose) {
+    evidence.push({ kind: "script", text: `Script ${quote(name)} is named for ${purpose === "develop" ? "development" : "starting"}, but its command ${serves === "develop" ? "starts a development server" : "starts a production server"}` });
+    strength = lowest(strength, "medium");
   }
-  const runner = invokedTool(command, [...NODE_RUNNERS, ...BUN_RUNNERS]);
-  if (runner) {
-    evidence.push({ kind: "script", text: `Script ${quote(name)} starts ${runner.tool}` });
-    return { strength: "medium", evidence };
-  }
-  return { strength: "low", evidence };
+  return { strength, evidence, servesPreview: classification.kind === "preview" };
 }
 
 function forEachManager(
@@ -188,13 +208,14 @@ function forEachManager(
   const caveats: Caveat[] = [NOT_VERIFIED_SCRIPT, RUNS_REPOSITORY_SCRIPT];
   const caps: Confidence[] = [];
 
-  const { strength, evidence: strengthEvidence } = scriptStrength(insight, name, scriptText);
+  const { strength, evidence: strengthEvidence, servesPreview } = scriptStrength(insight, name, scriptText, purpose);
   evidence.push(...strengthEvidence);
   caps.push(strength);
 
-  if (name === "preview") {
-    caveats.push({ code: "preview-serves-build", text: "preview usually serves a production build, which has to be built first." });
-    caps.push("low");
+  // Low confidence for a preview comes from the command's invocation kind
+  // (scriptStrength); the name alone doesn't decide.
+  if (name === "preview" || servesPreview) {
+    caveats.push({ code: "preview-serves-build", text: "A preview usually serves a production build, which has to be built first." });
   }
   if (orchestration) {
     evidence.push({ kind: "script", text: `Root script ${quote(name)} invokes ${orchestration}` });

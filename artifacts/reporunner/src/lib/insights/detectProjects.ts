@@ -9,8 +9,11 @@ import {
   NODE_RUNNERS,
   ORCHESTRATORS,
   RUN_SCRIPT_CANDIDATES,
+  classifyScript,
   commandSegments,
   invokedTool,
+  runEvidenceText,
+  runStrength,
   packageManagerFromField,
   type FrameworkRule,
   type ScriptTool,
@@ -356,45 +359,52 @@ function detectPackageManager(pkg: PackageSummary, directory: string, context: C
 
 function detectRunnability(pkg: PackageSummary, frameworks: FrameworkDetection[], context: Context): RunnabilityInsight {
   const present = new Set(pkg.scripts.map((s) => s.name));
-  const runScripts = RUN_SCRIPT_CANDIDATES.filter((name) => present.has(name));
+  const candidates = RUN_SCRIPT_CANDIDATES.filter((name) => present.has(name));
+  const frameworkIds = frameworks.map((f) => f.id);
+  const runScripts: string[] = [];
+  const buildOnlyScripts: string[] = [];
+  const evidence: Evidence[] = [];
   const uncertainties: UncertaintyCode[] = [];
+
+  // A script name alone is weak. What its command actually does decides the
+  // strength: a development or production server is strong, a preview or an
+  // unclassified invocation is weak, and a build-only command (dev: "vite
+  // build") isn't a run script at all. Nothing here was run or verified.
+  let confidence: Confidence = "low";
+  for (const name of candidates) {
+    const script = pkg.scripts.find((s) => s.name === name)!;
+    const classification = classifyScript(script.command, frameworkIds);
+    evidence.push({ kind: "script", text: runEvidenceText(name, classification) });
+    if (classification.kind === "build") {
+      buildOnlyScripts.push(name);
+      continue;
+    }
+    runScripts.push(name);
+    // The command decides, not the name: "vite preview" is low via its invocation kind.
+    const strength = runStrength(classification, frameworks);
+    if (RANK[strength] > RANK[confidence]) confidence = strength;
+  }
 
   if (runScripts.length === 0) {
     if (pkg.scriptsTruncated) {
       uncertainties.push("scripts-truncated");
-      return { status: "unknown", runScripts, confidence: null, evidence: [], uncertainties };
+      return { status: "unknown", runScripts, buildOnlyScripts, confidence: null, evidence, uncertainties };
     }
     return {
       status: "no-run-script",
       runScripts,
+      buildOnlyScripts,
       confidence: capAt("high", context.scanCap),
-      evidence: [{ kind: "absence", text: `${pkg.path} defines no ${RUN_SCRIPT_CANDIDATES.join(", ")} script` }],
+      evidence: [
+        ...evidence,
+        buildOnlyScripts.length > 0
+          ? { kind: "absence", text: `${pkg.path} has no script that starts a server (${buildOnlyScripts.join(", ")} only ${buildOnlyScripts.length > 1 ? "build" : "builds"})` }
+          : { kind: "absence", text: `${pkg.path} defines no ${RUN_SCRIPT_CANDIDATES.join(", ")} script` },
+      ],
       uncertainties: context.scanComplete ? [] : ["scan-incomplete"],
     };
   }
 
-  // A script name alone is weak; a run script that invokes a recognized
-  // dev server or runtime is stronger. Nothing here was run or verified.
-  const frameworkTools = FRAMEWORK_RULES.filter((r) => frameworks.some((f) => f.id === r.id));
-  const evidence: Evidence[] = [];
-  let confidence: Confidence = "low";
-  for (const name of runScripts) {
-    const script = pkg.scripts.find((s) => s.name === name)!;
-    const rule = frameworkTools.find((r) => r.scriptTools.length > 0 && invokedTool(script.command, r.scriptTools));
-    const runner = rule ? null : invokedTool(script.command, [...NODE_RUNNERS, ...BUN_RUNNERS]);
-    if (rule) {
-      evidence.push({ kind: "script", text: `Script ${quote(name)} invokes ${rule.label}'s command-line tool` });
-      const detected = frameworks.find((f) => f.id === rule.id)!;
-      const strength: Confidence = detected.confidence === "high" ? "high" : "medium";
-      if (name !== "preview" && RANK[strength] > RANK[confidence]) confidence = strength;
-    } else if (runner) {
-      evidence.push({ kind: "script", text: `Script ${quote(name)} starts ${runner.tool}` });
-      if (name !== "preview" && RANK.medium > RANK[confidence]) confidence = "medium";
-    } else {
-      evidence.push({ kind: "script", text: `Script ${quote(name)} is defined` });
-    }
-  }
-  // "preview" never raises confidence above (it usually serves a production build).
   if (runScripts.length === 1 && runScripts[0] === "preview") {
     evidence.push({ kind: "script", text: "Only a preview script exists; it usually serves a production build" });
   }
@@ -406,7 +416,7 @@ function detectRunnability(pkg: PackageSummary, frameworks: FrameworkDetection[]
     uncertainties.push("scan-incomplete");
     confidence = capAt(confidence, context.scanCap);
   }
-  return { status: "has-run-script", runScripts, confidence, evidence, uncertainties };
+  return { status: "has-run-script", runScripts, buildOnlyScripts, confidence, evidence, uncertainties };
 }
 
 function detectRuntimes(

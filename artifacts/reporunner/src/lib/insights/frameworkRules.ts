@@ -259,3 +259,153 @@ export function packageManagerFromField(value: string | null): "npm" | "pnpm" | 
   const name = value.split("@")[0]?.trim().toLowerCase();
   return name === "npm" || name === "pnpm" || name === "yarn" || name === "bun" ? name : null;
 }
+
+// ---------------------------------------------------------------------------
+// What a recognized CLI invocation does. Used to judge run scripts: invoking a
+// framework's tool says the framework is used, but only some invocations start
+// an application. Small explicit tables; anything not listed is "other" (not
+// classified), and a tool that isn't recognized at all is left unclassified.
+
+/** develop: dev server; start: production server; preview: serves a built app; build: builds and exits. */
+export type InvocationKind = "develop" | "start" | "preview" | "build" | "other";
+
+export interface RunInvocation {
+  tool: string;
+  /** The next token; null for the bare tool (or when the next token is an option). */
+  subcommand: string | null;
+  kind: InvocationKind;
+  /** "--watch" / "-w" / "--dev" turns this into a development server (e.g. "nest start --watch"). */
+  watchMeansDevelop?: boolean;
+}
+
+const VITE_INVOCATIONS: readonly RunInvocation[] = [
+  { tool: "vite", subcommand: null, kind: "develop" },
+  { tool: "vite", subcommand: "dev", kind: "develop" },
+  { tool: "vite", subcommand: "serve", kind: "develop" },
+  { tool: "vite", subcommand: "preview", kind: "preview" },
+  { tool: "vite", subcommand: "build", kind: "build" },
+];
+
+export const RUN_INVOCATIONS: Readonly<Record<FrameworkId, readonly RunInvocation[]>> = {
+  "react-vite": VITE_INVOCATIONS,
+  "vue-vite": VITE_INVOCATIONS,
+  "svelte-vite": VITE_INVOCATIONS,
+  sveltekit: VITE_INVOCATIONS,
+  nextjs: [
+    { tool: "next", subcommand: null, kind: "develop" }, // bare `next` runs the dev server
+    { tool: "next", subcommand: "dev", kind: "develop" },
+    { tool: "next", subcommand: "start", kind: "start" },
+    { tool: "next", subcommand: "build", kind: "build" },
+  ],
+  angular: [
+    { tool: "ng", subcommand: "serve", kind: "develop" },
+    { tool: "ng", subcommand: "s", kind: "develop" },
+    { tool: "ng", subcommand: "build", kind: "build" },
+  ],
+  nestjs: [
+    { tool: "nest", subcommand: "start", kind: "start", watchMeansDevelop: true },
+    { tool: "nest", subcommand: "build", kind: "build" },
+  ],
+  express: [],
+  fastify: [{ tool: "fastify", subcommand: "start", kind: "start", watchMeansDevelop: true }],
+  nuxt: [
+    { tool: "nuxt", subcommand: "dev", kind: "develop" },
+    { tool: "nuxi", subcommand: "dev", kind: "develop" },
+    { tool: "nuxt", subcommand: "preview", kind: "preview" },
+    { tool: "nuxi", subcommand: "preview", kind: "preview" },
+    { tool: "nuxt", subcommand: "build", kind: "build" },
+    { tool: "nuxi", subcommand: "build", kind: "build" },
+    { tool: "nuxt", subcommand: "generate", kind: "build" },
+    { tool: "nuxi", subcommand: "generate", kind: "build" },
+  ],
+  astro: [
+    { tool: "astro", subcommand: "dev", kind: "develop" },
+    { tool: "astro", subcommand: "preview", kind: "preview" },
+    { tool: "astro", subcommand: "build", kind: "build" },
+  ],
+  remix: [
+    { tool: "remix", subcommand: "dev", kind: "develop" },
+    { tool: "remix", subcommand: "vite:dev", kind: "develop" },
+    { tool: "remix", subcommand: "build", kind: "build" },
+    { tool: "remix", subcommand: "vite:build", kind: "build" },
+  ],
+};
+
+/** Classifies one command segment against one framework's table; null if its tool isn't invoked. */
+export function classifySegment(tokens: readonly string[], invocations: readonly RunInvocation[]): InvocationKind | null {
+  const [tool, next] = tokens;
+  const forTool = invocations.filter((i) => i.tool === tool);
+  if (forTool.length === 0) return null;
+  const subcommand = next === undefined || next.startsWith("-") ? null : next;
+  const hit = forTool.find((i) => i.subcommand === subcommand);
+  if (!hit) return "other";
+  if (hit.watchMeansDevelop && tokens.some((t) => t === "--watch" || t === "-w" || t === "--dev")) return "develop";
+  return hit.kind;
+}
+
+export interface ScriptClassification {
+  /** The script's strongest action; "runner" = starts node / nodemon / tsx / ts-node / bun directly; null = nothing recognized. */
+  kind: InvocationKind | "runner" | null;
+  /** The framework whose tool produced `kind` (null for runners or nothing recognized). */
+  frameworkId: FrameworkId | null;
+  tool: string | null;
+}
+
+const KIND_ORDER: Record<InvocationKind | "runner", number> = { develop: 5, start: 4, runner: 3, preview: 2, other: 1, build: 0 };
+
+/**
+ * Classifies a script by its strongest recognized segment, so
+ * "tsc && node dist/index.js" starts something while "vite build" only builds.
+ * Only the given frameworks' tables are consulted. Bounded, never executes.
+ */
+export function classifyScript(command: string, frameworkIds: readonly FrameworkId[]): ScriptClassification {
+  let best: ScriptClassification = { kind: null, frameworkId: null, tool: null };
+  const better = (kind: InvocationKind | "runner") => best.kind === null || KIND_ORDER[kind] > KIND_ORDER[best.kind];
+  for (const tokens of commandSegments(command)) {
+    for (const id of frameworkIds) {
+      const kind = classifySegment(tokens, RUN_INVOCATIONS[id]);
+      if (kind && better(kind)) best = { kind, frameworkId: id, tool: tokens[0] };
+    }
+    if ([...NODE_RUNNERS, ...BUN_RUNNERS].some((r) => r.tool === tokens[0]) && better("runner")) {
+      best = { kind: "runner", frameworkId: null, tool: tokens[0] };
+    }
+  }
+  return best;
+}
+
+/** Shared by runnability (Stage 2A) and suggestions (Stage 2B), so both read a script the same way. */
+export function runStrength(classification: ScriptClassification, frameworks: readonly { id: FrameworkId; confidence: "high" | "medium" | "low" }[]): "high" | "medium" | "low" {
+  switch (classification.kind) {
+    case "develop":
+    case "start": {
+      const framework = frameworks.find((f) => f.id === classification.frameworkId);
+      return framework?.confidence === "high" ? "high" : "medium";
+    }
+    case "runner":
+      return "medium";
+    default:
+      // preview serves a build; "other" and unrecognized invocations aren't classified; build doesn't run.
+      return "low";
+  }
+}
+
+export function runEvidenceText(scriptName: string, classification: ScriptClassification): string {
+  const label = FRAMEWORK_RULES.find((r) => r.id === classification.frameworkId)?.label ?? classification.tool ?? "";
+  const script = `Script "${scriptName}"`;
+  switch (classification.kind) {
+    case "develop":
+      return `${script} starts ${label}'s development server`;
+    case "start":
+      return `${script} starts ${label}'s production server`;
+    case "preview":
+      return `${script} runs ${label}'s preview of a production build`;
+    case "build":
+      return `${script} runs a ${label} build and doesn't start a server`;
+    case "runner":
+      return `${script} starts ${classification.tool}`;
+    case "other":
+      return `${script} invokes ${classification.tool} in a way RepoRunner doesn't classify`;
+    default:
+      return `${script} is defined`;
+  }
+}

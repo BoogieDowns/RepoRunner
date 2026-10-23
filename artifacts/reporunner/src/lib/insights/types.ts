@@ -114,6 +114,8 @@ export interface RunnabilityInsight {
   status: "has-run-script" | "no-run-script" | "unknown";
   /** Candidate run scripts present in package.json, in preference order. Never invented. */
   runScripts: string[];
+  /** Run-named scripts whose command only builds (e.g. dev: "vite build"); not counted as run scripts. */
+  buildOnlyScripts: string[];
   confidence: Confidence | null;
   evidence: Evidence[];
   uncertainties: UncertaintyCode[];
