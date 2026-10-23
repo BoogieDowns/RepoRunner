@@ -109,6 +109,35 @@ export interface StartScanOptions extends ScanOptions {
   onSettled?: () => void;
 }
 
+/** The answer for a request cancelled before any scanning started: nothing was read. */
+export function cancelledBeforeStartResult(rootInput: unknown): RepoScanResult {
+  let name = "";
+  try {
+    name = path.basename(checkScanRootSyntax(rootInput));
+  } catch {
+    // Invalid input: no name to show.
+  }
+  return {
+    status: "cancelled",
+    partial: true,
+    limitsHit: [],
+    rootName: sanitizeText(name, TEXT_LIMITS.rootName),
+    stats: { directoriesVisited: 0, entriesExamined: 0, filesRead: 0, bytesRead: 0, durationMs: 0 },
+    manifests: [],
+    manifestsTruncated: false,
+    packages: [],
+    packagesTruncated: false,
+    nodeVersionFiles: [],
+    workspace: { signals: [], patterns: [], patternsTruncated: false },
+    packageManager: { lockfiles: [], declared: null },
+    envFiles: [],
+    envFilesTruncated: false,
+    skipped: { links: 0, excludedDirectories: 0, sensitiveFiles: 0, depthLimited: 0, unreadable: 0, oversized: 0, otherTypes: 0, changedDuringScan: 0 },
+    warnings: [],
+    warningsTruncated: false,
+  };
+}
+
 export function scanRepository(rootInput: unknown, options: ScanOptions = {}): Promise<RepoScanResult> {
   return startScan(rootInput, options).result;
 }

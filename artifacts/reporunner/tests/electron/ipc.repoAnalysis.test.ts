@@ -639,7 +639,7 @@ describe("no execution, no persistence", () => {
     const source = fs.readFileSync(path.resolve(import.meta.dirname, "../../electron/repoAnalysisIpc.ts"), "utf8");
     const imports = [...source.matchAll(/from\s+"([^"]+)"/g)].map((m) => m[1]).sort();
     expect([...new Set(imports)]).toEqual(
-      ["../src/types.js", "./repoScanner/scanSession.js", "./repoScanner/types.js", "./windowSecurity.js", "electron"],
+      ["../src/types.js", "./repoScanner/scanRepository.js", "./repoScanner/scanSession.js", "./repoScanner/types.js", "./windowSecurity.js", "electron"],
     );
     expect(source).not.toMatch(/child_process|projectStore|processManager|\bfetch\(|import\(|require\(/);
   });

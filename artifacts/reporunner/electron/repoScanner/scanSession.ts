@@ -21,16 +21,27 @@ export class RepoScanSession {
     return this.active?.answered === true;
   }
 
-  /** Resolves true once no scan is active, or false after `timeoutMs`. */
-  waitUntilIdle(timeoutMs: number): Promise<boolean> {
+  /**
+   * Resolves true once no scan is active, or false after `timeoutMs` or when
+   * `signal` aborts (the timer is cleared either way).
+   */
+  waitUntilIdle(timeoutMs: number, signal?: AbortSignal): Promise<boolean> {
     const active = this.active;
     if (!active) return Promise.resolve(true);
+    if (signal?.aborted) return Promise.resolve(false);
     return new Promise((resolve) => {
-      const timer = setTimeout(() => resolve(this.active === null), timeoutMs);
-      void active.settled.then(() => {
+      let done = false;
+      const finish = (idle: boolean) => {
+        if (done) return;
+        done = true;
         clearTimeout(timer);
-        resolve(this.active === null);
-      });
+        signal?.removeEventListener("abort", onAbort);
+        resolve(idle);
+      };
+      const onAbort = () => finish(false);
+      const timer = setTimeout(() => finish(this.active === null), timeoutMs);
+      signal?.addEventListener("abort", onAbort, { once: true });
+      void active.settled.then(() => finish(this.active === null));
     });
   }
 

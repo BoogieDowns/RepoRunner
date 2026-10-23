@@ -1,5 +1,6 @@
 import { ipcMain } from "electron";
 import type { BrowserWindow, IpcMainInvokeEvent, WebContents } from "electron";
+import { cancelledBeforeStartResult } from "./repoScanner/scanRepository.js";
 import { RepoScanSession } from "./repoScanner/scanSession.js";
 import { RepoScanError, type RepoScanResult } from "./repoScanner/types.js";
 import { isAppPageUrl } from "./windowSecurity.js";
@@ -60,79 +61,110 @@ function toAnalysisError(error: unknown): Error {
 }
 
 /**
- * One analysis at a time, owned by the webContents that started it. The scan
- * is aborted when that webContents is destroyed, its renderer crashes, or its
- * page reloads or navigates, and when RepoRunner quits. Ownership ends only
- * when the scan has finished.
+ * One analysis request at a time, owned by the webContents that made it.
+ *
+ * A request is "pending" while it waits (at most FINISHING_WAIT_MS) for a
+ * cancelled or timed-out scan to finish its last filesystem call, then
+ * "active" once it owns the scan session. It is registered, with its
+ * lifecycle listeners, before any waiting, so Cancel, a renderer crash or
+ * destroy, a reload or main-frame navigation, and quitting all reach it:
+ * a pending request is abandoned and never starts a scan; an active one
+ * aborts its scan. Session ownership itself ends only when the scan's work
+ * has finished.
  */
+interface AnalysisRequest {
+  contents: WebContents;
+  phase: "pending" | "active";
+  cancelled: boolean;
+  /** Ends a pending wait early (and clears its timer). */
+  stopWaiting: AbortController;
+}
+
 export class RepoAnalysisService {
   private readonly session = new RepoScanSession();
-  private owner: { contents: WebContents } | null = null;
+  private request: AnalysisRequest | null = null;
   private closed = false;
 
   get isScanning(): boolean {
     return this.session.isScanning;
   }
 
+  /** A request is waiting for a finishing scan. */
+  get hasPendingRequest(): boolean {
+    return this.request?.phase === "pending";
+  }
+
   async analyze(sender: WebContents, repoPath: string): Promise<RepoScanResult> {
     if (this.closed) throw analysisError("unavailable");
-    if (this.session.isScanning) {
-      // A scan that already answered (cancelled or timed out) may still be
-      // finishing a filesystem call; wait briefly instead of refusing. A scan
-      // that is still running, or one that doesn't finish in time, is refused.
-      if (!this.session.isFinishing || !(await this.session.waitUntilIdle(FINISHING_WAIT_MS))) {
-        throw analysisError("scan-in-progress");
-      }
-      if (this.closed) throw analysisError("unavailable");
-      if (sender.isDestroyed()) throw analysisError("not-allowed");
-      if (this.session.isScanning) throw analysisError("scan-in-progress");
+    // Another request (pending or active), or a scan that hasn't answered yet.
+    if (this.request || (this.session.isScanning && !this.session.isFinishing)) {
+      throw analysisError("scan-in-progress");
     }
 
-    const owner = { contents: sender };
-    let aborted = false;
-    const abort = () => {
-      if (aborted || this.owner !== owner) return;
-      aborted = true;
-      this.session.cancel();
-    };
+    const request: AnalysisRequest = { contents: sender, phase: "pending", cancelled: false, stopWaiting: new AbortController() };
+    const abandon = () => this.abandon(request);
     // The page that asked is going away: a reload or main-frame navigation
     // (reloads never pass through will-navigate). Same-document changes such
     // as a hash update keep the page, and sub-frames are not the caller.
     // Anything not clearly one of those is treated as a navigation.
     const onNavigation = (details?: { isMainFrame?: boolean; isSameDocument?: boolean }) => {
       if (details?.isMainFrame === false || details?.isSameDocument === true) return;
-      abort();
+      abandon();
     };
     const lifecycle: Array<[string, (...args: never[]) => void]> = [
-      ["destroyed", abort],
-      ["render-process-gone", abort],
+      ["destroyed", abandon],
+      ["render-process-gone", abandon],
       ["did-start-navigation", onNavigation],
     ];
 
-    this.owner = owner;
+    this.request = request;
     for (const [event, listener] of lifecycle) sender.on(event as "destroyed", listener);
     try {
-      // scan() claims the session synchronously, before its first await.
-      return await this.session.scan(repoPath);
-    } catch (error) {
-      throw toAnalysisError(error);
+      if (this.session.isScanning) {
+        // A scan that already answered (cancelled or timed out) may still be
+        // finishing a filesystem call; wait briefly instead of refusing.
+        const idle = await this.session.waitUntilIdle(FINISHING_WAIT_MS, request.stopWaiting.signal);
+        if (this.closed) throw analysisError("unavailable");
+        if (request.cancelled) return cancelledBeforeStartResult(repoPath);
+        if (!idle || this.session.isScanning) throw analysisError("scan-in-progress");
+      }
+
+      // Pending -> active with no await in between: a cancel either landed
+      // before (handled above; nothing starts) or lands after (aborts the scan).
+      request.phase = "active";
+      try {
+        // scan() claims the session synchronously, before its first await.
+        return await this.session.scan(repoPath);
+      } catch (error) {
+        throw toAnalysisError(error);
+      }
     } finally {
       for (const [event, listener] of lifecycle) sender.removeListener(event as "destroyed", listener);
-      if (this.owner === owner) this.owner = null;
+      request.stopWaiting.abort();
+      if (this.request === request) this.request = null;
     }
   }
 
-  /** Cancels the active scan if `sender` owns it; no scan is a no-op. */
-  cancel(sender: WebContents): void {
-    const owner = this.owner;
-    if (!owner) return;
-    if (owner.contents !== sender) throw analysisError("not-allowed");
-    this.session.cancel();
+  /** Abandons `request` once: a pending one never starts; an active one aborts its scan. */
+  private abandon(request: AnalysisRequest): void {
+    if (this.request !== request || request.cancelled) return;
+    request.cancelled = true;
+    if (request.phase === "active") this.session.cancel();
+    else request.stopWaiting.abort();
   }
 
-  /** Quit: abort active work and refuse new scans. */
+  /** Cancels the request (pending or active) if `sender` made it; none is a no-op. */
+  cancel(sender: WebContents): void {
+    const request = this.request;
+    if (!request) return;
+    if (request.contents !== sender) throw analysisError("not-allowed");
+    this.abandon(request);
+  }
+
+  /** Quit: abandon any request, abort active work and refuse new scans. */
   shutdown(): void {
     this.closed = true;
+    if (this.request) this.abandon(this.request);
     this.session.cancel();
   }
 }
