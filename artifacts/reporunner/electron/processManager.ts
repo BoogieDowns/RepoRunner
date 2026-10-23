@@ -29,6 +29,8 @@ const PORT_RELEASE_TIMEOUT_MS = 8000;
 // tree-kill runs taskkill (Windows) or ps/pgrep (POSIX) without a timeout of
 // its own. Bound it so a hung helper can never leave a Stop lock held forever.
 const TREE_KILL_TIMEOUT_MS = 10000;
+// Overall budget for stopping tracked services when RepoRunner quits.
+export const SHUTDOWN_DEADLINE_MS = 15000;
 
 function treeKillAsync(pid: number, signal: string): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -235,6 +237,11 @@ const stopInProgress: Record<ServiceName, Promise<void> | null> = {
   backend: null,
 };
 
+// Set once when RepoRunner starts quitting and never reset: from then on no
+// service may start. Stop keeps working.
+let shuttingDown = false;
+let shutdownCleanup: Promise<ShutdownResult> | null = null;
+
 // Resolvers for waitForServiceSettled — fulfilled when a service leaves "starting"
 const settledResolvers: Record<"frontend" | "backend", Array<() => void>> = {
   frontend: [],
@@ -248,7 +255,13 @@ function getMainWindow(): BrowserWindow | null {
 
 function emitStatus() {
   const win = getMainWindow();
-  win?.webContents.send("status", { ...statuses });
+  try {
+    // The window may be closing or gone while services stop during quit.
+    if (!win || win.isDestroyed() || win.webContents.isDestroyed()) return;
+    win.webContents.send("status", { ...statuses });
+  } catch {
+    // Nothing to update.
+  }
 }
 
 function setStatus(service: "frontend" | "backend", status: ServiceStatus) {
@@ -307,6 +320,11 @@ export async function startService(
   cwd: string,
   port?: number,
 ): Promise<void> {
+  if (shuttingDown) {
+    emitLog("system", `RepoRunner is closing, so ${service} was not started.`);
+    return;
+  }
+
   if (stopInProgress[service]) {
     emitLog("system", `${service} is stopping. Wait for it to stop before starting it again.`);
     return;
@@ -352,6 +370,12 @@ export async function startService(
     }
   } finally {
     startInProgress[service] = false;
+  }
+
+  // Shutdown may have begun while the port was being checked.
+  if (shuttingDown) {
+    emitLog("system", `RepoRunner is closing, so ${service} was not started.`);
+    return;
   }
 
   setStatus(service, "starting");
@@ -569,5 +593,117 @@ export async function stopAllServices(
 
 export function getStatuses(): ServiceStatuses {
   return { ...statuses };
+}
+
+// ---------------------------------------------------------------------------
+// Application shutdown
+// ---------------------------------------------------------------------------
+
+const SERVICES: readonly ServiceName[] = ["frontend", "backend"];
+
+export type ShutdownOutcome =
+  /** Every tracked service tree was stopped (or nothing was tracked). */
+  | "stopped"
+  /** Stop finished, but RepoRunner could not confirm every tracked root exited. */
+  | "processes-remain"
+  /** The deadline passed before Stop finished. */
+  | "timed-out"
+  /** Stop failed unexpectedly. */
+  | "error";
+
+export interface ShutdownResult {
+  outcome: ShutdownOutcome;
+  /** Tracked root PIDs still alive when cleanup ended. */
+  remainingPids: number[];
+  /** Services whose root exited but whose child processes couldn't be confirmed gone. */
+  unverifiedServices: ServiceName[];
+  durationMs: number;
+}
+
+function trackedLivePids(): number[] {
+  return SERVICES.flatMap((service) => {
+    const proc = processes[service];
+    return isProcessAlive(proc) ? [proc.pid] : [];
+  });
+}
+
+/** Blocks every future start. Safe to call repeatedly; never undone. */
+export function beginShutdown(): void {
+  shuttingDown = true;
+}
+
+export function isShuttingDown(): boolean {
+  return shuttingDown;
+}
+
+/** True when quitting needs to wait for cleanup: a tracked process, a start or a stop is in flight. */
+export function hasTrackedServiceWork(): boolean {
+  return SERVICES.some(
+    (service) => isProcessAlive(processes[service]) || startInProgress[service] || stopInProgress[service] !== null,
+  );
+}
+
+/**
+ * Stops the service trees RepoRunner tracks, for app exit. Uses the normal
+ * Stop (tracked handles only, no ports), reuses a Stop already in progress,
+ * retries once for roots that survive, and never takes longer than
+ * `deadlineMs`. Every call returns the same cleanup.
+ */
+export function stopTrackedServicesForShutdown(deadlineMs = SHUTDOWN_DEADLINE_MS): Promise<ShutdownResult> {
+  beginShutdown();
+  if (!shutdownCleanup) shutdownCleanup = runShutdownCleanup(deadlineMs);
+  return shutdownCleanup;
+}
+
+async function runShutdownCleanup(deadlineMs: number): Promise<ShutdownResult> {
+  const startedAt = Date.now();
+
+  const work = (async () => {
+    // No ports: at exit only the tracked trees matter, and ports are never
+    // used to choose what to stop.
+    await Promise.all(SERVICES.map((service) => stopService(service)));
+    const survivors = SERVICES.filter((service) => isProcessAlive(processes[service]));
+    if (survivors.length > 0) {
+      emitLog("system", `Retrying stop for ${survivors.join(" and ")} before RepoRunner closes...`);
+      await Promise.all(survivors.map((service) => stopService(service)));
+    }
+  })();
+
+  // Settles exactly once, whichever comes first; a late rejection from `work`
+  // is already handled, so it can't become an unhandled rejection.
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const ended = await Promise.race([
+    work.then(
+      () => ({ kind: "done" as const }),
+      (error: unknown) => ({ kind: "error" as const, error }),
+    ),
+    new Promise<{ kind: "timeout" }>((resolve) => {
+      timer = setTimeout(() => resolve({ kind: "timeout" }), deadlineMs);
+    }),
+  ]);
+  clearTimeout(timer);
+
+  const remainingPids = trackedLivePids();
+  const unverifiedServices = SERVICES.filter((service) => statuses[service] === "unknown");
+  const outcome: ShutdownOutcome =
+    ended.kind === "timeout"
+      ? "timed-out"
+      : ended.kind === "error"
+        ? "error"
+        : remainingPids.length > 0 || unverifiedServices.length > 0
+          ? "processes-remain"
+          : "stopped";
+
+  if (ended.kind === "error") {
+    emitLog("system", `Stopping services before exit failed: ${errorMessage(ended.error)}`);
+  }
+  if (remainingPids.length > 0) {
+    emitLog(
+      "system",
+      `RepoRunner is closing, but could not confirm that tracked process ${remainingPids.join(", ")} stopped.`,
+    );
+  }
+
+  return { outcome, remainingPids, unverifiedServices, durationMs: Date.now() - startedAt };
 }
 
