@@ -21,7 +21,8 @@
 // therefore say "may run".
 import type { PackageManagerName, PackageSummary, RepoScanResult } from "../../types";
 import { detectProjects, directoryOf } from "./detectProjects";
-import { classifyScript, runEvidenceText, runStrength, unsupportedInvocations } from "./frameworkRules";
+import { RUN_SCRIPT_CANDIDATES, classifyScript, runEvidenceText, runStrength, unsupportedInvocations } from "./frameworkRules";
+import { invocableScripts, scriptNameProblemText, unusableScriptNames } from "./scriptNames";
 import { relativeTo, unknownMembershipText, workspaceMembership, type Membership } from "./workspaceMembership";
 import type {
   Caveat,
@@ -123,11 +124,18 @@ function scriptSuggestions(insight: PackageInsight, pkg: PackageSummary, insight
     return skip("unsupported-framework", `${insight.frameworks.map((f) => f.label).join(", ")} was recognized; RepoRunner doesn't suggest commands for it yet.`);
   }
 
-  const orchestrated = insight.directory === "." ? insights.orchestration.filter((o) => ORCHESTRATED_RUN_NAME.test(o.scriptName)) : [];
+  // Scripts are only ever named by an exact, unique name (see scriptNames.ts).
+  const scripts = invocableScripts(pkg);
+  const unusable = unusableScriptNames(pkg, (name) => RUN_SCRIPT_CANDIDATES.includes(name) || ORCHESTRATED_RUN_NAME.test(name));
+  for (const u of unusable) {
+    skip("script-name-unusable", `Script "${u.name}" in ${insight.packagePath} isn't suggested: ${scriptNameProblemText(u.name, u.problem)}.`);
+  }
+  const orchestrated = insight.directory === "." ? insights.orchestration.filter((o) => ORCHESTRATED_RUN_NAME.test(o.scriptName) && scripts.some((s) => s.name === o.scriptName)) : [];
   const names = [...insight.runnability.runScripts];
   for (const signal of orchestrated) if (!names.includes(signal.scriptName)) names.push(signal.scriptName);
 
   if (names.length === 0) {
+    if (unusable.length > 0 && !pkg.scriptsTruncated) return [];
     if (insight.runnability.status === "unknown") {
       return skip("scripts-truncated", `The script list of ${insight.packagePath} was cut short, so a run script may exist that wasn't seen.`);
     }
@@ -143,7 +151,7 @@ function scriptSuggestions(insight: PackageInsight, pkg: PackageSummary, insight
 
   const out: CommandSuggestion[] = [];
   for (const name of names) {
-    const script = pkg.scripts.find((s) => s.name === name);
+    const script = scripts.find((s) => s.name === name);
     if (!script) continue; // never invented
     // A script that invokes a recognized-but-unsupported framework (Nuxt,
     // Astro, Remix) anywhere isn't suggested, even when it also starts a

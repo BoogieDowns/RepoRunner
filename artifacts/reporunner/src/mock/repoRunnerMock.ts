@@ -243,8 +243,8 @@ function sampleScanResult(rootName: string, cancelled: boolean): RepoScanResult 
             packageManager: "pnpm@9.1.0",
             engines: { node: ">=20" },
             scripts: [
-              { name: "dev", command: "vite" },
-              { name: "build", command: "vite build" },
+              { name: "dev", nameExact: true, command: "vite" },
+              { name: "build", nameExact: true, command: "vite build" },
             ],
             scriptsTruncated: false,
             dependencies: ["react", "react-dom"],

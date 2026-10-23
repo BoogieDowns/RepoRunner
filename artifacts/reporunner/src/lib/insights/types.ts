@@ -40,7 +40,8 @@ export type UncertaintyCode =
   | "package-manager-unknown"
   | "unrecognized-package-manager-field"
   | "multiple-frameworks"
-  | "indirect-evidence-only";
+  | "indirect-evidence-only"
+  | "script-names-unusable";
 
 export type FrameworkId =
   | "react-vite"
@@ -231,6 +232,7 @@ export interface CommandSuggestion {
 export type SkipReason =
   | "no-run-script"
   | "scripts-truncated"
+  | "script-name-unusable"
   | "unsupported-framework"
   | "workspace-root-without-run-script"
   | "non-node-project"

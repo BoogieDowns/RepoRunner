@@ -52,9 +52,9 @@ describe("ordinary repositories", () => {
         packageManager: "pnpm@9.1.0",
         engines: { node: ">=20" },
         scripts: [
-          { name: "dev", command: "vite" },
-          { name: "build", command: "vite build" },
-          { name: "start", command: "node server.js" },
+          { name: "dev", nameExact: true, command: "vite" },
+          { name: "build", nameExact: true, command: "vite build" },
+          { name: "start", nameExact: true, command: "node server.js" },
         ],
         scriptsTruncated: false,
         dependencies: ["react", "react-dom"],
@@ -123,7 +123,7 @@ describe("ordinary repositories", () => {
     expect(result.packages.map((p) => p.path).sort()).toEqual(
       ["apps/api/package.json", "apps/web/package.json", "package.json", "packages/ui/package.json"],
     );
-    expect(result.packages.find((p) => p.name === "web")?.scripts).toEqual([{ name: "dev", command: "next dev" }]);
+    expect(result.packages.find((p) => p.name === "web")?.scripts).toEqual([{ name: "dev", nameExact: true, command: "next dev" }]);
   });
 
   it("workspaces in object form ({ packages: [...] })", async () => {

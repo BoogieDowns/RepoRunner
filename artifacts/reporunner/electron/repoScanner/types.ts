@@ -66,7 +66,14 @@ export interface RepoScanWarning {
 }
 
 export interface PackageScript {
+  /** Display-safe name (see sanitizeText). */
   name: string;
+  /**
+   * True only when package.json has a script with exactly `name`. False when
+   * cleaning for display changed it (removed characters, trimmed or collapsed
+   * whitespace, shortened), so `name` can't be used to run that script.
+   */
+  nameExact: boolean;
   /** Passive text from package.json. RepoRunner never runs it on its own. */
   command: string;
 }

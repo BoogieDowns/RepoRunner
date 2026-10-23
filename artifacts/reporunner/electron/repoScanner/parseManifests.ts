@@ -110,7 +110,7 @@ export function parsePackageJson(
     for (const [name, command] of entries.slice(0, limits.maxScriptsPerPackage)) {
       const safeName = sanitizeText(name, TEXT_LIMITS.scriptName);
       if (!safeName) continue;
-      scripts.push({ name: safeName, command: sanitizeText(command as string, TEXT_LIMITS.scriptCommand) });
+      scripts.push({ name: safeName, nameExact: safeName === name, command: sanitizeText(command as string, TEXT_LIMITS.scriptCommand) });
     }
   }
 

@@ -18,6 +18,7 @@ import {
   type FrameworkRule,
   type ScriptTool,
 } from "./frameworkRules";
+import { invocableScripts, scriptNameProblemText, unusableScriptNames } from "./scriptNames";
 import type {
   Confidence,
   Evidence,
@@ -358,7 +359,9 @@ function detectPackageManager(pkg: PackageSummary, directory: string, context: C
 }
 
 function detectRunnability(pkg: PackageSummary, frameworks: FrameworkDetection[], context: Context): RunnabilityInsight {
-  const present = new Set(pkg.scripts.map((s) => s.name));
+  // Only scripts whose names identify them; see scriptNames.ts.
+  const scripts = invocableScripts(pkg);
+  const present = new Set(scripts.map((s) => s.name));
   const candidates = RUN_SCRIPT_CANDIDATES.filter((name) => present.has(name));
   const frameworkIds = frameworks.map((f) => f.id);
   const runScripts: string[] = [];
@@ -372,7 +375,7 @@ function detectRunnability(pkg: PackageSummary, frameworks: FrameworkDetection[]
   // build") isn't a run script at all. Nothing here was run or verified.
   let confidence: Confidence = "low";
   for (const name of candidates) {
-    const script = pkg.scripts.find((s) => s.name === name)!;
+    const script = scripts.find((s) => s.name === name)!;
     const classification = classifyScript(script.command, frameworkIds);
     evidence.push({ kind: "script", text: runEvidenceText(name, classification) });
     if (classification.kind === "build") {
@@ -385,9 +388,14 @@ function detectRunnability(pkg: PackageSummary, frameworks: FrameworkDetection[]
     if (RANK[strength] > RANK[confidence]) confidence = strength;
   }
 
+  const unusable = unusableScriptNames(pkg, (name) => RUN_SCRIPT_CANDIDATES.includes(name));
+  for (const u of unusable) evidence.push({ kind: "script", text: `Script ${quote(u.name)} can't be used in a command: ${scriptNameProblemText(u.name, u.problem)}` });
+  if (unusable.length > 0) uncertainties.push("script-names-unusable");
+
   if (runScripts.length === 0) {
-    if (pkg.scriptsTruncated) {
-      uncertainties.push("scripts-truncated");
+    // A run script may exist under a name that can't be used, or beyond the listed scripts.
+    if (pkg.scriptsTruncated || unusable.length > 0) {
+      if (pkg.scriptsTruncated) uncertainties.push("scripts-truncated");
       return { status: "unknown", runScripts, buildOnlyScripts, confidence: null, evidence, uncertainties };
     }
     return {
