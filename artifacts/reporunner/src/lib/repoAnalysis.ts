@@ -194,6 +194,7 @@ const LIMIT_NOTES: Record<RepoScanResult["limitsHit"][number], string> = {
 
 export const UNANALYZED_NOTE = "Some files or folders could not be analyzed";
 export const WORKSPACE_PATTERNS_NOTE = "Not all workspace patterns are listed.";
+export const PACKAGE_DETAILS_NOTE = "Some packages have more scripts or dependencies than are listed.";
 
 export function summarizeStatus(result: RepoScanResult): StatusSummary {
   const notes: string[] = [];
@@ -206,6 +207,9 @@ export function summarizeStatus(result: RepoScanResult): StatusSummary {
   }
   if (result.workspace.patternsTruncated || result.packages.some((pkg) => pkg.workspacesTruncated)) {
     notes.push(WORKSPACE_PATTERNS_NOTE);
+  }
+  if (result.packages.some((pkg) => pkg.scriptsTruncated || pkg.dependenciesTruncated)) {
+    notes.push(PACKAGE_DETAILS_NOTE);
   }
   const skipped = result.skipped;
   const unanalyzed = skipped.unreadable + skipped.oversized + skipped.changedDuringScan;
@@ -232,6 +236,7 @@ const WARNING_TEXT: Record<RepoScanResult["warnings"][number]["code"], string> =
   "manifest-limit-reached": "package.json limit reached; later files skipped",
   "byte-budget-exhausted": "read budget used up; file skipped",
   "directory-unreadable": "folder could not be read",
+  "entry-unreadable": "could not be inspected",
   "changed-during-scan": "changed during analysis; skipped",
   "node-version-unrecognized": "Node version file not recognized",
 };

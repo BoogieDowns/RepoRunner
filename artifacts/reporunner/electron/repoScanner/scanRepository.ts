@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { parseNodeVersion, parsePackageJson, sanitizePathSegments, sanitizeText } from "./parseManifests.js";
-import { isWithin, resolveScanRoot, samePath } from "./scanRoot.js";
+import { checkScanRootSyntax, isWithin, resolveScanRoot, samePath } from "./scanRoot.js";
 import {
   SCAN_LIMITS,
   TEXT_LIMITS,
@@ -93,26 +93,64 @@ function isSameFile(before: fs.BigIntStats, opened: fs.BigIntStats, rootDevice: 
   return rootDevice !== null && opened.dev === rootDevice;
 }
 
-export async function scanRepository(rootInput: unknown, options: ScanOptions = {}): Promise<RepoScanResult> {
+/**
+ * A started scan. `result` is the caller's answer: on cancel or timeout it
+ * settles at once with what was gathered so far, even while a filesystem call
+ * is still pending (Node can't interrupt one). `settled` never rejects and
+ * resolves only when all scanner work, including that call, has finished.
+ */
+export interface ScanRun {
+  result: Promise<RepoScanResult>;
+  settled: Promise<void>;
+}
+
+export interface StartScanOptions extends ScanOptions {
+  /** Called synchronously when the work has finished (before `result` on a normal finish). */
+  onSettled?: () => void;
+}
+
+export function scanRepository(rootInput: unknown, options: ScanOptions = {}): Promise<RepoScanResult> {
+  return startScan(rootInput, options).result;
+}
+
+export function startScan(rootInput: unknown, options: StartScanOptions = {}): ScanRun {
+  let rootHint: string;
+  try {
+    rootHint = checkScanRootSyntax(rootInput);
+  } catch (error) {
+    options.onSettled?.();
+    return { result: Promise.reject(error), settled: Promise.resolve() };
+  }
+
   const limits: ScanLimits = { ...SCAN_LIMITS, ...options.limits };
   const startedAt = Date.now();
-  const root = await resolveScanRoot(rootInput);
-  const rootDevice = options.signal?.aborted ? null : await readRootDevice(root);
 
+  // Cancel and the time budget are watched before anything that can block,
+  // including resolving the root.
   let stopReason: "cancelled" | "timed-out" | null = null;
-  const onAbort = () => {
-    stopReason ??= "cancelled";
+  let signalStop!: () => void;
+  const stopRequested = new Promise<void>((resolve) => (signalStop = resolve));
+  const stop = (reason: "cancelled" | "timed-out") => {
+    if (stopReason) return;
+    stopReason = reason;
+    signalStop();
   };
-  if (options.signal?.aborted) onAbort();
+  const onAbort = () => stop("cancelled");
+  const timer = setTimeout(() => stop("timed-out"), limits.timeBudgetMs);
   options.signal?.addEventListener("abort", onAbort, { once: true });
-  const timer = setTimeout(() => {
-    stopReason ??= "timed-out";
-  }, limits.timeBudgetMs);
+  if (options.signal?.aborted) onAbort();
+  const stopWatching = () => {
+    clearTimeout(timer);
+    options.signal?.removeEventListener("abort", onAbort);
+  };
 
   const stopped = () => {
-    if (!stopReason && Date.now() - startedAt >= limits.timeBudgetMs) stopReason = "timed-out";
+    if (!stopReason && Date.now() - startedAt >= limits.timeBudgetMs) stop("timed-out");
     return stopReason !== null;
   };
+
+  let root: string | null = null;
+  let rootDevice: bigint | null = null;
 
   const limitsHit = new Set<RepoScanLimit>();
   const stats = { directoriesVisited: 0, entriesExamined: 0, filesRead: 0, bytesRead: 0, durationMs: 0 };
@@ -149,7 +187,7 @@ export async function scanRepository(rootInput: unknown, options: ScanOptions = 
       const st = await fs.promises.lstat(abs);
       if (!st.isDirectory() || st.isSymbolicLink()) return false;
       const real = await fs.promises.realpath(abs);
-      return samePath(real, abs) && isWithin(root, real);
+      return root !== null && samePath(real, abs) && isWithin(root, real);
     } catch {
       return false;
     }
@@ -173,7 +211,7 @@ export async function scanRepository(rootInput: unknown, options: ScanOptions = 
     }
     try {
       const real = await fs.promises.realpath(abs);
-      if (!samePath(real, abs) || !isWithin(root, real)) {
+      if (root === null || !samePath(real, abs) || !isWithin(root, real)) {
         warn("changed-during-scan", rel);
         return null;
       }
@@ -295,11 +333,31 @@ export async function scanRepository(rootInput: unknown, options: ScanOptions = 
     }
   };
 
-  const queue: Array<QueuedDirectory | undefined> = [{ abs: root, segments: [], depth: 0 }];
-  let head = 0;
-  let stopTraversal = false;
+  /** What an entry is; unknown types (some FUSE/network filesystems) are classified with lstat. */
+  const classifyEntry = async (directory: QueuedDirectory, entry: fs.Dirent): Promise<"link" | "directory" | "file" | "other" | null> => {
+    if (entry.isSymbolicLink()) return "link";
+    if (entry.isDirectory()) return "directory";
+    if (entry.isFile()) return "file";
+    if (entry.isFIFO() || entry.isSocket() || entry.isBlockDevice() || entry.isCharacterDevice()) return "other";
+    try {
+      // lstat never follows a link; a directory is still re-verified before it is listed.
+      const st = await fs.promises.lstat(path.join(directory.abs, entry.name));
+      if (st.isSymbolicLink()) return "link";
+      if (st.isDirectory()) return "directory";
+      if (st.isFile()) return "file";
+      return "other";
+    } catch {
+      skipped.unreadable++;
+      warn("entry-unreadable", sanitizePathSegments([...directory.segments, entry.name]));
+      return null;
+    }
+  };
 
-  try {
+  const traverse = async (scanRoot: string) => {
+    const queue: Array<QueuedDirectory | undefined> = [{ abs: scanRoot, segments: [], depth: 0 }];
+    let head = 0;
+    let stopTraversal = false;
+
     while (head < queue.length && !stopTraversal) {
       if (stopped()) break;
       if (stats.directoriesVisited >= limits.maxDirectories) {
@@ -336,9 +394,12 @@ export async function scanRepository(rootInput: unknown, options: ScanOptions = 
           }
           stats.entriesExamined++;
 
-          if (entry.isSymbolicLink()) {
+          const kind = await classifyEntry(directory, entry);
+          if (kind === null) continue;
+          if (stopped()) break;
+          if (kind === "link") {
             skipped.links++;
-          } else if (entry.isDirectory()) {
+          } else if (kind === "directory") {
             if (isExcludedDirectory(entry.name)) {
               skipped.excludedDirectories++;
             } else if (directory.depth + 1 > limits.maxDepth) {
@@ -347,7 +408,7 @@ export async function scanRepository(rootInput: unknown, options: ScanOptions = 
             } else {
               queue.push({ abs: path.join(directory.abs, entry.name), segments: [...directory.segments, entry.name], depth: directory.depth + 1 });
             }
-          } else if (entry.isFile()) {
+          } else if (kind === "file") {
             await handleFile(directory, entry.name);
           } else {
             skipped.otherTypes++;
@@ -360,41 +421,88 @@ export async function scanRepository(rootInput: unknown, options: ScanOptions = 
         await dir.close().catch(() => undefined); // already closed after full iteration
       }
     }
-  } finally {
-    clearTimeout(timer);
-    options.signal?.removeEventListener("abort", onAbort);
-  }
-
-  if (stopReason === "timed-out") limitsHit.add("time");
-  stats.durationMs = Date.now() - startedAt;
-
-  const result: RepoScanResult = {
-    status: "complete",
-    partial: false,
-    limitsHit: [],
-    rootName: sanitizeText(path.basename(root), TEXT_LIMITS.rootName),
-    stats,
-    manifests,
-    manifestsTruncated,
-    packages,
-    packagesTruncated: false,
-    nodeVersionFiles,
-    workspace: { signals: [...signals], patterns: workspacePatterns, patternsTruncated: workspacePatternsTruncated },
-    packageManager: { lockfiles: lockfiles.slice(0, limits.maxManifests), declared: declaredPackageManager },
-    envFiles,
-    envFilesTruncated,
-    skipped,
-    warnings,
-    warningsTruncated,
   };
 
-  fitResultSize(result, limits.maxResultBytes, limitsHit);
+  /** The caller's result, built from a copy of the state at this moment. */
+  const buildResult = (): RepoScanResult => {
+    const resultLimits = new Set(limitsHit);
+    if (stopReason === "timed-out") resultLimits.add("time");
+    const result: RepoScanResult = structuredClone({
+      status: "complete",
+      partial: false,
+      limitsHit: [],
+      rootName: sanitizeText(path.basename(root ?? rootHint), TEXT_LIMITS.rootName),
+      stats: { ...stats, durationMs: Date.now() - startedAt },
+      manifests,
+      manifestsTruncated,
+      packages,
+      packagesTruncated: false,
+      nodeVersionFiles,
+      workspace: { signals: [...signals], patterns: workspacePatterns, patternsTruncated: workspacePatternsTruncated },
+      packageManager: { lockfiles: lockfiles.slice(0, limits.maxManifests), declared: declaredPackageManager },
+      envFiles,
+      envFilesTruncated,
+      skipped,
+      warnings,
+      warningsTruncated,
+    } satisfies RepoScanResult);
 
-  result.limitsHit = [...limitsHit];
-  result.status =
-    stopReason ?? (result.limitsHit.length > 0 || hasTruncatedLists(result) || hasUnanalyzedContent(result) ? "truncated" : "complete");
-  result.partial = result.status !== "complete";
-  return result;
+    fitResultSize(result, limits.maxResultBytes, resultLimits);
+
+    result.limitsHit = [...resultLimits];
+    result.status =
+      stopReason ?? (result.limitsHit.length > 0 || hasTruncatedLists(result) || hasUnanalyzedContent(result) ? "truncated" : "complete");
+    result.partial = result.status !== "complete";
+    return result;
+  };
+
+  const work = (async () => {
+    root = await resolveScanRoot(rootInput);
+    if (stopped()) return;
+    rootDevice = await readRootDevice(root);
+    if (stopped()) return;
+    await traverse(root);
+  })();
+
+  // Exactly one answer per scan: whichever comes first of the work finishing
+  // or a stop request. Later work can't change what was delivered (it's a copy).
+  let delivered = false;
+  let resolveSettled!: () => void;
+  const settled = new Promise<void>((resolve) => (resolveSettled = resolve));
+  const result = new Promise<RepoScanResult>((resolve, reject) => {
+    const answer = (build: () => RepoScanResult) => {
+      if (delivered) return;
+      delivered = true;
+      stopWatching();
+      try {
+        resolve(build());
+      } catch (error) {
+        reject(error);
+      }
+    };
+    const finishWork = () => {
+      stopWatching();
+      try {
+        options.onSettled?.();
+      } finally {
+        resolveSettled();
+      }
+    };
+    work.then(
+      () => {
+        finishWork();
+        answer(buildResult);
+      },
+      (error: unknown) => {
+        finishWork();
+        if (delivered) return; // already answered (stopped); nothing more to report
+        delivered = true;
+        reject(error);
+      },
+    );
+    void stopRequested.then(() => answer(buildResult));
+  });
+  return { result, settled };
 }
 
 function hasTruncatedLists(result: RepoScanResult): boolean {
@@ -404,7 +512,7 @@ function hasTruncatedLists(result: RepoScanResult): boolean {
     result.envFilesTruncated ||
     result.warningsTruncated ||
     result.workspace.patternsTruncated ||
-    result.packages.some((pkg) => pkg.workspacesTruncated)
+    result.packages.some((pkg) => pkg.workspacesTruncated || pkg.scriptsTruncated || pkg.dependenciesTruncated)
   );
 }
 

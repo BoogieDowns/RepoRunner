@@ -20,6 +20,8 @@ export interface TrustedRenderer {
 }
 
 const MAX_REPO_PATH_LENGTH = 4096;
+/** How long a new request waits for a cancelled or timed-out scan to finish its last filesystem call. */
+const FINISHING_WAIT_MS = 2000;
 
 function analysisError(code: RepoAnalysisErrorCode): Error {
   return new Error(REPO_ANALYSIS_ERROR_MESSAGES[code]);
@@ -74,7 +76,17 @@ export class RepoAnalysisService {
 
   async analyze(sender: WebContents, repoPath: string): Promise<RepoScanResult> {
     if (this.closed) throw analysisError("unavailable");
-    if (this.session.isScanning) throw analysisError("scan-in-progress");
+    if (this.session.isScanning) {
+      // A scan that already answered (cancelled or timed out) may still be
+      // finishing a filesystem call; wait briefly instead of refusing. A scan
+      // that is still running, or one that doesn't finish in time, is refused.
+      if (!this.session.isFinishing || !(await this.session.waitUntilIdle(FINISHING_WAIT_MS))) {
+        throw analysisError("scan-in-progress");
+      }
+      if (this.closed) throw analysisError("unavailable");
+      if (sender.isDestroyed()) throw analysisError("not-allowed");
+      if (this.session.isScanning) throw analysisError("scan-in-progress");
+    }
 
     const owner = { contents: sender };
     let aborted = false;

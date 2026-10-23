@@ -252,6 +252,8 @@ describe("one scan at a time", () => {
     await expect(session.scan(root)).rejects.toMatchObject({ code: "scan-in-progress" });
     const cancelled = await first;
     expect(cancelled.status).toBe("cancelled");
+    // The answer came at once; ownership ends when the pending filesystem call returns.
+    expect(await session.waitUntilIdle(5000)).toBe(true);
 
     vi.restoreAllMocks();
     const next = await session.scan(root);

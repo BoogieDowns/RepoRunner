@@ -55,6 +55,7 @@ export type RepoScanWarningCode =
   | "manifest-limit-reached"
   | "byte-budget-exhausted"
   | "directory-unreadable"
+  | "entry-unreadable"
   | "changed-during-scan"
   | "node-version-unrecognized";
 

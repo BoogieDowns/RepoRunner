@@ -257,6 +257,10 @@ describe("errors use the fixed contract", () => {
     expect(controller.state).toEqual({ phase: "error", path: "C:\\repo", code, message: text });
   });
 
+  it("the busy message tells the user a previous analysis may still be finishing", () => {
+    expect(REPO_ANALYSIS_ERROR_MESSAGES["scan-in-progress"]).toMatch(/still running or finishing/);
+  });
+
   it("an unexpected error shows the generic message, never its raw text", async () => {
     const { controller, calls } = setup();
     const done = controller.start("C:\\repo");

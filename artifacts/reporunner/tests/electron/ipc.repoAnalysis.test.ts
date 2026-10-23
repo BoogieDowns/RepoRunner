@@ -85,10 +85,17 @@ const rejection = (promise: Promise<unknown>) => promise.then(() => null, (e: un
 /** Delays every directory listing so scans stay active long enough to race. */
 function slowScans(delayMs = 15) {
   const opendir = fs.promises.opendir;
+  const concurrency = { now: 0, max: 0 };
   vi.spyOn(fs.promises, "opendir").mockImplementation((async (p: fs.PathLike, ...rest: unknown[]) => {
-    await new Promise((resolve) => setTimeout(resolve, delayMs));
-    return (opendir as (...a: unknown[]) => unknown)(p, ...rest);
+    concurrency.max = Math.max(concurrency.max, ++concurrency.now);
+    try {
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+      return await (opendir as (...a: unknown[]) => Promise<unknown>)(p, ...rest);
+    } finally {
+      concurrency.now--;
+    }
   }) as never);
+  return concurrency;
 }
 const tick = (ms = 25) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -326,16 +333,62 @@ describe("one scan at a time, cancellation and lifecycle", () => {
     await expect(analyze(legitEvent(), repo)).resolves.toMatchObject({ status: "complete" });
   });
 
-  it("cancel stops the active scan; ownership is held until it has actually finished", async () => {
-    slowScans();
+  it("cancel answers at once; ownership is held until the work has finished; the next scan waits and never overlaps", async () => {
+    const concurrency = slowScans(40);
     const first = analyze(legitEvent(), repo);
     await tick();
     await expect(cancel(legitEvent())).resolves.toBeUndefined();
     expect(service.isScanning).toBe(true); // not released by the cancel itself
-    expect((await rejection(analyze(legitEvent(), repo)))?.message).toBe(message("scan-in-progress"));
-    expect((await first).status).toBe("cancelled");
+    expect((await first).status).toBe("cancelled"); // answered while an opendir is still pending
+    expect(service.isScanning).toBe(true);
+    // A new request waits for the finishing scan instead of failing or overlapping.
+    const next = await analyze(legitEvent(), repo);
+    expect(next.status).toBe("complete");
+    expect(concurrency.max).toBe(1);
     expect(service.isScanning).toBe(false);
+  });
+
+  it("if a cancelled scan's filesystem call stays blocked, a new request is refused clearly after a bounded wait", async () => {
+    const target = path.join(repo, "packages");
+    const opendir = fs.promises.opendir;
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    vi.spyOn(fs.promises, "opendir").mockImplementation((async (p: fs.PathLike, ...rest: unknown[]) => {
+      if (path.resolve(String(p)) === target) await gate;
+      return (opendir as (...a: unknown[]) => unknown)(p, ...rest);
+    }) as never);
+    const first = analyze(legitEvent(), repo);
+    await vi.waitFor(() => expect(service.isScanning).toBe(true));
+    await tick(50);
+    await cancel(legitEvent());
+    expect((await first).status).toBe("cancelled");
+
+    const started = Date.now();
+    const refused = await rejection(analyze(legitEvent(), repo));
+    expect(refused?.message).toBe(message("scan-in-progress"));
+    expect(Date.now() - started).toBeGreaterThanOrEqual(1500); // waited, bounded
+    expect(Date.now() - started).toBeLessThan(5000);
+
+    release();
+    await vi.waitFor(() => expect(service.isScanning).toBe(false));
     await expect(analyze(legitEvent(), repo)).resolves.toMatchObject({ status: "complete" });
+  }, 15_000); // includes the deliberate 2 s bounded wait
+
+  it("package caps reach the caller as a partial result through IPC", async () => {
+    const capped = space.repo("ipc caps", { "package.json": pkg({ name: "capped", scripts: Object.fromEntries(Array.from({ length: 101 }, (_, i) => [`s${i}`, "echo"])) }) });
+    const result = await analyze(legitEvent(), capped);
+    expect(result).toMatchObject({ status: "truncated", partial: true });
+    expect(result.packages[0].scriptsTruncated).toBe(true);
+  });
+
+  it("a request while a scan is still running (not cancelled) is refused at once", async () => {
+    slowScans();
+    const first = analyze(legitEvent(), repo);
+    await tick();
+    const started = Date.now();
+    expect((await rejection(analyze(legitEvent(), repo)))?.message).toBe(message("scan-in-progress"));
+    expect(Date.now() - started).toBeLessThan(500);
+    await expect(first).resolves.toMatchObject({ status: "complete" });
   });
 
   it("cancel with no active scan is a harmless no-op", async () => {
@@ -368,7 +421,7 @@ describe("one scan at a time, cancellation and lifecycle", () => {
     contents.destroyed = true;
     contents.emit("destroyed");
     expect((await scanning).status).toBe("cancelled");
-    expect(service.isScanning).toBe(false);
+    await vi.waitFor(() => expect(service.isScanning).toBe(false));
     expect(contents.listenerCount("destroyed")).toBe(0);
     expect(contents.listenerCount("render-process-gone")).toBe(0);
   });

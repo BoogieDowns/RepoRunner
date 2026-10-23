@@ -173,7 +173,8 @@ export const REPO_ANALYSIS_ERROR_MESSAGES: Record<RepoAnalysisErrorCode, string>
   "root-not-allowed":
     "RepoRunner won't analyze a drive root, network share, system folder or your whole home folder. Choose the repository's own folder.",
   unreadable: "RepoRunner couldn't read that folder.",
-  "scan-in-progress": "A repository analysis is already running.",
+  // Also returned while a cancelled or timed-out analysis finishes its last filesystem call.
+  "scan-in-progress": "A repository analysis is still running or finishing. Try again in a moment.",
   "invalid-request": "RepoRunner received an invalid analysis request.",
   "not-allowed": "Repository analysis isn't available from this page.",
   unavailable: "Repository analysis isn't available while RepoRunner is closing.",

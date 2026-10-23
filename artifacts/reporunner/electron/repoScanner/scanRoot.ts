@@ -65,10 +65,10 @@ function isNetworkOrDevicePath(value: string): boolean {
 }
 
 /**
- * Validates the user-selected folder and returns its canonical real path.
- * Throws RepoScanError with a fixed code; never echoes the path back.
+ * Synchronous checks on the raw input, with no filesystem access: a local,
+ * absolute path that isn't a network or device path. Returns the input.
  */
-export async function resolveScanRoot(input: unknown): Promise<string> {
+export function checkScanRootSyntax(input: unknown): string {
   if (typeof input !== "string" || input.length === 0 || input.length > MAX_PATH_INPUT || input.includes("\0")) {
     throw new RepoScanError("invalid-path");
   }
@@ -80,6 +80,15 @@ export async function resolveScanRoot(input: unknown): Promise<string> {
   } else if (!path.isAbsolute(input)) {
     throw new RepoScanError("invalid-path");
   }
+  return input;
+}
+
+/**
+ * Validates the user-selected folder and returns its canonical real path.
+ * Throws RepoScanError with a fixed code; never echoes the path back.
+ */
+export async function resolveScanRoot(rawInput: unknown): Promise<string> {
+  const input = checkScanRootSyntax(rawInput);
 
   let real: string;
   try {

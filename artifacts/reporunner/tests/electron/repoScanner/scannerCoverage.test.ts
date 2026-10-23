@@ -243,3 +243,27 @@ describe("workspace pattern truncation", () => {
     expect(result).toMatchObject({ status: "truncated", partial: true });
   });
 });
+
+describe("package-level caps make the result partial (Finding C)", () => {
+  const names = (prefix: string, n: number) => Object.fromEntries(Array.from({ length: n }, (_, i) => [`${prefix}${i}`, "1"]));
+
+  it.each([
+    ["exactly 100 scripts", { scripts: names("s", 100) }, false, false],
+    ["101 scripts", { scripts: names("s", 101) }, true, false],
+    ["exactly 300 dependencies", { dependencies: names("d", 300) }, false, false],
+    ["301 dependencies", { dependencies: names("d", 301) }, false, true],
+    ["exactly 300 devDependencies", { devDependencies: names("d", 300) }, false, false],
+    ["301 devDependencies", { devDependencies: names("d", 301) }, false, true],
+  ])("%s", async (label, fields, scriptsCut, depsCut) => {
+    const root = space.repo(`caps ${label}`, { "package.json": pkg({ name: "capped", ...fields }) });
+    const result = await scanRepository(root);
+    const [summary] = result.packages;
+    expect(summary.scriptsTruncated).toBe(scriptsCut);
+    expect(summary.dependenciesTruncated).toBe(depsCut);
+    expect(summary.scripts.length).toBeLessThanOrEqual(100);
+    expect(summary.dependencies.length).toBeLessThanOrEqual(300);
+    expect(summary.devDependencies.length).toBeLessThanOrEqual(300);
+    const incomplete = scriptsCut || depsCut;
+    expect(result).toMatchObject({ status: incomplete ? "truncated" : "complete", partial: incomplete });
+  });
+});
