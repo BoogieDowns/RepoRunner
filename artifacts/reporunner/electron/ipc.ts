@@ -22,6 +22,7 @@ import { parsePortFromUrl } from "./portManager.js";
 import {
   prepareCommandForExecution,
   sanitizeCommandInput,
+  spawnPreparedCommand,
 } from "./commandUtils.js";
 import {
   ProjectProfile,
@@ -121,18 +122,7 @@ function runStreamingInstall(
   cwd: string
 ): Promise<void> {
   return new Promise((resolve, reject) => {
-    const child =
-      preparedCommand.kind === "file"
-        ? spawn(preparedCommand.file, preparedCommand.args, {
-            cwd,
-            shell: false,
-            env: { ...process.env },
-          })
-        : spawn(preparedCommand.command, {
-            cwd,
-            shell: true,
-            env: { ...process.env },
-          });
+    const child = spawnPreparedCommand(preparedCommand, cwd);
 
 
     const stdoutLog = createLineBufferedLogEmitter("install");

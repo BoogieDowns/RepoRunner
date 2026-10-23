@@ -13,7 +13,7 @@ import {
   Orbit,
   Webhook,
 } from "lucide-react";
-import { ProjectProfile, ServiceStatuses, LogEntry } from "@/types";
+import { ProjectProfile, ServiceStatuses, LogEntry, appendRetainedLog } from "@/types";
 import { CommandButton } from "./CommandButton";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -582,7 +582,7 @@ export function Dashboard({ project, onEdit, controlsDisabled = false, showNoRep
     hydrateStatuses();
 
     const unsubLog = window.repoRunner.onLog((entry) => {
-      setLogs((prev) => [...prev, entry]);
+      setLogs((prev) => appendRetainedLog(prev, entry));
     });
     const unsubStatus = window.repoRunner.onStatus((s) => {
       setStatuses(s);

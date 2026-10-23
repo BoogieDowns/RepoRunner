@@ -1,3 +1,5 @@
+import { spawn, type ChildProcess } from "child_process";
+
 const COMMAND_LABEL_PATTERN =
   /^(?:install|frontend|backend|pull)\s+command\s*:\s*/i;
 
@@ -14,6 +16,8 @@ export type PreparedCommand =
       kind: "file";
       file: string;
       args: string[];
+      /** Pass `args` to the process exactly as given (Windows only). */
+      windowsVerbatimArguments?: boolean;
     };
 
 export function sanitizeCommandInput(command: string): string {
@@ -35,10 +39,16 @@ export function prepareCommandForExecution(command: string): PreparedCommand {
     process.platform === "win32" &&
     !isAlreadyShellWrapped(sanitizedCommand)
   ) {
+    // `cmd /s /c "<command>"` strips exactly the outer pair of quotes and runs
+    // <command> as if typed at a cmd prompt (this is also how Node runs
+    // `shell: true`). The arguments must be passed verbatim: Node's default
+    // argument quoting would turn every `"` in the command into `\"`, which
+    // cmd.exe keeps as a literal backslash and breaks quoted paths.
     return {
       kind: "file",
       file: "cmd.exe",
-      args: ["/d", "/s", "/c", sanitizedCommand],
+      args: ["/d", "/s", "/c", `"${sanitizedCommand}"`],
+      windowsVerbatimArguments: true,
     };
   }
 
@@ -46,4 +56,21 @@ export function prepareCommandForExecution(command: string): PreparedCommand {
     kind: "shell",
     command: sanitizedCommand,
   };
+}
+
+/** Starts a prepared command in `cwd`. The only place RepoRunner spawns configured commands. */
+export function spawnPreparedCommand(preparedCommand: PreparedCommand, cwd: string): ChildProcess {
+  const env = { ...process.env };
+  return preparedCommand.kind === "file"
+    ? spawn(preparedCommand.file, preparedCommand.args, {
+        cwd,
+        shell: false,
+        env,
+        windowsVerbatimArguments: preparedCommand.windowsVerbatimArguments,
+      })
+    : spawn(preparedCommand.command, {
+        cwd,
+        shell: true,
+        env,
+      });
 }

@@ -1,5 +1,5 @@
 import { BrowserWindow } from "electron";
-import type { LogEntry, LogSource } from "../src/types.js";
+import { MAX_RETAINED_LOG_ENTRIES, type LogEntry, type LogSource } from "../src/types.js";
 
 let logCounter = 0;
 let logBuffer: LogEntry[] = [];
@@ -21,7 +21,12 @@ export function emitLog(source: LogSource, text: string) {
     text,
   };
 
+  // Same retention as the window (appendRetainedLog), trimmed in place so a
+  // chatty process doesn't copy the whole buffer for every line.
   logBuffer.push(entry);
+  if (logBuffer.length > MAX_RETAINED_LOG_ENTRIES) {
+    logBuffer.splice(0, logBuffer.length - MAX_RETAINED_LOG_ENTRIES);
+  }
 
   const win = BrowserWindow.getAllWindows()[0];
   try {

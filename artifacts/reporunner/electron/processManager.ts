@@ -1,6 +1,6 @@
-import { spawn, execFile, ChildProcess } from "child_process";
+import { execFile, ChildProcess } from "child_process";
 import { promisify } from "util";
-import { prepareCommandForExecution } from "./commandUtils.js";
+import { prepareCommandForExecution, spawnPreparedCommand } from "./commandUtils.js";
 import { emitLog } from "./logSink.js";
 import treeKill from "tree-kill";
 import { BrowserWindow } from "electron";
@@ -382,18 +382,7 @@ export async function startService(
   emitLog(service as LogSource, `Starting ${service}: ${command}`);
 
   const preparedCommand = prepareCommandForExecution(command);
-  const proc =
-    preparedCommand.kind === "file"
-      ? spawn(preparedCommand.file, preparedCommand.args, {
-          cwd,
-          shell: false,
-          env: { ...process.env },
-        })
-      : spawn(preparedCommand.command, {
-          cwd,
-          shell: true,
-          env: { ...process.env },
-        });
+  const proc = spawnPreparedCommand(preparedCommand, cwd);
 
   processes[service] = proc;
 
