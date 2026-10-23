@@ -91,6 +91,7 @@ vi.mock("electron", () => ({
   },
   BrowserWindow: h.FakeWindow,
   Menu: { buildFromTemplate: () => ({ popup: () => {} }) },
+  session: { defaultSession: { setPermissionRequestHandler: () => {}, setPermissionCheckHandler: () => {} } },
 }));
 vi.mock("../../electron/ipc.js", () => ({ setupIpc: vi.fn() }));
 vi.mock("../../electron/processManager.js", () => h.pm);

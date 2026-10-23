@@ -87,6 +87,7 @@ vi.mock("electron", () => ({
   },
   BrowserWindow: h.FakeWindow,
   Menu: { buildFromTemplate: () => ({ popup: () => {} }) },
+  session: { defaultSession: { setPermissionRequestHandler: () => {}, setPermissionCheckHandler: () => {} } },
   ipcMain: { handle: h.ipcHandle },
   dialog: {},
   clipboard: { writeText: () => {} },
