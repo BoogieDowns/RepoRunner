@@ -476,12 +476,23 @@ export function startScan(rootInput: unknown, options: StartScanOptions = {}): S
       warningsTruncated,
     } satisfies RepoScanResult);
 
+    const finalize = () => {
+      result.limitsHit = [...resultLimits];
+      result.status =
+        stopReason ?? (result.limitsHit.length > 0 || hasTruncatedLists(result) || hasUnanalyzedContent(result) ? "truncated" : "complete");
+      result.partial = result.status !== "complete";
+    };
+    // The cap applies to the response as sent, so fit it with its final
+    // metadata. Trimming can itself add "result-size" and truncation flags
+    // (and so a longer status), so finalize again and, if that grew it past
+    // the cap, trim once more: after that nothing grows any further.
+    finalize();
     fitResultSize(result, limits.maxResultBytes, resultLimits);
-
-    result.limitsHit = [...resultLimits];
-    result.status =
-      stopReason ?? (result.limitsHit.length > 0 || hasTruncatedLists(result) || hasUnanalyzedContent(result) ? "truncated" : "complete");
-    result.partial = result.status !== "complete";
+    finalize();
+    if (serializedBytes(result) > limits.maxResultBytes) {
+      fitResultSize(result, limits.maxResultBytes, resultLimits);
+      finalize();
+    }
     return result;
   };
 
