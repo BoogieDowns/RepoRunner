@@ -20,6 +20,21 @@ export interface LogEntry {
   text: string;
 }
 
+/** Newest log entries kept in memory, in the main process and in the window. Older ones are dropped. */
+export const MAX_RETAINED_LOG_ENTRIES = 5000;
+
+/** Returns `entries` with `entry` appended, keeping only the newest `max`. Does not modify `entries`. */
+export function appendRetainedLog<T>(
+  entries: readonly T[],
+  entry: T,
+  max: number = MAX_RETAINED_LOG_ENTRIES
+): T[] {
+  const overflow = entries.length + 1 - max;
+  const kept = overflow > 0 ? entries.slice(overflow) : entries.slice();
+  kept.push(entry);
+  return kept;
+}
+
 export interface ProjectProfile {
   id: string;
   name: string;

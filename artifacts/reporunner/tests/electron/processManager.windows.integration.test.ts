@@ -154,6 +154,21 @@ describe.runIf(process.platform === "win32")("Windows process termination (real 
     expect(await canConnect(port)).toBe(false);
   }, 60000);
 
+  it("a command with a quoted script path starts, is tracked, and Stop removes the whole tree", async () => {
+    const port = await getFreePort();
+    const script = path.relative(APP_DIR, path.join(FIXTURES, "listener-tree.cjs"));
+
+    await pm.startService("frontend", `node "${script}" ${port}`, APP_DIR, port);
+    expect(pm.getStatuses().frontend).toBe("running");
+    const { middle, grandchild } = readFixturePids();
+
+    await pm.stopService("frontend", port);
+
+    expect(pm.getStatuses().frontend).toBe("stopped");
+    expect(await waitFor(() => !isPidAlive(middle) && !isPidAlive(grandchild))).toBe(true);
+    expect(await canConnect(port)).toBe(false);
+  }, 60000);
+
   it("Stop leaves an unrelated listener on the configured port running", async () => {
     const port = await getFreePort();
     await listenOwned(port); // stands in for an unrelated app (owned by this test worker)
