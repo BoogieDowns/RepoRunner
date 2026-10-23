@@ -1,7 +1,8 @@
-import { app, BrowserWindow, Menu } from "electron";
+import { app, BrowserWindow, Menu, session } from "electron";
 import path from "path";
-import { fileURLToPath } from "url";
+import { fileURLToPath, pathToFileURL } from "url";
 import { setupIpc } from "./ipc.js";
+import { hardenSession, hardenWebContents } from "./windowSecurity.js";
 import {
   beginShutdown,
   hasTrackedServiceWork,
@@ -12,6 +13,14 @@ import {
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const isDev = process.env.NODE_ENV === "development";
+const DEV_SERVER_URL = "http://localhost:5173/";
+
+/** The only page RepoRunner windows may show (navigation elsewhere is blocked). */
+function appPageUrl(): string {
+  return isDev
+    ? DEV_SERVER_URL
+    : pathToFileURL(path.join(app.getAppPath(), "dist/public/index.html")).href;
+}
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -35,6 +44,8 @@ function createWindow() {
       preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,
       nodeIntegration: false,
+      sandbox: true,
+      webviewTag: false,
     },
     icon: path.join(__dirname, "../assets/icon.png"),
   });
@@ -58,7 +69,7 @@ function createWindow() {
   });
 
   if (isDev) {
-    mainWindow.loadURL("http://localhost:5173");
+    mainWindow.loadURL(DEV_SERVER_URL);
   } else {
     mainWindow.loadFile(path.join(app.getAppPath(), "dist/public/index.html"));
   }
@@ -101,11 +112,18 @@ if (!hasSingleInstanceLock) {
   // registering IPC handlers, reading saved setups or creating a window.
   app.quit();
 } else {
+  // Every webContents (the window, its frames, anything created later) gets
+  // the navigation, new-window and webview restrictions before it loads.
+  app.on("web-contents-created", (_event, contents) => {
+    hardenWebContents(contents, appPageUrl());
+  });
+
   app.on("second-instance", () => {
     focusExistingWindow();
   });
 
   app.whenReady().then(() => {
+    hardenSession(session.defaultSession);
     setupIpc();
     createWindow();
 
