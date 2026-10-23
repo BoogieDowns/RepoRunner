@@ -43,6 +43,11 @@ import type {
  * the OS supports it and their identity (device + inode/file ID) is compared
  * with the pre-open lstat; directories have no such handle-based check, so a
  * swap in that tiny window could expose one directory listing (names only).
+ *
+ * Some runtimes (Electron 35 / Node 22 on Windows) report device 0 from every
+ * path-based stat; only handle-based fstat has the real volume. Then the
+ * opened file must match the lstat file ID and be on the root's volume, read
+ * from a handle on the root directory. Without that volume, files are skipped.
  */
 
 export interface ScanOptions {
@@ -61,10 +66,38 @@ interface QueuedDirectory {
 const OPEN_FLAGS =
   fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW ?? 0) | (fs.constants.O_NONBLOCK ?? 0);
 
+/**
+ * The root's volume, from a read-only handle on the root directory (nothing
+ * is read through it). Null if it can't be confirmed to be the root.
+ */
+async function readRootDevice(root: string): Promise<bigint | null> {
+  let handle: fs.promises.FileHandle | null = null;
+  try {
+    const before = await fs.promises.lstat(root, { bigint: true });
+    handle = await fs.promises.open(root, OPEN_FLAGS);
+    const opened = await handle.stat({ bigint: true });
+    if (!opened.isDirectory() || opened.ino !== before.ino) return null;
+    if (before.dev !== 0n && opened.dev !== before.dev) return null;
+    return opened.dev;
+  } catch {
+    return null;
+  } finally {
+    await handle?.close().catch(() => {});
+  }
+}
+
+/** Same file as the pre-open lstat (see the note on device 0 above). */
+function isSameFile(before: fs.BigIntStats, opened: fs.BigIntStats, rootDevice: bigint | null): boolean {
+  if (!opened.isFile() || opened.ino !== before.ino) return false;
+  if (before.dev !== 0n) return opened.dev === before.dev;
+  return rootDevice !== null && opened.dev === rootDevice;
+}
+
 export async function scanRepository(rootInput: unknown, options: ScanOptions = {}): Promise<RepoScanResult> {
   const limits: ScanLimits = { ...SCAN_LIMITS, ...options.limits };
   const startedAt = Date.now();
   const root = await resolveScanRoot(rootInput);
+  const rootDevice = options.signal?.aborted ? null : await readRootDevice(root);
 
   let stopReason: "cancelled" | "timed-out" | null = null;
   const onAbort = () => {
@@ -170,7 +203,7 @@ export async function scanRepository(rootInput: unknown, options: ScanOptions = 
     }
     try {
       const opened = await handle.stat({ bigint: true });
-      if (!opened.isFile() || opened.ino !== before.ino || opened.dev !== before.dev) {
+      if (!isSameFile(before, opened, rootDevice)) {
         warn("changed-during-scan", rel);
         return null;
       }

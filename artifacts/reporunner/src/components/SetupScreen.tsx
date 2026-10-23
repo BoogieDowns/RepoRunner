@@ -35,6 +35,13 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ProjectStoreNotice } from "@/components/ProjectStoreNotice";
+import { AnalyzeRepoButton, RepoAnalysisPanel } from "@/components/RepoAnalysisPanel";
+import {
+  canStartAnalysis,
+  createRepoAnalysisController,
+  type RepoAnalysisController,
+  type RepoAnalysisState,
+} from "@/lib/repoAnalysis";
 import {
   classifyStoreError,
   isStoreBlocked,
@@ -286,6 +293,24 @@ export function SetupScreen({
   // ID of a new setup whose save could not be confirmed. If the re-read shows
   // it was saved, switch to editing it so a retry can't create a duplicate.
   const unverifiedNewProfileId = useRef<string | null>(null);
+
+  // Read-only repository analysis. Never touches the form or saved setups;
+  // results for one path are dropped as soon as the path changes.
+  const [analysisState, setAnalysisState] = useState<RepoAnalysisState>({ phase: "idle" });
+  const analysisController = useRef<RepoAnalysisController | null>(null);
+
+  useEffect(() => {
+    const controller = createRepoAnalysisController(() => window.repoRunner, setAnalysisState);
+    analysisController.current = controller;
+    return () => {
+      controller.dispose();
+      if (analysisController.current === controller) analysisController.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    analysisController.current?.pathChanged(formData.repoPath);
+  }, [formData.repoPath]);
 
   const currentHelpPage = setupHelpPages[helpPageIndex] ?? setupHelpPages[0];
   const isFirstHelpPage = helpPageIndex === 0;
@@ -884,7 +909,8 @@ export function SetupScreen({
                 >
                   Local Repository Folder
                 </label>
-                <div className="flex flex-col gap-2 sm:flex-row">
+                {/* Buttons wrap below the path when the column is too narrow for both. */}
+                <div className="flex flex-wrap gap-2">
                   <Input
                     id="setup-repo-path"
                     placeholder={placeholderExamples.repoPath}
@@ -892,7 +918,7 @@ export function SetupScreen({
                     onChange={(event) =>
                       updateField("repoPath", event.target.value)
                     }
-                    className={`flex-1 min-w-0 text-sm ${inputClassName}`}
+                    className={`min-w-0 flex-[1_1_340px] text-sm ${inputClassName}`}
                     style={{ ...inputStyle, ...MONO, fontSize: "12px" }}
                   />
                   <Button
@@ -920,10 +946,20 @@ export function SetupScreen({
                     <Folder className="h-3.5 w-3.5 mr-1.5 flex-none" />
                     Choose Folder
                   </Button>
+                  <AnalyzeRepoButton
+                    disabled={!canStartAnalysis(formData.repoPath, analysisState)}
+                    running={analysisState.phase === "running"}
+                    onClick={() => void analysisController.current?.start(formData.repoPath)}
+                  />
                 </div>
                 {renderError("repoPath")}
               </div>
             </div>
+
+            <RepoAnalysisPanel
+              state={analysisState}
+              onCancel={() => analysisController.current?.cancel()}
+            />
 
             {/* Row 2: Preview URL — full width */}
             <div className="space-y-1.5">

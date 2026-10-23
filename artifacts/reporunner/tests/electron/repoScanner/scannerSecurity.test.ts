@@ -302,7 +302,8 @@ describe("residual race windows still expose no file contents", () => {
     const result = await scanRepository(root);
 
     expect(swapped).toBe(true);
-    expect(opened).toEqual([]); // no file was opened at all, inside or outside
+    // Only the root directory handle (for its volume ID); no file inside or outside.
+    expect(opened).toEqual([root]);
     expect(JSON.stringify(result)).not.toContain(CANARY);
     expect(result.packages).toEqual([]);
     expect(result.warnings).toContainEqual({ code: "changed-during-scan", path: "sub/package.json" });
@@ -354,8 +355,9 @@ describe("misleading file names", () => {
 
     const result = await scanRepository(root);
 
-    const openedNames = access.opened.map((p) => path.basename(p)).sort();
+    const openedNames = access.opened.filter((p) => p !== root).map((p) => path.basename(p)).sort();
     expect(openedNames).toEqual([".nvmrc", "package.json"]);
+    expect(access.opened.filter((p) => p === root)).toHaveLength(1); // the root directory handle
     expect(JSON.stringify(result)).not.toContain(CANARY);
   });
 });
@@ -402,7 +404,7 @@ describe("sensitive files", () => {
     const result = await scanRepository(root);
 
     const openedNames = access.opened.map((p) => path.relative(root, p).split(path.sep).join("/"));
-    expect(openedNames).toEqual(["package.json"]); // the only file opened
+    expect(openedNames).toEqual(["", "package.json"]); // the root directory handle, then the only file opened
     expect(access.readFile).not.toHaveBeenCalled();
     expect(access.readFileSync).not.toHaveBeenCalled();
     expect(access.createReadStream).not.toHaveBeenCalled();
@@ -437,5 +439,133 @@ describe("nothing is executed and nothing goes over the network", () => {
       }
       expect(source, file).not.toMatch(/child_process|require\(|\beval\(|new Function\(|\bfetch\(|import\(/);
     }
+  });
+});
+
+describe("runtimes whose path-based stat reports device 0 (Electron 35 / Node 22 on Windows)", () => {
+  type AnyStats = fs.Stats | fs.BigIntStats;
+  const withDevice = <T extends AnyStats>(st: T, dev: bigint | number): T =>
+    Object.assign(Object.create(Object.getPrototypeOf(st)), st, { dev });
+
+  /** Every lstat reports device 0, as Electron 35 does on Windows. */
+  function zeroDeviceLstat() {
+    const lstat = fs.promises.lstat;
+    vi.spyOn(fs.promises, "lstat").mockImplementation((async (p: fs.PathLike, opts?: fs.StatOptions) => {
+      const st = (await (lstat as (...a: unknown[]) => Promise<AnyStats>)(p, opts)) as AnyStats;
+      return withDevice(st, typeof st.dev === "bigint" ? 0n : 0);
+    }) as never);
+  }
+
+  /** File handles report a different volume (same file ID): a swapped-in file from elsewhere. */
+  function fileHandlesOnAnotherVolume() {
+    const open = fs.promises.open;
+    vi.spyOn(fs.promises, "open").mockImplementation((async (...args: unknown[]) => {
+      const handle = await (open as (...a: unknown[]) => Promise<fs.promises.FileHandle>)(...args);
+      return new Proxy(handle, {
+        get(target, prop) {
+          if (prop === "stat") {
+            return async (o?: fs.StatOptions) => {
+              const st = (await target.stat(o as never)) as unknown as fs.BigIntStats;
+              return st.isFile() ? withDevice(st, st.dev + 1n) : st;
+            };
+          }
+          const value = Reflect.get(target, prop, target);
+          return typeof value === "function" ? value.bind(target) : value;
+        },
+      });
+    }) as never);
+  }
+
+  it("manifests are still read, using the root directory's volume", async () => {
+    const root = space.repo("zero device", { "package.json": pkg({ name: "zero-dev" }), ".nvmrc": "20" });
+    zeroDeviceLstat();
+    const result = await scanRepository(root);
+    expect(result.packages.map((p) => p.name)).toEqual(["zero-dev"]);
+    expect(result.nodeVersionFiles).toEqual([{ path: ".nvmrc", version: "20" }]);
+    expect(result.warnings).toEqual([]);
+  });
+
+  it("a same-ID file on another volume is rejected", async () => {
+    const root = space.repo("zero device other volume", { "package.json": pkg({ name: `x-${CANARY}` }) });
+    zeroDeviceLstat();
+    fileHandlesOnAnotherVolume();
+    const result = await scanRepository(root);
+    expect(result.packages).toEqual([]);
+    expect(result.warnings).toEqual([{ code: "changed-during-scan", path: "package.json" }]);
+    expect(JSON.stringify(result)).not.toContain(CANARY);
+  });
+
+  it("without the root's volume, files are skipped (fail closed)", async () => {
+    const root = space.repo("zero device no root handle", { "package.json": pkg({ name: `x-${CANARY}` }) });
+    zeroDeviceLstat();
+    const open = fs.promises.open;
+    vi.spyOn(fs.promises, "open").mockImplementation((async (p: fs.PathLike, ...rest: unknown[]) => {
+      if (path.resolve(String(p)) === root) throw Object.assign(new Error("EPERM"), { code: "EPERM" });
+      return (open as (...a: unknown[]) => unknown)(p, ...rest);
+    }) as never);
+    const result = await scanRepository(root);
+    expect(result.packages).toEqual([]);
+    expect(result.warnings).toEqual([{ code: "changed-during-scan", path: "package.json" }]);
+  });
+
+  it("with real devices, a handle on another volume is rejected too", async () => {
+    const root = space.repo("real device other volume", { "package.json": pkg({ name: "y" }) });
+    fileHandlesOnAnotherVolume();
+    const result = await scanRepository(root);
+    expect(result.packages).toEqual([]);
+    expect(result.warnings).toEqual([{ code: "changed-during-scan", path: "package.json" }]);
+  });
+});
+
+describe("the root directory handle", () => {
+  /** Tracks handles opened on `root` and whether each was closed. */
+  function trackRootHandles(root: string, failStat = false) {
+    const handles: Array<{ flags: unknown; closed: boolean }> = [];
+    const open = fs.promises.open;
+    vi.spyOn(fs.promises, "open").mockImplementation((async (p: fs.PathLike, flags?: unknown, ...rest: unknown[]) => {
+      const handle = await (open as (...a: unknown[]) => Promise<fs.promises.FileHandle>)(p, flags, ...rest);
+      if (path.resolve(String(p)) !== root) return handle;
+      const entry = { flags, closed: false };
+      handles.push(entry);
+      return new Proxy(handle, {
+        get(target, prop) {
+          if (prop === "close") return async () => { entry.closed = true; return target.close(); };
+          if (prop === "stat" && failStat) return async () => { throw Object.assign(new Error("EIO"), { code: "EIO" }); };
+          const value = Reflect.get(target, prop, target);
+          return typeof value === "function" ? value.bind(target) : value;
+        },
+      });
+    }) as never);
+    return handles;
+  }
+
+  it("is opened read-only once and always closed", async () => {
+    const root = space.repo("root handle normal", { "package.json": pkg({ name: "r" }) });
+    const handles = trackRootHandles(root);
+    const result = await scanRepository(root);
+    expect(result.packages.map((p) => p.name)).toEqual(["r"]);
+    expect(handles).toHaveLength(1);
+    expect(handles[0].closed).toBe(true);
+    const flags = Number(handles[0].flags);
+    expect(flags & (fs.constants.O_WRONLY | fs.constants.O_RDWR | fs.constants.O_CREAT | fs.constants.O_TRUNC | fs.constants.O_APPEND)).toBe(0);
+  });
+
+  it("is closed when reading its identity fails, and the scan still completes safely", async () => {
+    const root = space.repo("root handle stat error", { "package.json": pkg({ name: "r" }) });
+    const handles = trackRootHandles(root, true);
+    const result = await scanRepository(root);
+    expect(handles).toHaveLength(1);
+    expect(handles[0].closed).toBe(true);
+    expect(result.status).toBe("complete");
+  });
+
+  it("is not opened at all for an already-cancelled scan", async () => {
+    const root = space.repo("root handle cancelled", { "package.json": pkg({ name: "r" }) });
+    const handles = trackRootHandles(root);
+    const controller = new AbortController();
+    controller.abort();
+    const result = await scanRepository(root, { signal: controller.signal });
+    expect(result.status).toBe("cancelled");
+    expect(handles).toEqual([]);
   });
 });

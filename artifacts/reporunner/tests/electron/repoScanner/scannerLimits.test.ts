@@ -109,7 +109,8 @@ describe("limits produce clearly partial results", () => {
     expect(result.packages).toEqual([]);
     expect(result.skipped.oversized).toBe(1);
     expect(result.warnings).toEqual([{ code: "manifest-oversized", path: "package.json" }]);
-    expect(open).not.toHaveBeenCalled();
+    // Only the root directory handle; the oversized file itself is never opened.
+    expect(open.mock.calls.map((call) => path.resolve(String(call[0])))).toEqual([root]);
   });
 
   it("total byte budget", async () => {
