@@ -169,6 +169,22 @@ describe("Restart", () => {
     expect(processManager.getStatuses()).toEqual({ frontend: "failed", backend: "failed" });
   });
 
+  it("when RepoRunner starts quitting mid-restart, the restart starts nothing new", async () => {
+    await run(handler("start-backend")());
+    await run(handler("start-frontend")());
+    expect(h.spawn).toHaveBeenCalledTimes(2);
+
+    const restart = handler("restart-all")();
+    await vi.advanceTimersByTimeAsync(0); // restart is now stopping the old services
+    const cleanup = processManager.stopTrackedServicesForShutdown();
+    await run(restart);
+    const result = await run(cleanup);
+
+    expect(h.spawn).toHaveBeenCalledTimes(2); // no replacement services
+    expect(result.outcome).toBe("stopped");
+    expect(processManager.getStatuses()).toEqual({ frontend: "stopped", backend: "stopped" });
+  });
+
   it("does not start over a tracked process whose termination could not be confirmed", async () => {
     await run(handler("start-frontend")());
     const [frontPid] = [...children.keys()];

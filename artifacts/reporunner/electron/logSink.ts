@@ -23,8 +23,15 @@ export function emitLog(source: LogSource, text: string) {
 
   logBuffer.push(entry);
 
-  const wins = BrowserWindow.getAllWindows();
-  wins[0]?.webContents.send("log", entry);
+  const win = BrowserWindow.getAllWindows()[0];
+  try {
+    // Logs still go to the buffer when the window is closing or gone (for
+    // example while services stop during quit).
+    if (!win || win.isDestroyed() || win.webContents.isDestroyed()) return;
+    win.webContents.send("log", entry);
+  } catch {
+    // Nothing to deliver to.
+  }
 }
 
 export function clearLogs() {

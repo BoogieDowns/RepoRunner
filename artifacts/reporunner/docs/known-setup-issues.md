@@ -133,6 +133,15 @@ RepoRunner never deletes recovery copies. You can remove old ones yourself once 
 
 RepoRunner runs as a single instance. Opening it again brings the existing window to the front instead of starting a second copy that could edit the same saved repos or lose track of running services.
 
+## Closing RepoRunner stops its running services
+
+When you close RepoRunner normally, it first stops the frontend and backend services it started, the same way Stop Engine does. It only stops processes it started itself, never something else just because it uses the same port. This normally takes under a second; RepoRunner waits at most 15 seconds and then closes anyway.
+
+This is best effort:
+
+- If RepoRunner is force-closed (for example with Task Manager's End task) or crashes, it can't stop its services, and they may keep running. Close them manually or restart your computer.
+- Install and Git Pull aren't stopped when RepoRunner closes. If one is still running, it continues in the background until it finishes.
+
 ## Unsigned Windows installer warning
 
 RepoRunner is currently an unsigned Windows V0 app. Windows may show a security warning during install.

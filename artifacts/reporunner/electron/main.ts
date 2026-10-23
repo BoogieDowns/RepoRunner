@@ -2,12 +2,26 @@ import { app, BrowserWindow, Menu } from "electron";
 import path from "path";
 import { fileURLToPath } from "url";
 import { setupIpc } from "./ipc.js";
+import {
+  beginShutdown,
+  hasTrackedServiceWork,
+  isShuttingDown,
+  stopTrackedServicesForShutdown,
+} from "./processManager.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const isDev = process.env.NODE_ENV === "development";
 
 let mainWindow: BrowserWindow | null = null;
+
+/**
+ * Quit lifecycle: idle → cleaning-up → complete. The first quit request
+ * blocks new service starts; if RepoRunner owns running services the quit
+ * waits (at most SHUTDOWN_DEADLINE_MS) while they are stopped, then quits.
+ */
+type QuitState = "idle" | "cleaning-up" | "complete";
+let quitState: QuitState = "idle";
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -60,6 +74,9 @@ function createWindow() {
  * there is nothing to do: the first instance shows its window when ready.
  */
 function focusExistingWindow() {
+  // Quitting: never bring back or recreate a window.
+  if (isShuttingDown()) return;
+
   const window = mainWindow && !mainWindow.isDestroyed() ? mainWindow : null;
 
   if (!window) {
@@ -93,10 +110,48 @@ if (!hasSingleInstanceLock) {
     createWindow();
 
     app.on("activate", () => {
-      if (BrowserWindow.getAllWindows().length === 0) {
+      if (!isShuttingDown() && BrowserWindow.getAllWindows().length === 0) {
         createWindow();
       }
     });
+  });
+
+  app.on("before-quit", (event) => {
+    if (quitState === "complete") return;
+
+    // From the first quit request on, nothing new may start.
+    beginShutdown();
+
+    if (quitState === "cleaning-up") {
+      // Repeated quit request: keep waiting for the cleanup already running.
+      event.preventDefault();
+      return;
+    }
+
+    if (!hasTrackedServiceWork()) {
+      quitState = "complete";
+      return;
+    }
+
+    event.preventDefault();
+    quitState = "cleaning-up";
+    void stopTrackedServicesForShutdown()
+      .then((result) => {
+        if (result.outcome !== "stopped") {
+          console.warn(
+            `RepoRunner exit cleanup: ${result.outcome}` +
+              (result.remainingPids.length > 0 ? `; tracked PIDs still alive: ${result.remainingPids.join(", ")}` : "") +
+              (result.unverifiedServices.length > 0 ? `; unverified: ${result.unverifiedServices.join(", ")}` : ""),
+          );
+        }
+      })
+      .catch((error: unknown) => {
+        console.error("RepoRunner exit cleanup failed:", error);
+      })
+      .finally(() => {
+        quitState = "complete";
+        app.quit();
+      });
   });
 
   app.on("window-all-closed", () => {
