@@ -373,6 +373,25 @@ export function classifyScript(command: string, frameworkIds: readonly Framework
   return best;
 }
 
+/**
+ * Every unsupported framework (Nuxt, Astro, Remix) whose command-line tool any
+ * segment of the script invokes, whatever the subcommand, and whether or not
+ * the framework was detected from dependencies. Unlike classifyScript, this
+ * doesn't stop at the strongest invocation: "vite & astro dev" also runs Astro.
+ * Only a segment's first token (after the wrappers commandSegments strips)
+ * counts, so "echo astro dev" doesn't.
+ */
+export function unsupportedInvocations(command: string): { frameworkId: FrameworkId; label: string; tool: string }[] {
+  const found: { frameworkId: FrameworkId; label: string; tool: string }[] = [];
+  for (const tokens of commandSegments(command)) {
+    for (const rule of FRAMEWORK_RULES) {
+      if (rule.suggestionsSupported || found.some((f) => f.frameworkId === rule.id)) continue;
+      if (classifySegment(tokens, RUN_INVOCATIONS[rule.id]) !== null) found.push({ frameworkId: rule.id, label: rule.label, tool: tokens[0] });
+    }
+  }
+  return found;
+}
+
 /** Shared by runnability (Stage 2A) and suggestions (Stage 2B), so both read a script the same way. */
 export function runStrength(classification: ScriptClassification, frameworks: readonly { id: FrameworkId; confidence: "high" | "medium" | "low" }[]): "high" | "medium" | "low" {
   switch (classification.kind) {

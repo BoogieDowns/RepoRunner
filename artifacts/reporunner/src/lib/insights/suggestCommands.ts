@@ -21,7 +21,8 @@
 // therefore say "may run".
 import type { PackageManagerName, PackageSummary, RepoScanResult } from "../../types";
 import { detectProjects, directoryOf } from "./detectProjects";
-import { classifyScript, runEvidenceText, runStrength } from "./frameworkRules";
+import { classifyScript, runEvidenceText, runStrength, unsupportedInvocations } from "./frameworkRules";
+import { relativeTo, unknownMembershipText, workspaceMembership, type Membership } from "./workspaceMembership";
 import type {
   Caveat,
   CommandSuggestion,
@@ -144,12 +145,13 @@ function scriptSuggestions(insight: PackageInsight, pkg: PackageSummary, insight
   for (const name of names) {
     const script = pkg.scripts.find((s) => s.name === name);
     if (!script) continue; // never invented
-    // A script that runs a recognized-but-unsupported framework (Nuxt, Astro,
-    // Remix) isn't suggested, even when the package also uses a supported one.
-    const classification = classifyScript(script.command, insight.frameworks.map((f) => f.id));
-    const owner = insight.frameworks.find((f) => f.id === classification.frameworkId);
-    if (owner && !owner.suggestionsSupported) {
-      skip("unsupported-framework", `Script "${name}" in ${insight.packagePath} runs ${owner.label}, which RepoRunner doesn't suggest commands for yet.`);
+    // A script that invokes a recognized-but-unsupported framework (Nuxt,
+    // Astro, Remix) anywhere isn't suggested, even when it also starts a
+    // supported one ("vite & astro dev") or the package uses a supported one.
+    const unsupported = unsupportedInvocations(script.command);
+    if (unsupported.length > 0) {
+      const labels = unsupported.map((u) => u.label).join(" and ");
+      skip("unsupported-framework", `Script "${name}" in ${insight.packagePath} runs ${labels}, which RepoRunner doesn't suggest commands for yet.`);
       continue;
     }
     const orchestration = orchestrated.find((o) => o.scriptName === name)?.tool ?? null;
@@ -308,29 +310,105 @@ function suggestionId(directory: string, purpose: SuggestionPurpose, script: str
  * One install suggestion per package-manager root: the folder of the nearest
  * lockfile; else, in a monorepo, the workspace root; else the package itself.
  */
+/**
+ * Where a package's dependencies get installed. Only confirmed workspace
+ * membership puts a nested package under a parent's install; a lockfile in a
+ * parent folder is package-manager evidence, not install scope.
+ */
+type InstallScope =
+  | { kind: "own" }
+  | { kind: "member"; root: string; pattern: string }
+  | { kind: "independent"; ancestor: string; reason: Extract<Membership, { status: "not-member" }>["reason"] }
+  | { kind: "unknown"; ancestor: string; membership: Extract<Membership, { status: "unknown" }> };
+
+function installScopes(result: RepoScanResult, insights: ProjectInsights, lockfileDirs: Set<string>): Map<string, InstallScope> {
+  const dirs = insights.packages.map((p) => p.directory);
+  const scopes = new Map<string, InstallScope>();
+  const scopeOf = (dir: string): InstallScope => {
+    const known = scopes.get(dir);
+    if (known) return known;
+    let scope: InstallScope = { kind: "own" };
+    // A package with its own lockfile installs on its own (a separate install root).
+    if (dir !== "." && !lockfileDirs.has(dir)) {
+      const ancestors = dirs.filter((a) => relativeTo(a, dir) !== null).sort((a, b) => b.length - a.length); // nearest first
+      let unknown: InstallScope | null = null;
+      let independent: InstallScope | null = null;
+      for (const ancestor of ancestors) {
+        const m = workspaceMembership(result, ancestor, dir);
+        if (m.status === "member") {
+          const parent = scopeOf(ancestor);
+          scope = { kind: "member", root: parent.kind === "member" ? parent.root : ancestor, pattern: m.pattern };
+          break;
+        }
+        if (m.status === "unknown") unknown ??= { kind: "unknown", ancestor, membership: m };
+        else independent ??= { kind: "independent", ancestor, reason: m.reason };
+      }
+      if (scope.kind === "own") scope = unknown ?? independent ?? scope;
+    }
+    scopes.set(dir, scope);
+    return scope;
+  };
+  for (const dir of dirs) scopeOf(dir);
+  return scopes;
+}
+
+const where = (dir: string) => (dir === "." ? "the repository root" : dir);
+
 function installSuggestions(result: RepoScanResult, insights: ProjectInsights, summaries: Map<string, PackageSummary>): CommandSuggestion[] {
   const lockfileDirs = new Set(result.packageManager.lockfiles.map((l) => directoryOf(l.path)));
   const packageDirs = new Map(insights.packages.map((p) => [p.directory, p]));
-  const rootOf = (dir: string): string => {
-    for (let d: string | null = dir; d !== null; d = d === "." ? null : directoryOf(d)) {
-      if (lockfileDirs.has(d) && packageDirs.has(d)) return d;
-    }
-    if (insights.kind === "monorepo" && packageDirs.has(".")) return ".";
-    return dir;
-  };
+  const scopes = installScopes(result, insights, lockfileDirs);
 
   const members = new Map<string, PackageInsight[]>();
   for (const insight of insights.packages) {
-    const root = rootOf(insight.directory);
+    const scope = scopes.get(insight.directory)!;
+    const root = scope.kind === "member" ? scope.root : insight.directory;
     members.set(root, [...(members.get(root) ?? []), insight]);
   }
 
   const out: CommandSuggestion[] = [];
   for (const [root, group] of [...members.entries()].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))) {
     const rootInsight = packageDirs.get(root)!;
+    const scope = scopes.get(root)!;
     const evidence: Evidence[] = [{ kind: "project-file", text: `${rootInsight.packagePath} is present` }];
-    if (group.length > 1) evidence.push({ kind: "workspace-file", text: `${group.length} packages share this install root` });
+    if (group.length > 1) {
+      evidence.push({ kind: "workspace-file", text: `${group.length} packages share this install root: ${group.length - 1} matched by the "workspaces" patterns in ${rootInsight.packagePath}` });
+    }
     const caveats: Caveat[] = [NOT_VERIFIED_INSTALL];
+    let scopeCap: Confidence = "high";
+    const hasParentLockfile = [...lockfileDirs].some((d) => relativeTo(d, root) !== null);
+    if (scope.kind === "independent") {
+      const parent = packageDirs.get(scope.ancestor)!;
+      evidence.push({
+        kind: "workspace-file",
+        text: scope.reason === "no-workspaces"
+          ? `${parent.packagePath} declares no workspaces, so installing at ${where(scope.ancestor)} doesn't install ${root}`
+          : `${root} doesn't match the "workspaces" patterns in ${parent.packagePath}, so installing at ${where(scope.ancestor)} doesn't install it`,
+      });
+      caveats.push({ code: "independent-package", text: `${root} is a separate package and needs its own install.` });
+      scopeCap = "medium";
+    } else if (scope.kind === "unknown") {
+      const parent = packageDirs.get(scope.ancestor)!;
+      caveats.push({
+        code: "workspace-membership-unknown",
+        text: `It couldn't be confirmed whether ${root} is a workspace member of ${parent.packagePath} (${unknownMembershipText(scope.membership)}). If it is, installing at ${where(scope.ancestor)} already covers it; if not, it needs this separate install.`,
+      });
+      scopeCap = "low";
+    }
+    if (scope.kind !== "own" && hasParentLockfile && !lockfileDirs.has(root)) {
+      caveats.push({ code: "no-lockfile-here", text: `There's no lockfile in ${root}; the package manager comes from a lockfile in a parent folder, and installing here may create a new lockfile.` });
+    }
+    const unconfirmed = insights.packages
+      .map((p) => [p.directory, scopes.get(p.directory)!] as const)
+      .filter(([, sc]) => sc.kind === "unknown" && sc.ancestor === root)
+      .map(([dir]) => dir);
+    if (unconfirmed.length > 0) {
+      const many = unconfirmed.length > 1;
+      caveats.push({
+        code: "members-unconfirmed",
+        text: `Workspace membership couldn't be confirmed for ${unconfirmed.length} nested ${many ? "packages" : "package"} (${unconfirmed.slice(0, 5).join(", ")}${unconfirmed.length > 5 ? ", …" : ""}), so this install may not cover ${many ? "them" : "it"}; ${many ? "each has" : "it has"} a separate suggestion.`,
+      });
+    }
 
     const hooks: string[] = [];
     let hooksIncomplete = false;
@@ -367,7 +445,7 @@ function installSuggestions(result: RepoScanResult, insights: ProjectInsights, s
         scanIncomplete,
         orchestration: null,
         frameworks: [],
-        confidence: manager && managerConfidence ? (scanIncomplete ? lowest(managerConfidence, "medium") : managerConfidence) : null,
+        confidence: manager && managerConfidence ? lowest(scanIncomplete ? lowest(managerConfidence, "medium") : managerConfidence, scopeCap) : null,
         evidence: [...evidence, ...managerEvidence],
         caveats: [...caveats, ...managerCaveats(manager, ambiguous)],
       })),

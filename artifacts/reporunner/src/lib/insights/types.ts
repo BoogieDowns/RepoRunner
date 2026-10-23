@@ -178,7 +178,11 @@ export type CaveatCode =
   | "preview-serves-build"
   | "runs-multiple-packages"
   | "framework-uncertain"
-  | "multiple-frameworks";
+  | "multiple-frameworks"
+  | "independent-package"
+  | "no-lockfile-here"
+  | "workspace-membership-unknown"
+  | "members-unconfirmed";
 
 export interface Caveat {
   code: CaveatCode;
