@@ -154,3 +154,92 @@ export interface ProjectInsights {
   otherEcosystems: string[];
   uncertainties: UncertaintyCode[];
 }
+
+// ---------------------------------------------------------------------------
+// Stage 2B: command suggestions. Informational only: nothing here is run,
+// applied or saved, and no suggestion has been tested.
+
+export type SuggestionPurpose = "develop" | "start" | "install";
+
+export type CaveatCode =
+  | "not-verified"
+  | "runs-repository-script"
+  | "package-manager-ambiguous"
+  | "package-manager-unknown"
+  | "unsafe-script-name"
+  | "scan-incomplete"
+  | "scripts-truncated"
+  | "hooks-may-be-incomplete"
+  | "lifecycle-hooks"
+  | "install-runs-project-scripts"
+  | "install-runs-dependency-scripts"
+  | "preview-serves-build"
+  | "runs-multiple-packages"
+  | "framework-uncertain"
+  | "multiple-frameworks";
+
+export interface Caveat {
+  code: CaveatCode;
+  text: string;
+}
+
+export interface CommandSuggestion {
+  /** Stable identifier: directory, purpose, script and package manager. */
+  id: string;
+  packagePath: string;
+  /** Root-relative folder the command belongs to ("." for the root). */
+  directory: string;
+  packageName: string | null;
+  purpose: SuggestionPurpose;
+  /** "script": runs an existing package.json script; "install": a package manager's standard install command. */
+  source: "script" | "install";
+  /** The existing script's name (scripts only). */
+  scriptName: string | null;
+  /** What that script runs, as passive text for review. Never part of `command`. */
+  scriptCommandText: string | null;
+  /** The package manager this alternative uses; null when it couldn't be determined. */
+  packageManager: PackageManagerName | null;
+  /**
+   * Built from a fixed template plus an allowlisted script name, or null when
+   * no command could be built (see `unavailableReason`). This constrains the
+   * command's syntax only. It is NOT a safety guarantee: the script it runs is
+   * defined by the repository and can execute arbitrary commands, and nothing
+   * was run, verified or security-reviewed.
+   */
+  command: string | null;
+  unavailableReason: "package-manager-unknown" | "unsafe-script-name" | null;
+  /** True when this is one of several alternatives because package-manager evidence conflicts. */
+  packageManagerAmbiguous: boolean;
+  scanIncomplete: boolean;
+  /** Set when a root script runs several workspace packages. */
+  orchestration: OrchestrationSignal["tool"] | null;
+  frameworks: FrameworkId[];
+  /** Null when no command could be built. Never "verified". */
+  confidence: Confidence | null;
+  evidence: Evidence[];
+  caveats: Caveat[];
+}
+
+export type SkipReason =
+  | "no-run-script"
+  | "scripts-truncated"
+  | "unsupported-framework"
+  | "workspace-root-without-run-script"
+  | "non-node-project"
+  | "no-packages";
+
+/** A package (or the repository) for which nothing was suggested, and why. */
+export interface SuggestionSkip {
+  packagePath: string | null;
+  directory: string | null;
+  reason: SkipReason;
+  text: string;
+}
+
+export interface CommandSuggestions {
+  scanComplete: boolean;
+  suggestions: CommandSuggestion[];
+  /** True if the suggestion limit was reached and some were left out. */
+  suggestionsTruncated: boolean;
+  skipped: SuggestionSkip[];
+}
