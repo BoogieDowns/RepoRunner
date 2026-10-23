@@ -10,7 +10,9 @@ import {
   ProjectProfilesState,
   ProjectStoreRecoveryAction,
   ProjectStoreStatus,
+  REPO_ANALYSIS_ERROR_MESSAGES,
   RepoRunnerAPI,
+  RepoScanResult,
   ServiceStatuses,
   ServiceStatus,
 } from "../types";
@@ -206,6 +208,60 @@ function getMockStoreStatus(): ProjectStoreStatus {
     totalEntries: getProjectState().profiles.length,
     unavailableEntries: [],
     availableActions: ["retry"],
+  };
+}
+
+// Preview-mode repository analysis: returns the same passive sample result
+// for any folder. Like the desktop app it only describes; nothing is run or
+// saved. One analysis at a time; cancel resolves the running one "cancelled".
+let mockAnalysis: { cancel(): void } | null = null;
+
+function sampleScanResult(rootName: string, cancelled: boolean): RepoScanResult {
+  return {
+    status: cancelled ? "cancelled" : "complete",
+    partial: cancelled,
+    limitsHit: [],
+    rootName,
+    stats: { directoriesVisited: 4, entriesExamined: 23, filesRead: 2, bytesRead: 912, durationMs: 18 },
+    manifests: cancelled
+      ? []
+      : [
+          { path: "package.json", kind: "package-json" },
+          { path: "pnpm-lock.yaml", kind: "lockfile" },
+          { path: "vite.config.ts", kind: "framework-config" },
+          { path: ".nvmrc", kind: "node-version" },
+        ],
+    manifestsTruncated: false,
+    packages: cancelled
+      ? []
+      : [
+          {
+            path: "package.json",
+            name: "my-app",
+            version: "0.1.0",
+            private: true,
+            packageManager: "pnpm@9.1.0",
+            engines: { node: ">=20" },
+            scripts: [
+              { name: "dev", command: "vite" },
+              { name: "build", command: "vite build" },
+            ],
+            scriptsTruncated: false,
+            dependencies: ["react", "react-dom"],
+            devDependencies: ["vite", "typescript"],
+            dependenciesTruncated: false,
+            workspaces: [],
+          },
+        ],
+    packagesTruncated: false,
+    nodeVersionFiles: cancelled ? [] : [{ path: ".nvmrc", version: "20" }],
+    workspace: { signals: [], patterns: [] },
+    packageManager: { lockfiles: cancelled ? [] : [{ path: "pnpm-lock.yaml", manager: "pnpm" }], declared: cancelled ? null : "pnpm@9.1.0" },
+    envFiles: cancelled ? [] : [".env.example"],
+    envFilesTruncated: false,
+    skipped: { links: 0, excludedDirectories: 1, sensitiveFiles: 1, depthLimited: 0, unreadable: 0, oversized: 0, otherTypes: 0 },
+    warnings: [],
+    warningsTruncated: false,
   };
 }
 
@@ -445,6 +501,28 @@ export const mockRepoRunnerAPI: RepoRunnerAPI = {
     return () => {
       statusListeners = statusListeners.filter((fn) => fn !== callback);
     };
+  },
+
+  async analyzeRepo(repoPath: string) {
+    if (typeof repoPath !== "string" || repoPath.length === 0 || repoPath.length > 4096) {
+      throw new Error(REPO_ANALYSIS_ERROR_MESSAGES["invalid-path"]);
+    }
+    if (mockAnalysis) throw new Error(REPO_ANALYSIS_ERROR_MESSAGES["scan-in-progress"]);
+
+    const rootName = repoPath.split(/[\\/]/).filter(Boolean).pop() ?? "repo";
+    return new Promise<RepoScanResult>((resolve) => {
+      const finish = (cancelled: boolean) => {
+        clearTimeout(timer);
+        mockAnalysis = null;
+        resolve(sampleScanResult(rootName, cancelled));
+      };
+      const timer = setTimeout(() => finish(false), 600);
+      mockAnalysis = { cancel: () => finish(true) };
+    });
+  },
+
+  async cancelRepoAnalysis() {
+    mockAnalysis?.cancel();
   },
 };
 

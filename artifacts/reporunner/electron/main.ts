@@ -3,6 +3,7 @@ import path from "path";
 import { fileURLToPath, pathToFileURL } from "url";
 import { setupIpc } from "./ipc.js";
 import { hardenSession, hardenWebContents } from "./windowSecurity.js";
+import { shutdownRepoAnalysis } from "./repoAnalysisIpc.js";
 import {
   beginShutdown,
   hasTrackedServiceWork,
@@ -124,7 +125,7 @@ if (!hasSingleInstanceLock) {
 
   app.whenReady().then(() => {
     hardenSession(session.defaultSession);
-    setupIpc();
+    setupIpc({ getMainWindow: () => mainWindow, appPageUrl });
     createWindow();
 
     app.on("activate", () => {
@@ -139,6 +140,7 @@ if (!hasSingleInstanceLock) {
 
     // From the first quit request on, nothing new may start.
     beginShutdown();
+    shutdownRepoAnalysis();
 
     if (quitState === "cleaning-up") {
       // Repeated quit request: keep waiting for the cleanup already running.

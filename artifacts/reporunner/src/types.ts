@@ -1,3 +1,5 @@
+import type { RepoScanErrorCode, RepoScanResult } from "../electron/repoScanner/types.js";
+
 export type ServiceStatus =
   | "stopped"
   | "starting"
@@ -134,6 +136,50 @@ export const PROJECT_STORE_ERROR_MESSAGES: Record<ProjectStoreErrorCode, string>
     "RepoRunner couldn't save a copy of your current saved repo setups, so it didn't make any changes.",
 };
 
+// Repository analysis contract. The result shapes are defined once, next to
+// the scanner (electron/repoScanner/types.ts), and re-exported here as types
+// only, so no scanner code is bundled into the window.
+export type {
+  ManifestKind,
+  PackageManagerName,
+  PackageScript,
+  PackageSummary,
+  RepoScanErrorCode,
+  RepoScanLimit,
+  RepoScanResult,
+  RepoScanStatus,
+  RepoScanWarning,
+  RepoScanWarningCode,
+  WorkspaceSignal,
+} from "../electron/repoScanner/types.js";
+
+/** Scanner errors plus the IPC layer's own refusals. */
+export type RepoAnalysisErrorCode =
+  | RepoScanErrorCode
+  | "invalid-request"
+  | "not-allowed"
+  | "unavailable"
+  | "failed";
+
+/**
+ * Fixed, value-free messages for analysis errors (no paths, no filesystem
+ * errors). Shared so the renderer can recognise an error that crossed IPC by
+ * its exact text.
+ */
+export const REPO_ANALYSIS_ERROR_MESSAGES: Record<RepoAnalysisErrorCode, string> = {
+  "invalid-path": "Choose a full local folder path to analyze.",
+  "not-found": "That folder doesn't exist.",
+  "not-a-directory": "That path is not a folder.",
+  "root-not-allowed":
+    "RepoRunner won't analyze a drive root, network share, system folder or your whole home folder. Choose the repository's own folder.",
+  unreadable: "RepoRunner couldn't read that folder.",
+  "scan-in-progress": "A repository analysis is already running.",
+  "invalid-request": "RepoRunner received an invalid analysis request.",
+  "not-allowed": "Repository analysis isn't available from this page.",
+  unavailable: "Repository analysis isn't available while RepoRunner is closing.",
+  failed: "RepoRunner couldn't analyze that folder.",
+};
+
 export interface ServiceStatuses {
   frontend: ServiceStatus;
   backend: ServiceStatus;
@@ -168,6 +214,13 @@ export interface RepoRunnerAPI {
   onLog(callback: (entry: LogEntry) => void): () => void;
   getStatuses(): Promise<ServiceStatuses>;
   onStatus(callback: (statuses: ServiceStatuses) => void): () => void;
+  /**
+   * Read-only analysis of a local folder. Never runs anything or saves
+   * anything. Check `status`: only "complete" is a full scan.
+   */
+  analyzeRepo(repoPath: string): Promise<RepoScanResult>;
+  /** Stops the running analysis, if any (its call then resolves "cancelled"). */
+  cancelRepoAnalysis(): Promise<void>;
 }
 
 declare global {

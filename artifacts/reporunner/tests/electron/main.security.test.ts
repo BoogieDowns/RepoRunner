@@ -27,6 +27,8 @@ const h = vi.hoisted(() => {
     FakeWindow,
     appListeners: new Map<string, Listener[]>(),
     session: { setPermissionRequestHandler: vi.fn(), setPermissionCheckHandler: vi.fn() },
+    setupIpc: vi.fn(),
+    shutdownRepoAnalysis: vi.fn(),
   };
 });
 
@@ -43,7 +45,8 @@ vi.mock("electron", () => ({
   Menu: { buildFromTemplate: () => ({ popup: () => {} }) },
   session: { defaultSession: h.session },
 }));
-vi.mock("../../electron/ipc.js", () => ({ setupIpc: vi.fn() }));
+vi.mock("../../electron/ipc.js", () => ({ setupIpc: h.setupIpc }));
+vi.mock("../../electron/repoAnalysisIpc.js", () => ({ shutdownRepoAnalysis: h.shutdownRepoAnalysis }));
 vi.mock("../../electron/processManager.js", () => ({
   beginShutdown: vi.fn(),
   isShuttingDown: () => false,
@@ -58,6 +61,8 @@ beforeEach(async () => {
   h.appListeners.clear();
   h.session.setPermissionRequestHandler.mockClear();
   h.session.setPermissionCheckHandler.mockClear();
+  h.setupIpc.mockClear();
+  h.shutdownRepoAnalysis.mockClear();
   vi.resetModules();
   await import("../../electron/main.js");
   await flush();
@@ -107,5 +112,21 @@ describe("hardening is applied", () => {
     expect(listeners.has("will-redirect")).toBe(true);
     expect(listeners.has("will-frame-navigate")).toBe(true);
     expect(listeners.has("will-attach-webview")).toBe(true);
+  });
+});
+
+describe("repository analysis wiring", () => {
+  it("gives IPC the main window and the exact packaged page as the trusted renderer", () => {
+    expect(h.setupIpc).toHaveBeenCalledTimes(1);
+    const trust = h.setupIpc.mock.calls[0][0] as { getMainWindow(): unknown; appPageUrl(): string };
+    expect(trust.getMainWindow()).toBe(h.FakeWindow.instances[0]);
+    expect(trust.appPageUrl()).toBe(
+      pathToFileURL(path.join("C:\\Apps\\RepoRunner\\resources\\app.asar", "dist/public/index.html")).href,
+    );
+  });
+
+  it("aborts analysis as soon as quitting begins", () => {
+    for (const listener of h.appListeners.get("before-quit") ?? []) listener({ preventDefault: vi.fn() });
+    expect(h.shutdownRepoAnalysis).toHaveBeenCalledTimes(1);
   });
 });

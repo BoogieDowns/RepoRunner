@@ -5,6 +5,8 @@
  * length-limited.
  */
 
+import { REPO_ANALYSIS_ERROR_MESSAGES } from "../../src/types.js";
+
 export type RepoScanStatus = "complete" | "truncated" | "cancelled" | "timed-out";
 
 export type RepoScanLimit =
@@ -131,22 +133,12 @@ export type RepoScanErrorCode =
   | "unreadable"
   | "scan-in-progress";
 
-const ERROR_MESSAGES: Record<RepoScanErrorCode, string> = {
-  "invalid-path": "Choose a full local folder path to analyze.",
-  "not-found": "That folder doesn't exist.",
-  "not-a-directory": "That path is not a folder.",
-  "root-not-allowed":
-    "RepoRunner won't analyze a drive root, network share, system folder or your whole home folder. Choose the repository's own folder.",
-  unreadable: "RepoRunner couldn't read that folder.",
-  "scan-in-progress": "A repository analysis is already running.",
-};
-
 /** Fixed, value-free errors (never contain paths or filesystem messages). */
 export class RepoScanError extends Error {
   readonly code: RepoScanErrorCode;
 
   constructor(code: RepoScanErrorCode) {
-    super(ERROR_MESSAGES[code]);
+    super(REPO_ANALYSIS_ERROR_MESSAGES[code]);
     this.code = code;
   }
 }

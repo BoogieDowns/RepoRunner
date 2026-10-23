@@ -426,13 +426,14 @@ describe("nothing is executed and nothing goes over the network", () => {
     expect(h.executed).toEqual([]);
   });
 
-  it("scanner sources import only fs, path and os (no processes, network or dynamic code)", () => {
+  it("scanner sources import only fs, path, os and the shared types (no processes, network or dynamic code)", () => {
     const dir = path.resolve(import.meta.dirname, "../../../electron/repoScanner");
     for (const file of fs.readdirSync(dir).filter((f) => f.endsWith(".ts"))) {
       const source = fs.readFileSync(path.join(dir, file), "utf8");
       const imports = [...source.matchAll(/from\s+"([^"]+)"/g)].map((m) => m[1]);
       for (const spec of imports) {
-        expect(["node:fs", "node:path", "node:os"].includes(spec) || spec.startsWith("./"), `${file}: ${spec}`).toBe(true);
+        // ../../src/types.js holds only the shared fixed error messages.
+        expect(["node:fs", "node:path", "node:os", "../../src/types.js"].includes(spec) || spec.startsWith("./"), `${file}: ${spec}`).toBe(true);
       }
       expect(source, file).not.toMatch(/child_process|require\(|\beval\(|new Function\(|\bfetch\(|import\(/);
     }
