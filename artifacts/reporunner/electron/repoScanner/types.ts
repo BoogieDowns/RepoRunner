@@ -84,6 +84,8 @@ export interface PackageSummary {
   dependenciesTruncated: boolean;
   /** Workspace patterns exactly as declared (text only; never used as paths). */
   workspaces: string[];
+  /** More workspace patterns were declared than are listed. */
+  workspacesTruncated: boolean;
 }
 
 export interface RepoScanResult {
@@ -104,7 +106,8 @@ export interface RepoScanResult {
   packages: PackageSummary[];
   packagesTruncated: boolean;
   nodeVersionFiles: Array<{ path: string; version: string | null }>;
-  workspace: { signals: WorkspaceSignal[]; patterns: string[] };
+  /** patternsTruncated: the root package declared more patterns than are listed. */
+  workspace: { signals: WorkspaceSignal[]; patterns: string[]; patternsTruncated: boolean };
   packageManager: {
     lockfiles: Array<{ path: string; manager: PackageManagerName }>;
     declared: string | null;
@@ -120,6 +123,8 @@ export interface RepoScanResult {
     unreadable: number;
     oversized: number;
     otherTypes: number;
+    /** Folders or allowed files that changed between checks and were skipped. */
+    changedDuringScan: number;
   };
   warnings: RepoScanWarning[];
   warningsTruncated: boolean;

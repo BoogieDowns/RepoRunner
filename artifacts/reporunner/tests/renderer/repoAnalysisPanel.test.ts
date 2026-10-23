@@ -34,11 +34,11 @@ function base(overrides: Partial<RepoScanResult> = {}): RepoScanResult {
     packages: [],
     packagesTruncated: false,
     nodeVersionFiles: [],
-    workspace: { signals: [], patterns: [] },
+    workspace: { signals: [], patterns: [], patternsTruncated: false },
     packageManager: { lockfiles: [], declared: null },
     envFiles: [],
     envFilesTruncated: false,
-    skipped: { links: 0, excludedDirectories: 0, sensitiveFiles: 0, depthLimited: 0, unreadable: 0, oversized: 0, otherTypes: 0 },
+    skipped: { links: 0, excludedDirectories: 0, sensitiveFiles: 0, depthLimited: 0, unreadable: 0, oversized: 0, otherTypes: 0, changedDuringScan: 0 },
     warnings: [],
     warningsTruncated: false,
     ...overrides,
@@ -174,7 +174,8 @@ describe("results", () => {
     ["truncated", base({ status: "truncated", partial: true, limitsHit: ["entries", "result-size"] }), "Partial results", ["Results limited for a large repository (file count).", "Some details were left out to keep the results small."]],
     ["cancelled", base({ status: "cancelled", partial: true }), "Analysis cancelled", ["Results are incomplete."]],
     ["timed-out", base({ status: "timed-out", partial: true, limitsHit: ["time"] }), "Analysis timed out", ["Results are incomplete."]],
-    ["skipped files", base({ status: "complete", skipped: { links: 2, excludedDirectories: 0, sensitiveFiles: 0, depthLimited: 0, unreadable: 1, oversized: 1, otherTypes: 0 } }), "Analysis complete", ["Some files were skipped (2 unreadable or too large).", "2 linked folders or files were not followed."]],
+    ["unanalyzed files or folders", base({ status: "truncated", partial: true, skipped: { links: 2, excludedDirectories: 0, sensitiveFiles: 0, depthLimited: 0, unreadable: 1, oversized: 1, otherTypes: 0, changedDuringScan: 1 } }), "Partial results", ["Some files or folders could not be analyzed (3).", "2 linked folders or files were not followed."]],
+    ["workspace patterns cut", base({ status: "truncated", partial: true, workspace: { signals: ["npm-workspaces"], patterns: ["apps/*"], patternsTruncated: true } }), "Partial results", ["Not all workspace patterns are listed."]],
   ])("%s results are labelled clearly", (_label, result, title, notes) => {
     const t = text(render(done(result)));
     expect(t).toContain(title);

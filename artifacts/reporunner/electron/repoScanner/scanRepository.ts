@@ -116,13 +116,14 @@ export async function scanRepository(rootInput: unknown, options: ScanOptions = 
 
   const limitsHit = new Set<RepoScanLimit>();
   const stats = { directoriesVisited: 0, entriesExamined: 0, filesRead: 0, bytesRead: 0, durationMs: 0 };
-  const skipped = { links: 0, excludedDirectories: 0, sensitiveFiles: 0, depthLimited: 0, unreadable: 0, oversized: 0, otherTypes: 0 };
+  const skipped = { links: 0, excludedDirectories: 0, sensitiveFiles: 0, depthLimited: 0, unreadable: 0, oversized: 0, otherTypes: 0, changedDuringScan: 0 };
   const manifests: Array<{ path: string; kind: ManifestKind }> = [];
   let manifestsTruncated = false;
   const packages: PackageSummary[] = [];
   const nodeVersionFiles: Array<{ path: string; version: string | null }> = [];
   const signals = new Set<WorkspaceSignal>();
   let workspacePatterns: string[] = [];
+  let workspacePatternsTruncated = false;
   const lockfiles: Array<{ path: string; manager: PackageManagerName }> = [];
   let declaredPackageManager: string | null = null;
   const envFiles: string[] = [];
@@ -133,6 +134,8 @@ export async function scanRepository(rootInput: unknown, options: ScanOptions = 
   let byteBudgetExhausted = false;
 
   const warn = (code: RepoScanWarningCode, relativePath: string) => {
+    // Counted even when the warning list itself is full.
+    if (code === "changed-during-scan") skipped.changedDuringScan++;
     if (warnings.length >= limits.maxWarnings) {
       warningsTruncated = true;
       return;
@@ -280,6 +283,7 @@ export async function scanRepository(rootInput: unknown, options: ScanOptions = 
         if (parsed.summary.workspaces.length > 0) {
           signals.add("npm-workspaces");
           workspacePatterns = parsed.summary.workspaces;
+          workspacePatternsTruncated = parsed.summary.workspacesTruncated;
         }
       }
     } else if (readable === "node-version") {
@@ -375,7 +379,7 @@ export async function scanRepository(rootInput: unknown, options: ScanOptions = 
     packages,
     packagesTruncated: false,
     nodeVersionFiles,
-    workspace: { signals: [...signals], patterns: workspacePatterns },
+    workspace: { signals: [...signals], patterns: workspacePatterns, patternsTruncated: workspacePatternsTruncated },
     packageManager: { lockfiles: lockfiles.slice(0, limits.maxManifests), declared: declaredPackageManager },
     envFiles,
     envFilesTruncated,
@@ -387,13 +391,31 @@ export async function scanRepository(rootInput: unknown, options: ScanOptions = 
   fitResultSize(result, limits.maxResultBytes, limitsHit);
 
   result.limitsHit = [...limitsHit];
-  result.status = stopReason ?? (result.limitsHit.length > 0 || hasTruncatedLists(result) ? "truncated" : "complete");
+  result.status =
+    stopReason ?? (result.limitsHit.length > 0 || hasTruncatedLists(result) || hasUnanalyzedContent(result) ? "truncated" : "complete");
   result.partial = result.status !== "complete";
   return result;
 }
 
 function hasTruncatedLists(result: RepoScanResult): boolean {
-  return result.manifestsTruncated || result.packagesTruncated || result.envFilesTruncated || result.warningsTruncated;
+  return (
+    result.manifestsTruncated ||
+    result.packagesTruncated ||
+    result.envFilesTruncated ||
+    result.warningsTruncated ||
+    result.workspace.patternsTruncated ||
+    result.packages.some((pkg) => pkg.workspacesTruncated)
+  );
+}
+
+/**
+ * Something in scope could not be analyzed: an unreadable folder (at open or
+ * mid-listing), or a folder or allowed file that was unreadable, too large or
+ * changed during the scan. Deliberately excluded folders and links don't count.
+ */
+function hasUnanalyzedContent(result: RepoScanResult): boolean {
+  const { unreadable, oversized, changedDuringScan } = result.skipped;
+  return unreadable + oversized + changedDuringScan > 0;
 }
 
 function serializedBytes(value: unknown): number {
@@ -444,6 +466,7 @@ function fitResultSize(result: RepoScanResult, maxBytes: number, limitsHit: Set<
     () => {
       if (result.workspace.patterns.length === 0) return false;
       result.workspace.patterns = [];
+      result.workspace.patternsTruncated = true;
       return true;
     },
   ];

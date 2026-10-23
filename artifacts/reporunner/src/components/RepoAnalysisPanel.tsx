@@ -9,6 +9,7 @@ import {
   packageManagerSummary,
   summarizeStatus,
   warningText,
+  WORKSPACE_PATTERNS_NOTE,
   type RepoAnalysisState,
 } from "../lib/repoAnalysis";
 
@@ -153,7 +154,7 @@ function PackageCard({ pkg, open }: { pkg: PackageSummary; open: boolean }) {
         <DependencyList label="Dev dependencies" names={pkg.devDependencies} truncated={pkg.dependenciesTruncated} />
         {pkg.workspaces.length > 0 && (
           <p className="text-[11px]" style={{ color: "#858280" }}>
-            Workspaces: <span style={MONO}>{pkg.workspaces.join(", ")}</span>
+            Workspaces{pkg.workspacesTruncated ? " (first 50)" : ""}: <span style={MONO}>{pkg.workspaces.join(", ")}</span>
           </p>
         )}
       </div>
@@ -223,6 +224,11 @@ function Results({ result }: { result: RepoScanResult }) {
                 <Chip key={`${index}:${pattern}`}>{pattern}</Chip>
               ))}
             </div>
+          )}
+          {result.workspace.patternsTruncated && (
+            <p className="text-[10px]" style={{ color: "#5a5856" }}>
+              {WORKSPACE_PATTERNS_NOTE}
+            </p>
           )}
         </Section>
         <Section title="Node version">

@@ -192,6 +192,9 @@ const LIMIT_NOTES: Record<RepoScanResult["limitsHit"][number], string> = {
   "result-size": "Some details were left out to keep the results small.",
 };
 
+export const UNANALYZED_NOTE = "Some files or folders could not be analyzed";
+export const WORKSPACE_PATTERNS_NOTE = "Not all workspace patterns are listed.";
+
 export function summarizeStatus(result: RepoScanResult): StatusSummary {
   const notes: string[] = [];
   for (const limit of result.limitsHit) {
@@ -201,9 +204,12 @@ export function summarizeStatus(result: RepoScanResult): StatusSummary {
   if (result.manifestsTruncated || result.packagesTruncated || result.envFilesTruncated || result.warningsTruncated) {
     if (!result.limitsHit.includes("result-size")) notes.push("Some lists were shortened.");
   }
+  if (result.workspace.patternsTruncated || result.packages.some((pkg) => pkg.workspacesTruncated)) {
+    notes.push(WORKSPACE_PATTERNS_NOTE);
+  }
   const skipped = result.skipped;
-  const unread = skipped.unreadable + skipped.oversized;
-  if (unread > 0) notes.push(`Some files were skipped (${unread} unreadable or too large).`);
+  const unanalyzed = skipped.unreadable + skipped.oversized + skipped.changedDuringScan;
+  if (unanalyzed > 0) notes.push(`${UNANALYZED_NOTE} (${unanalyzed}).`);
   if (skipped.links > 0) notes.push(`${skipped.links} linked ${skipped.links === 1 ? "folder or file was" : "folders or files were"} not followed.`);
 
   switch (result.status) {

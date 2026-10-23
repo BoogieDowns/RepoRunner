@@ -61,6 +61,7 @@ describe("ordinary repositories", () => {
         devDependencies: ["vite"],
         dependenciesTruncated: false,
         workspaces: [],
+        workspacesTruncated: false,
       },
     ]);
     expect(result.packageManager).toEqual({ lockfiles: [{ path: "pnpm-lock.yaml", manager: "pnpm" }], declared: "pnpm@9.1.0" });

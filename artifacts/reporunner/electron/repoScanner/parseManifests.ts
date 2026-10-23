@@ -70,13 +70,14 @@ function dependencyNames(value: unknown, limit: number): { names: string[]; trun
   };
 }
 
-function workspacePatterns(value: unknown): string[] {
+function workspacePatterns(value: unknown): { patterns: string[]; truncated: boolean } {
   const list = Array.isArray(value) ? value : isRecord(value) && Array.isArray(value.packages) ? value.packages : [];
-  return list
-    .filter((pattern): pattern is string => typeof pattern === "string")
+  const declared = list.filter((pattern): pattern is string => typeof pattern === "string");
+  const patterns = declared
     .slice(0, SCAN_LIMITS.maxWorkspacePatterns)
     .map((pattern) => sanitizeText(pattern, TEXT_LIMITS.workspacePattern))
     .filter((pattern) => pattern.length > 0);
+  return { patterns, truncated: declared.length > SCAN_LIMITS.maxWorkspacePatterns };
 }
 
 export type PackageJsonParseResult =
@@ -113,6 +114,7 @@ export function parsePackageJson(
     }
   }
 
+  const workspaces = workspacePatterns(data.workspaces);
   const dependencies = dependencyNames(data.dependencies, limits.maxDependencyNames);
   const devDependencies = dependencyNames(data.devDependencies, limits.maxDependencyNames);
   const engines = isRecord(data.engines) ? data.engines : {};
@@ -131,7 +133,8 @@ export function parsePackageJson(
       dependencies: dependencies.names,
       devDependencies: devDependencies.names,
       dependenciesTruncated: dependencies.truncated || devDependencies.truncated,
-      workspaces: workspacePatterns(data.workspaces),
+      workspaces: workspaces.patterns,
+      workspacesTruncated: workspaces.truncated,
     },
   };
 }
