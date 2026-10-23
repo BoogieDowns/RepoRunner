@@ -57,6 +57,11 @@ contextBridge.exposeInMainWorld("repoRunner", {
 
   getStatuses: () => ipcRenderer.invoke("get-statuses"),
 
+  // Read-only repository analysis. Only the path is forwarded.
+  analyzeRepo: (repoPath: string) => ipcRenderer.invoke("analyze-repo", repoPath),
+
+  cancelRepoAnalysis: () => ipcRenderer.invoke("cancel-repo-analysis"),
+
   onLog: (callback: (entry: LogEntry) => void) => {
     const listener = (_event: IpcRendererEvent, entry: LogEntry) =>
       callback(entry);

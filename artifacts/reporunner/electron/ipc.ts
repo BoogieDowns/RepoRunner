@@ -36,6 +36,7 @@ import {
   validateRepoPathDirectoryForSave,
 } from "./projectProfileValidation.js";
 import { clearLogs, emitLog, formatLogsForClipboard } from "./logSink.js";
+import { registerRepoAnalysisIpc, type TrustedRenderer } from "./repoAnalysisIpc.js";
 
 function createLineBufferedLogEmitter(source: LogSource) {
   let pending = "";
@@ -201,7 +202,13 @@ function readRecoveryAction(value: unknown): ProjectStoreRecoveryAction {
   }
   throw new Error("Unknown recovery action.");
 }
-export function setupIpc() {
+/**
+ * `trustedRenderer` identifies RepoRunner's own window and page; handlers
+ * that check their caller (repository analysis) refuse every call without it.
+ */
+export function setupIpc(trustedRenderer?: TrustedRenderer) {
+  registerRepoAnalysisIpc(trustedRenderer);
+
   ipcMain.handle("select-folder", async (event) => {
     const parentWindow =
       BrowserWindow.fromWebContents(event.sender) ??
