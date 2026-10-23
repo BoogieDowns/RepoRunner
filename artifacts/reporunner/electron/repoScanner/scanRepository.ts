@@ -559,61 +559,96 @@ function serializedBytes(value: unknown): number {
   return Buffer.byteLength(JSON.stringify(value), "utf8");
 }
 
-/** Drops the least important data until the serialized result fits. */
-function fitResultSize(result: RepoScanResult, maxBytes: number, limitsHit: Set<RepoScanLimit>): void {
-  const steps: Array<() => boolean> = [
+/** A trimming step's effect: nothing left to drop, the exact bytes saved, or "measure again". */
+type TrimOutcome = false | number | "remeasure";
+
+/**
+ * Drops the least important data until the serialized result fits, in a
+ * fixed priority order (each step sets the matching truncation flag).
+ *
+ * The full result is serialized once up front. The per-item steps (clearing
+ * one package's dependency lists, dropping the last package) report the exact
+ * number of compact-JSON bytes they removed, so they don't re-serialize the
+ * whole result each time; the halving and one-shot steps run at most
+ * ~log2(n) times and simply measure again. A final measurement confirms the
+ * cap, with a slow path that measures after every step if it ever didn't hold
+ * (it resumes the same steps, so the outcome is unchanged; only slower).
+ * Returns whether the fast path alone was enough.
+ */
+export function fitResultSize(
+  result: RepoScanResult,
+  maxBytes: number,
+  limitsHit: Set<RepoScanLimit>,
+  measure: (value: unknown) => number = serializedBytes,
+): boolean {
+  // "false" -> "true" is one byte shorter in JSON.
+  const setFlag = (wasSet: boolean) => (wasSet ? 0 : 1);
+  const steps: Array<() => TrimOutcome> = [
     () => {
       if (result.warnings.length === 0) return false;
       result.warnings.splice(Math.floor(result.warnings.length / 2));
       result.warningsTruncated = true;
-      return true;
+      return "remeasure";
     },
     () => {
       const pkg = result.packages.find((p) => p.dependencies.length > 0 || p.devDependencies.length > 0);
       if (!pkg) return false;
+      // "[...]" becomes "[]" for each list.
+      const saved = serializedBytes(pkg.dependencies) - 2 + serializedBytes(pkg.devDependencies) - 2 + setFlag(pkg.dependenciesTruncated);
       pkg.dependencies = [];
       pkg.devDependencies = [];
       pkg.dependenciesTruncated = true;
-      return true;
+      return saved;
     },
     () => {
       if (result.manifests.length === 0) return false;
       result.manifests.splice(Math.floor(result.manifests.length / 2));
       result.manifestsTruncated = true;
-      return true;
+      return "remeasure";
     },
     () => {
-      if (result.packages.length === 0) return false;
-      result.packages.pop();
+      const pkg = result.packages.pop();
+      if (!pkg) return false;
+      // The element, plus its separating comma if others remain.
+      const saved = serializedBytes(pkg) + (result.packages.length > 0 ? 1 : 0) + setFlag(result.packagesTruncated);
       result.packagesTruncated = true;
-      return true;
+      return saved;
     },
     () => {
       if (result.envFiles.length === 0) return false;
       result.envFiles.splice(Math.floor(result.envFiles.length / 2));
       result.envFilesTruncated = true;
-      return true;
+      return "remeasure";
     },
     () => {
       if (result.packageManager.lockfiles.length === 0 && result.nodeVersionFiles.length === 0) return false;
       result.packageManager.lockfiles = [];
       result.nodeVersionFiles = [];
-      return true;
+      return "remeasure";
     },
     () => {
       if (result.workspace.patterns.length === 0) return false;
       result.workspace.patterns = [];
       result.workspace.patternsTruncated = true;
-      return true;
+      return "remeasure";
     },
   ];
 
-  let size = serializedBytes(result);
-  for (const step of steps) {
-    while (size > maxBytes && step()) {
-      limitsHit.add("result-size");
-      size = serializedBytes(result);
+  const trim = (exactAccounting: boolean) => {
+    let size = measure(result);
+    for (const step of steps) {
+      while (size > maxBytes) {
+        const outcome = step();
+        if (outcome === false) break;
+        limitsHit.add("result-size");
+        size = exactAccounting && outcome !== "remeasure" ? size - outcome : measure(result);
+      }
+      if (size <= maxBytes) return;
     }
-    if (size <= maxBytes) return;
-  }
+  };
+
+  trim(true);
+  if (measure(result) <= maxBytes) return true;
+  trim(false); // safety net: never exceed the cap
+  return false;
 }
