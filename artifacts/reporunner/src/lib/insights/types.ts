@@ -182,7 +182,9 @@ export type CaveatCode =
   | "independent-package"
   | "no-lockfile-here"
   | "workspace-membership-unknown"
-  | "members-unconfirmed";
+  | "members-unconfirmed"
+  | "nested-workspace-root"
+  | "workspace-ownership-ambiguous";
 
 export interface Caveat {
   code: CaveatCode;

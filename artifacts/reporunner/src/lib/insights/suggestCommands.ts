@@ -313,42 +313,45 @@ function suggestionId(directory: string, purpose: SuggestionPurpose, script: str
 /**
  * Where a package's dependencies get installed. Only confirmed workspace
  * membership puts a nested package under a parent's install; a lockfile in a
- * parent folder is package-manager evidence, not install scope.
+ * parent folder is package-manager evidence, not install scope. Membership is
+ * direct: a package belongs to the ancestor whose own "workspaces" patterns
+ * match it, never to that ancestor's parent workspace (package managers don't
+ * install a member's own workspace members from the top level).
  */
 type InstallScope =
   | { kind: "own" }
   | { kind: "member"; root: string; pattern: string }
+  | { kind: "ambiguous"; candidates: string[] }
   | { kind: "independent"; ancestor: string; reason: Extract<Membership, { status: "not-member" }>["reason"] }
   | { kind: "unknown"; ancestor: string; membership: Extract<Membership, { status: "unknown" }> };
 
 function installScopes(result: RepoScanResult, insights: ProjectInsights, lockfileDirs: Set<string>): Map<string, InstallScope> {
   const dirs = insights.packages.map((p) => p.directory);
   const scopes = new Map<string, InstallScope>();
-  const scopeOf = (dir: string): InstallScope => {
-    const known = scopes.get(dir);
-    if (known) return known;
+  for (const dir of dirs) {
     let scope: InstallScope = { kind: "own" };
-    // A package with its own lockfile installs on its own (a separate install root).
-    if (dir !== "." && !lockfileDirs.has(dir)) {
+    if (dir !== ".") {
       const ancestors = dirs.filter((a) => relativeTo(a, dir) !== null).sort((a, b) => b.length - a.length); // nearest first
+      const direct: { ancestor: string; pattern: string }[] = [];
+      const configuredUnknown: string[] = [];
       let unknown: InstallScope | null = null;
       let independent: InstallScope | null = null;
       for (const ancestor of ancestors) {
         const m = workspaceMembership(result, ancestor, dir);
-        if (m.status === "member") {
-          const parent = scopeOf(ancestor);
-          scope = { kind: "member", root: parent.kind === "member" ? parent.root : ancestor, pattern: m.pattern };
-          break;
-        }
-        if (m.status === "unknown") unknown ??= { kind: "unknown", ancestor, membership: m };
-        else independent ??= { kind: "independent", ancestor, reason: m.reason };
+        if (m.status === "member") direct.push({ ancestor, pattern: m.pattern });
+        else if (m.status === "unknown") {
+          unknown ??= { kind: "unknown", ancestor, membership: m };
+          // An unreadable or uninterpretable workspace declaration could also claim it.
+          if (m.reason !== "scan-incomplete") configuredUnknown.push(ancestor);
+        } else independent ??= { kind: "independent", ancestor, reason: m.reason };
       }
-      if (scope.kind === "own") scope = unknown ?? independent ?? scope;
+      if (direct.length === 1 && configuredUnknown.length === 0) scope = { kind: "member", root: direct[0].ancestor, pattern: direct[0].pattern };
+      else if (direct.length > 0) scope = { kind: "ambiguous", candidates: [...direct.map((d) => d.ancestor), ...configuredUnknown].sort() };
+      // A package with its own lockfile and no workspace claim is simply its own install root.
+      else if (!lockfileDirs.has(dir)) scope = unknown ?? independent ?? scope;
     }
     scopes.set(dir, scope);
-    return scope;
-  };
-  for (const dir of dirs) scopeOf(dir);
+  }
   return scopes;
 }
 
@@ -359,25 +362,64 @@ function installSuggestions(result: RepoScanResult, insights: ProjectInsights, s
   const packageDirs = new Map(insights.packages.map((p) => [p.directory, p]));
   const scopes = installScopes(result, insights, lockfileDirs);
 
-  const members = new Map<string, PackageInsight[]>();
+  // Direct members of each workspace root.
+  const membersOf = new Map<string, PackageInsight[]>();
   for (const insight of insights.packages) {
     const scope = scopes.get(insight.directory)!;
-    const root = scope.kind === "member" ? scope.root : insight.directory;
-    members.set(root, [...(members.get(root) ?? []), insight]);
+    if (scope.kind === "member") membersOf.set(scope.root, [...(membersOf.get(scope.root) ?? []), insight]);
   }
+  // Nested packages a workspace root may claim, but whose membership couldn't be confirmed.
+  const unconfirmedOf = (root: string) =>
+    insights.packages
+      .map((p) => [p.directory, scopes.get(p.directory)!] as const)
+      .filter(([, sc]) => (sc.kind === "unknown" && sc.ancestor === root) || (sc.kind === "ambiguous" && sc.candidates.includes(root)))
+      .map(([dir]) => dir);
+  // A package gets its own install unless it's only a direct member of another
+  // package's workspace. A member that has its own lockfile, or is itself a
+  // workspace root that has (or may have) members, also gets one.
+  const installRoots = insights.packages
+    .map((p) => p.directory)
+    .filter((dir) => scopes.get(dir)!.kind !== "member" || lockfileDirs.has(dir) || membersOf.has(dir) || unconfirmedOf(dir).length > 0)
+    .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
 
   const out: CommandSuggestion[] = [];
-  for (const [root, group] of [...members.entries()].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))) {
+  for (const root of installRoots) {
     const rootInsight = packageDirs.get(root)!;
+    const members = membersOf.get(root) ?? [];
+    const group = [rootInsight, ...members];
     const scope = scopes.get(root)!;
+    const unconfirmed = unconfirmedOf(root);
     const evidence: Evidence[] = [{ kind: "project-file", text: `${rootInsight.packagePath} is present` }];
-    if (group.length > 1) {
-      evidence.push({ kind: "workspace-file", text: `${group.length} packages share this install root: ${group.length - 1} matched by the "workspaces" patterns in ${rootInsight.packagePath}` });
+    if (members.length > 0) {
+      evidence.push({ kind: "workspace-file", text: `${group.length} packages share this install root: ${members.length} matched by the "workspaces" patterns in ${rootInsight.packagePath}` });
     }
     const caveats: Caveat[] = [NOT_VERIFIED_INSTALL];
     let scopeCap: Confidence = "high";
     const hasParentLockfile = [...lockfileDirs].some((d) => relativeTo(d, root) !== null);
-    if (scope.kind === "independent") {
+    if (scope.kind === "member") {
+      // A member of a parent workspace that is also an install root of its own.
+      const parent = packageDirs.get(scope.root)!;
+      evidence.push({ kind: "workspace-file", text: `${root} is a workspace member of ${parent.packagePath} (pattern "${scope.pattern}")` });
+      const own = [...members.map((m) => m.directory), ...unconfirmed];
+      if (own.length > 0) {
+        caveats.push({
+          code: "nested-workspace-root",
+          text: `${root} also declares its own workspaces. Installing at ${where(scope.root)} doesn't install the packages in ${root}'s own workspace (${own.slice(0, 5).join(", ")}${own.length > 5 ? ", …" : ""}), so this install is suggested separately. Package managers handle nested workspaces differently, so it may not behave as expected.`,
+        });
+      } else {
+        caveats.push({
+          code: "nested-workspace-root",
+          text: `${root} has its own lockfile, so a separate install is suggested; as a workspace member of ${parent.packagePath}, it may also be installed from ${where(scope.root)}.`,
+        });
+      }
+      scopeCap = lockfileDirs.has(root) ? "medium" : "low";
+    } else if (scope.kind === "ambiguous") {
+      caveats.push({
+        code: "workspace-ownership-ambiguous",
+        text: `It couldn't be determined which workspace ${root} belongs to: ${scope.candidates.map((c) => packageDirs.get(c)!.packagePath).join(" and ")} could each claim it. If one of those installs covers it, this separate install isn't needed.`,
+      });
+      scopeCap = "low";
+    } else if (scope.kind === "independent") {
       const parent = packageDirs.get(scope.ancestor)!;
       evidence.push({
         kind: "workspace-file",
@@ -398,10 +440,6 @@ function installSuggestions(result: RepoScanResult, insights: ProjectInsights, s
     if (scope.kind !== "own" && hasParentLockfile && !lockfileDirs.has(root)) {
       caveats.push({ code: "no-lockfile-here", text: `There's no lockfile in ${root}; the package manager comes from a lockfile in a parent folder, and installing here may create a new lockfile.` });
     }
-    const unconfirmed = insights.packages
-      .map((p) => [p.directory, scopes.get(p.directory)!] as const)
-      .filter(([, sc]) => sc.kind === "unknown" && sc.ancestor === root)
-      .map(([dir]) => dir);
     if (unconfirmed.length > 0) {
       const many = unconfirmed.length > 1;
       caveats.push({
