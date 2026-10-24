@@ -4,6 +4,7 @@
 import * as React from "react";
 import { Loader2, ScanSearch, X } from "lucide-react";
 import type { PackageSummary, RepoScanResult } from "../types";
+import { RepoSuggestedSetup } from "./RepoSuggestedSetup";
 import {
   MAX_DEPENDENCIES_SHOWN,
   packageManagerSummary,
@@ -139,6 +140,12 @@ function PackageCard({ pkg, open }: { pkg: PackageSummary; open: boolean }) {
                     </td>
                     <td className="break-all py-0.5" style={{ color: "#9a9896" }}>
                       {script.command}
+                      {script.commandExact !== true && (
+                        <span style={{ color: "#5a5856" }} data-testid="script-command-altered">
+                          {" "}
+                          (changed for display)
+                        </span>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -200,6 +207,8 @@ function Results({ result }: { result: RepoScanResult }) {
           in {result.stats.durationMs} ms
         </p>
       </div>
+
+      <RepoSuggestedSetup result={result} />
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Section title="Package manager">

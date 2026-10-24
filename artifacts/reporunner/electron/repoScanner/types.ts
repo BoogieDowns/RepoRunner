@@ -66,9 +66,24 @@ export interface RepoScanWarning {
 }
 
 export interface PackageScript {
+  /** Display-safe name (see sanitizeText). */
   name: string;
+  /**
+   * True only when package.json has a script with exactly `name`. False when
+   * cleaning for display changed it (removed characters, trimmed or collapsed
+   * whitespace, shortened), so `name` can't be used to run that script.
+   */
+  nameExact: boolean;
   /** Passive text from package.json. RepoRunner never runs it on its own. */
   command: string;
+  /**
+   * True only when `command` is exactly the package.json value. False when
+   * cleaning for display changed it (line breaks or tabs turned into spaces,
+   * whitespace collapsed or trimmed, characters removed, shortened), so it
+   * doesn't show what the script runs: "vite build\nvite preview" is two
+   * commands, its display text one. The original is never included.
+   */
+  commandExact: boolean;
 }
 
 export interface PackageSummary {
@@ -87,6 +102,14 @@ export interface PackageSummary {
   workspaces: string[];
   /** More workspace patterns were declared than are listed. */
   workspacesTruncated: boolean;
+  /**
+   * True only when every listed pattern is exactly the package.json string and
+   * no declared entry was left out other than by the count limit (which is
+   * `workspacesTruncated`). False when cleaning for display changed or dropped
+   * an entry, or "workspaces" had an unexpected shape: the list then can't be
+   * matched as written.
+   */
+  workspacesExact: boolean;
 }
 
 export interface RepoScanResult {

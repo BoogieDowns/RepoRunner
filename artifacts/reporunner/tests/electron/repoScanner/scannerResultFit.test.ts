@@ -293,3 +293,114 @@ describe("in real scans", () => {
     await run.settled;
   });
 });
+
+// PR #76: the cap applies to the response as sent. limitsHit, status and
+// partial are filled in after trimming, which made results up to ~15 bytes
+// larger than the cap at some caps (2,004 bytes at a 2,000-byte cap on Linux).
+describe("the cap includes the final metadata", () => {
+  let space: FixtureSpace;
+  const CANARY = "CANARY-FIT-FINAL-5c21";
+  beforeAll(() => {
+    space = new FixtureSpace();
+  });
+  afterAll(() => space.cleanup());
+  afterEach(() => vi.restoreAllMocks());
+
+  /** 40 packages with long dependency lists and a root workspace declaration (so workspacesExact is present). */
+  function workspaceRepo(extra: Record<string, string> = {}) {
+    const deps = Object.fromEntries(Array.from({ length: 60 }, (_, i) => [`dependency-name-${i}-${"x".repeat(40)}`, "1"]));
+    const tree: Record<string, string> = { ".env": `SECRET=${CANARY}`, "package.json": pkg({ name: "root", private: true, workspaces: ["p*"] }), ...extra };
+    for (let i = 0; i < 40; i++) tree[`p${i}/package.json`] = pkg({ name: `p${i}`, dependencies: deps, scripts: { build: "tsc" } });
+    return tree;
+  }
+  const settled = (r: RepoScanResult) => ({ ...r, stats: { ...r.stats, durationMs: 0 } });
+
+  it("every cap in a dense sweep: never over the cap, flagged, partial, no secrets", async () => {
+    const root = space.repo("fit final sweep", workspaceRepo());
+    const fullSize = bytes(await scanRepository(root));
+    const caps = new Set<number>([2_000]);
+    for (let cap = 1_500; cap <= 4_000; cap += 9) caps.add(cap);
+    for (let cap = 1_990; cap <= 2_010; cap++) caps.add(cap);
+    for (const cap of [Math.floor(fullSize / 2), fullSize - 20, fullSize - 1]) caps.add(cap);
+    for (const cap of caps) {
+      const result = await scanRepository(root, { limits: { maxResultBytes: cap } });
+      expect(bytes(result), `cap ${cap}`).toBeLessThanOrEqual(cap);
+      expect(result.limitsHit, `cap ${cap}`).toContain("result-size");
+      expect(result, `cap ${cap}`).toMatchObject({ status: "truncated", partial: true });
+      expect(result.packagesTruncated || result.packages.some((p) => p.dependenciesTruncated), `cap ${cap}`).toBe(true);
+      expect(JSON.stringify(result)).not.toContain(CANARY);
+      for (const p of result.packages) expect(typeof p.workspacesExact).toBe("boolean");
+    }
+  }, 120_000);
+
+  it("at and above the full size nothing changes: complete, no flags, identical output", async () => {
+    const root = space.repo("fit final unchanged", workspaceRepo());
+    const full = await scanRepository(root);
+    expect(full.status).toBe("complete");
+    for (const cap of [bytes(full), bytes(full) + 1, bytes(full) + 5_000]) {
+      const result = await scanRepository(root, { limits: { maxResultBytes: cap } });
+      expect(settled(result), `cap ${cap}`).toEqual(settled(full));
+    }
+  });
+
+  it("just below the full size: the smallest trim, and the status turns truncated within the cap", async () => {
+    const root = space.repo("fit final threshold", workspaceRepo());
+    const full = await scanRepository(root);
+    const cap = bytes(full) - 1;
+    const result = await scanRepository(root, { limits: { maxResultBytes: cap } });
+    expect(bytes(result)).toBeLessThanOrEqual(cap);
+    expect([result.status, result.partial, result.limitsHit]).toEqual(["truncated", true, ["result-size"]]);
+    // Priority order: warnings (none here), then dependency lists from the first package on.
+    expect(result.packages.length).toBe(full.packages.length);
+    expect(result.packages.find((p) => p.dependencies.length > 0 || p.devDependencies.length > 0)).toBeDefined();
+    const firstWithDeps = full.packages.findIndex((p) => p.dependencies.length > 0 || p.devDependencies.length > 0);
+    expect(result.packages.findIndex((p) => p.dependenciesTruncated)).toBe(firstWithDeps);
+  });
+
+  it("limitsHit that is already long before trimming is counted too", async () => {
+    // depth > maxDepth adds "depth" before fitting, so limitsHit ends as ["depth", "result-size"].
+    const root = space.repo("fit final depth", workspaceRepo({ "a/b/c/d/package.json": pkg({ name: "deep" }) }));
+    for (let cap = 1_800; cap <= 2_400; cap += 7) {
+      const result = await scanRepository(root, { limits: { maxResultBytes: cap, maxDepth: 2 } });
+      expect(bytes(result), `cap ${cap}`).toBeLessThanOrEqual(cap);
+      expect(result.limitsHit, `cap ${cap}`).toEqual(expect.arrayContaining(["depth", "result-size"]));
+    }
+  });
+
+  /** A scan stopped (cancelled or timed out) while a late folder's listing is held, after all packages were read. */
+  async function stoppedScan(root: string, cap: number, how: "cancel" | "timeout") {
+    const opendir = fs.promises.opendir;
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    let enter!: () => void;
+    const entered = new Promise<void>((resolve) => (enter = resolve));
+    const spy = vi.spyOn(fs.promises, "opendir").mockImplementation((async (p: fs.PathLike, ...rest: unknown[]) => {
+      if (path.resolve(String(p)) === path.join(root, "zz", "late")) {
+        enter();
+        await gate;
+      }
+      return (opendir as (...a: unknown[]) => Promise<unknown>)(p, ...rest);
+    }) as never);
+    const controller = new AbortController();
+    const run = startScan(root, { signal: controller.signal, limits: { maxResultBytes: cap, ...(how === "timeout" ? { timeBudgetMs: 400 } : {}) } });
+    await entered;
+    if (how === "cancel") controller.abort();
+    const result = await run.result;
+    release();
+    await run.settled;
+    spy.mockRestore();
+    return result;
+  }
+
+  it.each(["cancel", "timeout"] as const)("%s: stopped snapshots stay within the cap and keep their status", async (how) => {
+    const root = space.repo(`fit final ${how}`, workspaceRepo({ "zz/late/readme.txt": "x" }));
+    for (const cap of [1_700, 2_000, 2_003, 3_100]) {
+      const result = await stoppedScan(root, cap, how);
+      expect(bytes(result), `cap ${cap}`).toBeLessThanOrEqual(cap);
+      expect([result.status, result.partial], `cap ${cap}`).toEqual([how === "cancel" ? "cancelled" : "timed-out", true]);
+      expect(result.limitsHit, `cap ${cap}`).toContain("result-size");
+      if (how === "timeout") expect(result.limitsHit).toContain("time");
+      expect(JSON.stringify(result)).not.toContain(CANARY);
+    }
+  }, 60_000);
+});

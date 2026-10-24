@@ -1,0 +1,515 @@
+// Declarative, bounded detection rules. All patterns here are fixed; nothing
+// is ever built from repository content. Script text is untrusted data and is
+// only split into tokens and compared for exact equality.
+import type { FrameworkCategory, FrameworkId } from "./types";
+
+export interface ScriptTool {
+  /** Executable name, compared exactly with a command segment's first token. */
+  tool: string;
+  /** When given, the next token must be one of these (e.g. "next dev"). */
+  subcommands?: readonly string[];
+}
+
+export interface FrameworkRule {
+  id: FrameworkId;
+  label: string;
+  category: FrameworkCategory;
+  suggestionsSupported: boolean;
+  /**
+   * Every group must be satisfied by at least one listed dependency name
+   * (dependencies or devDependencies), e.g. [["vite"], ["react", ...]].
+   */
+  dependencyGroups: readonly (readonly string[])[];
+  /** Config files (exact basenames, matched case-insensitively) in the package's own folder. */
+  configFiles: readonly RegExp[];
+  /** True when a config file alone identifies this framework (vite.config doesn't). */
+  configIdentifies: boolean;
+  scriptTools: readonly ScriptTool[];
+  /** True when invoking the script tool alone identifies this framework (plain "vite" doesn't). */
+  scriptIdentifies: boolean;
+  /** Meta-frameworks built on this one; when one is detected, this one is reported as part of it. */
+  supersededBy: readonly FrameworkId[];
+  /** Backend libraries have no config or CLI to corroborate them; a runtime dependency is direct evidence. */
+  dependencyIsDirect: boolean;
+}
+
+const VITE_CONFIG = /^vite\.config\.(js|cjs|mjs|ts|cts|mts)$/i;
+const VITE_TOOLS: readonly ScriptTool[] = [{ tool: "vite" }];
+
+export const FRAMEWORK_RULES: readonly FrameworkRule[] = [
+  {
+    id: "react-vite",
+    label: "React + Vite",
+    category: "frontend",
+    suggestionsSupported: true,
+    dependencyGroups: [["vite"], ["react", "@vitejs/plugin-react", "@vitejs/plugin-react-swc"]],
+    configFiles: [VITE_CONFIG],
+    configIdentifies: false,
+    scriptTools: VITE_TOOLS,
+    scriptIdentifies: false,
+    supersededBy: ["remix"],
+    dependencyIsDirect: false,
+  },
+  {
+    id: "vue-vite",
+    label: "Vue + Vite",
+    category: "frontend",
+    suggestionsSupported: true,
+    dependencyGroups: [["vite"], ["vue", "@vitejs/plugin-vue"]],
+    configFiles: [VITE_CONFIG],
+    configIdentifies: false,
+    scriptTools: VITE_TOOLS,
+    scriptIdentifies: false,
+    supersededBy: ["nuxt"],
+    dependencyIsDirect: false,
+  },
+  {
+    id: "svelte-vite",
+    label: "Svelte + Vite",
+    category: "frontend",
+    suggestionsSupported: true,
+    dependencyGroups: [["vite"], ["svelte", "@sveltejs/vite-plugin-svelte"]],
+    configFiles: [VITE_CONFIG],
+    configIdentifies: false,
+    scriptTools: VITE_TOOLS,
+    scriptIdentifies: false,
+    supersededBy: ["sveltekit"],
+    dependencyIsDirect: false,
+  },
+  {
+    id: "sveltekit",
+    label: "SvelteKit",
+    category: "fullstack",
+    suggestionsSupported: true,
+    dependencyGroups: [["@sveltejs/kit"]],
+    configFiles: [/^svelte\.config\.(js|cjs|mjs|ts)$/i],
+    configIdentifies: false, // svelte.config is also used by plain Svelte
+    scriptTools: [{ tool: "vite", subcommands: ["dev", "build", "preview"] }, { tool: "svelte-kit" }],
+    scriptIdentifies: false,
+    supersededBy: [],
+    dependencyIsDirect: false,
+  },
+  {
+    id: "nextjs",
+    label: "Next.js",
+    category: "fullstack",
+    suggestionsSupported: true,
+    dependencyGroups: [["next"]],
+    configFiles: [/^next\.config\.(js|cjs|mjs|ts|mts)$/i],
+    configIdentifies: true,
+    scriptTools: [{ tool: "next", subcommands: ["dev", "start", "build"] }],
+    scriptIdentifies: true,
+    supersededBy: [],
+    dependencyIsDirect: false,
+  },
+  {
+    id: "angular",
+    label: "Angular",
+    category: "frontend",
+    suggestionsSupported: true,
+    dependencyGroups: [["@angular/core"]],
+    configFiles: [/^angular\.json$/i],
+    configIdentifies: true,
+    scriptTools: [{ tool: "ng", subcommands: ["serve", "start", "build"] }],
+    scriptIdentifies: true,
+    supersededBy: [],
+    dependencyIsDirect: false,
+  },
+  {
+    id: "nestjs",
+    label: "NestJS",
+    category: "backend",
+    suggestionsSupported: true,
+    dependencyGroups: [["@nestjs/core"]],
+    configFiles: [],
+    configIdentifies: false,
+    scriptTools: [{ tool: "nest", subcommands: ["start"] }],
+    scriptIdentifies: true,
+    supersededBy: [],
+    dependencyIsDirect: false,
+  },
+  {
+    id: "express",
+    label: "Express",
+    category: "backend",
+    suggestionsSupported: true,
+    dependencyGroups: [["express"]],
+    configFiles: [],
+    configIdentifies: false,
+    scriptTools: [],
+    scriptIdentifies: false,
+    supersededBy: [],
+    dependencyIsDirect: true,
+  },
+  {
+    id: "fastify",
+    label: "Fastify",
+    category: "backend",
+    suggestionsSupported: true,
+    dependencyGroups: [["fastify"]],
+    configFiles: [],
+    configIdentifies: false,
+    scriptTools: [{ tool: "fastify", subcommands: ["start"] }],
+    scriptIdentifies: true,
+    supersededBy: [],
+    dependencyIsDirect: true,
+  },
+  {
+    id: "nuxt",
+    label: "Nuxt",
+    category: "fullstack",
+    suggestionsSupported: false,
+    dependencyGroups: [["nuxt"]],
+    configFiles: [/^nuxt\.config\.(js|mjs|ts)$/i],
+    configIdentifies: true,
+    scriptTools: [{ tool: "nuxt" }, { tool: "nuxi" }],
+    scriptIdentifies: true,
+    supersededBy: [],
+    dependencyIsDirect: false,
+  },
+  {
+    id: "astro",
+    label: "Astro",
+    category: "frontend",
+    suggestionsSupported: false,
+    dependencyGroups: [["astro"]],
+    configFiles: [/^astro\.config\.(js|cjs|mjs|ts|mts)$/i],
+    configIdentifies: true,
+    scriptTools: [{ tool: "astro" }],
+    scriptIdentifies: true,
+    supersededBy: [],
+    dependencyIsDirect: false,
+  },
+  {
+    id: "remix",
+    label: "Remix",
+    category: "fullstack",
+    suggestionsSupported: false,
+    dependencyGroups: [["@remix-run/dev", "@remix-run/react", "@remix-run/node", "@remix-run/serve"]],
+    configFiles: [/^remix\.config\.(js|cjs|mjs|ts)$/i],
+    configIdentifies: true,
+    scriptTools: [{ tool: "remix" }],
+    scriptIdentifies: true,
+    supersededBy: [],
+    dependencyIsDirect: false,
+  },
+];
+
+/** Script names that suggest a package can be started, in preference order. */
+export const RUN_SCRIPT_CANDIDATES: readonly string[] = ["dev", "start", "serve", "develop", "start:dev", "preview"];
+
+/** Tools that start a Node program directly (evidence for a generic Node app). */
+export const NODE_RUNNERS: readonly ScriptTool[] = [{ tool: "node" }, { tool: "nodemon" }, { tool: "ts-node" }, { tool: "tsx" }];
+
+export const BUN_RUNNERS: readonly ScriptTool[] = [{ tool: "bun" }, { tool: "bunx" }];
+
+/** Root-script tools that run several workspace packages. */
+export const ORCHESTRATORS = [
+  { id: "turbo", match: (t: string[]) => t[0] === "turbo" },
+  { id: "nx", match: (t: string[]) => t[0] === "nx" },
+  { id: "lerna", match: (t: string[]) => t[0] === "lerna" },
+  { id: "pnpm-recursive", match: (t: string[]) => t[0] === "pnpm" && t.some((x) => x === "-r" || x === "--recursive" || x === "--filter" || x.startsWith("--filter=")) },
+  { id: "npm-workspaces", match: (t: string[]) => t[0] === "npm" && t.some((x) => x === "-w" || x === "--workspace" || x === "--workspaces" || x.startsWith("--workspace=")) },
+  { id: "yarn-workspaces", match: (t: string[]) => t[0] === "yarn" && (t[1] === "workspaces" || t[1] === "workspace") },
+  { id: "concurrently", match: (t: string[]) => t[0] === "concurrently" },
+] as const;
+
+const MAX_SEGMENTS = 16;
+const MAX_TOKENS = 32;
+const ENV_ASSIGNMENT = /^[A-Za-z_][A-Za-z0-9_]*=/;
+const WRAPPERS = new Set(["cross-env", "npx", "bunx", "dotenv"]);
+
+/** A package.json script as Stage 2 reads it (see PackageScript). */
+export interface ScriptText {
+  command: string;
+  /** The scanner's integrity flag; missing means unverified. */
+  commandExact?: boolean;
+}
+
+/**
+ * The command text Stage 2 may analyze: the package.json command when the
+ * scanner kept it exactly, otherwise "" (nothing in it is detected or
+ * classified). Display cleaning can join lines ("vite build\nvite preview"
+ * shows as one command) or cut a command short, so altered text says
+ * nothing reliable about what the script runs.
+ */
+export function analyzedCommand(script: ScriptText): string {
+  return script.commandExact === true ? script.command : "";
+}
+
+/** classifyScript for a package.json script, honoring command integrity. */
+export function classifyPackageScript(script: ScriptText, frameworkIds: readonly FrameworkId[]): ScriptClassification {
+  if (script.commandExact !== true) return { kind: null, frameworkId: null, tool: null, commandAltered: true };
+  return classifyScript(script.command, frameworkIds);
+}
+
+/**
+ * Whether a command uses quotes or escapes ("..." '...' `...` \). Inside them
+ * &&, | or ; aren't separators and words aren't programs, so splitting the
+ * text would read quoted text as commands (echo "ready && vite" doesn't start
+ * Vite). RepoRunner doesn't parse shell quoting; such a command is left
+ * unclassified instead.
+ */
+export function usesShellQuoting(command: string): boolean {
+  return /["'`\\]/.test(command);
+}
+
+/**
+ * Splits a script's command text into command segments (on &&, ||, ;, |, &)
+ * and each segment into whitespace tokens, skipping leading environment
+ * assignments and simple wrappers (cross-env, npx). Bounded; never executes
+ * or evaluates anything. A command that uses quotes or escapes has no
+ * segments (see usesShellQuoting): nothing in it is detected or classified.
+ */
+export function commandSegments(command: string): string[][] {
+  const segments: string[][] = [];
+  if (usesShellQuoting(command)) return segments;
+  for (const raw of command.split(/&&|\|\||[;|&]/).slice(0, MAX_SEGMENTS)) {
+    const tokens = segmentTokens(raw);
+    if (tokens.length > 0) segments.push(tokens);
+  }
+  return segments;
+}
+
+function segmentTokens(raw: string): string[] {
+  let tokens = raw.trim().split(/\s+/).filter(Boolean).slice(0, MAX_TOKENS);
+  let guard = 0;
+  while (tokens.length > 0 && guard++ < 8) {
+    if (ENV_ASSIGNMENT.test(tokens[0])) tokens = tokens.slice(1);
+    else if (WRAPPERS.has(tokens[0])) tokens = tokens.slice(1);
+    else if ((tokens[0] === "pnpm" || tokens[0] === "npm") && (tokens[1] === "exec" || tokens[1] === "dlx")) tokens = tokens.slice(2);
+    else break;
+  }
+  return tokens;
+}
+
+/**
+ * The unquoted words a command starts with, for naming the program it runs
+ * when the rest of it uses quotes: concurrently "npm:dev:*" is still
+ * concurrently. Only the text before the first quote or escape counts, only
+ * when no separator comes before it, and a word that runs into the quote
+ * (vite"x") is dropped. Arguments after it aren't seen, so this names the
+ * program but doesn't say what it does.
+ */
+export function leadingWords(command: string): string[] {
+  if (!usesShellQuoting(command)) return commandSegments(command)[0] ?? [];
+  const at = command.search(/["'`\\]/);
+  let lead = command.slice(0, at);
+  if (/[;|&]/.test(lead)) return [];
+  if (!/\s$/.test(lead)) lead = lead.replace(/\S+$/, "");
+  return segmentTokens(lead);
+}
+
+/** The first tool from `tools` that some segment of `command` invokes, if any. */
+export function invokedTool(command: string, tools: readonly ScriptTool[]): ScriptTool | null {
+  for (const tokens of commandSegments(command)) {
+    for (const tool of tools) {
+      if (tokens[0] !== tool.tool) continue;
+      if (!tool.subcommands || (tokens[1] !== undefined && tool.subcommands.includes(tokens[1]))) return tool;
+    }
+  }
+  return null;
+}
+
+/** "pnpm@9.1.0" -> "pnpm"; anything else -> null. */
+export function packageManagerFromField(value: string | null): "npm" | "pnpm" | "yarn" | "bun" | null {
+  if (!value) return null;
+  const name = value.split("@")[0]?.trim().toLowerCase();
+  return name === "npm" || name === "pnpm" || name === "yarn" || name === "bun" ? name : null;
+}
+
+// ---------------------------------------------------------------------------
+// What a recognized CLI invocation does. Used to judge run scripts: invoking a
+// framework's tool says the framework is used, but only some invocations start
+// an application. Small explicit tables; anything not listed is "other" (not
+// classified), and a tool that isn't recognized at all is left unclassified.
+
+/** develop: dev server; start: production server; preview: serves a built app; build: builds and exits. */
+export type InvocationKind = "develop" | "start" | "preview" | "build" | "other";
+
+export interface RunInvocation {
+  tool: string;
+  /** The next token; null for the bare tool (or when the next token is an option). */
+  subcommand: string | null;
+  kind: InvocationKind;
+  /** "--watch" / "-w" / "--dev" turns this into a development server (e.g. "nest start --watch"). */
+  watchMeansDevelop?: boolean;
+}
+
+const VITE_INVOCATIONS: readonly RunInvocation[] = [
+  { tool: "vite", subcommand: null, kind: "develop" },
+  { tool: "vite", subcommand: "dev", kind: "develop" },
+  { tool: "vite", subcommand: "serve", kind: "develop" },
+  { tool: "vite", subcommand: "preview", kind: "preview" },
+  { tool: "vite", subcommand: "build", kind: "build" },
+];
+
+export const RUN_INVOCATIONS: Readonly<Record<FrameworkId, readonly RunInvocation[]>> = {
+  "react-vite": VITE_INVOCATIONS,
+  "vue-vite": VITE_INVOCATIONS,
+  "svelte-vite": VITE_INVOCATIONS,
+  sveltekit: VITE_INVOCATIONS,
+  nextjs: [
+    { tool: "next", subcommand: null, kind: "develop" }, // bare `next` runs the dev server
+    { tool: "next", subcommand: "dev", kind: "develop" },
+    { tool: "next", subcommand: "start", kind: "start" },
+    { tool: "next", subcommand: "build", kind: "build" },
+  ],
+  angular: [
+    { tool: "ng", subcommand: "serve", kind: "develop" },
+    { tool: "ng", subcommand: "s", kind: "develop" },
+    { tool: "ng", subcommand: "build", kind: "build" },
+  ],
+  nestjs: [
+    { tool: "nest", subcommand: "start", kind: "start", watchMeansDevelop: true },
+    { tool: "nest", subcommand: "build", kind: "build" },
+  ],
+  express: [],
+  fastify: [{ tool: "fastify", subcommand: "start", kind: "start", watchMeansDevelop: true }],
+  nuxt: [
+    { tool: "nuxt", subcommand: "dev", kind: "develop" },
+    { tool: "nuxi", subcommand: "dev", kind: "develop" },
+    { tool: "nuxt", subcommand: "preview", kind: "preview" },
+    { tool: "nuxi", subcommand: "preview", kind: "preview" },
+    { tool: "nuxt", subcommand: "build", kind: "build" },
+    { tool: "nuxi", subcommand: "build", kind: "build" },
+    { tool: "nuxt", subcommand: "generate", kind: "build" },
+    { tool: "nuxi", subcommand: "generate", kind: "build" },
+  ],
+  astro: [
+    { tool: "astro", subcommand: "dev", kind: "develop" },
+    { tool: "astro", subcommand: "preview", kind: "preview" },
+    { tool: "astro", subcommand: "build", kind: "build" },
+  ],
+  remix: [
+    { tool: "remix", subcommand: "dev", kind: "develop" },
+    { tool: "remix", subcommand: "vite:dev", kind: "develop" },
+    { tool: "remix", subcommand: "build", kind: "build" },
+    { tool: "remix", subcommand: "vite:build", kind: "build" },
+  ],
+};
+
+/** Classifies one command segment against one framework's table; null if its tool isn't invoked. */
+export function classifySegment(tokens: readonly string[], invocations: readonly RunInvocation[]): InvocationKind | null {
+  const [tool, next] = tokens;
+  const forTool = invocations.filter((i) => i.tool === tool);
+  if (forTool.length === 0) return null;
+  const subcommand = next === undefined || next.startsWith("-") ? null : next;
+  const hit = forTool.find((i) => i.subcommand === subcommand);
+  if (!hit) return "other";
+  if (hit.watchMeansDevelop && tokens.some((t) => t === "--watch" || t === "-w" || t === "--dev")) return "develop";
+  return hit.kind;
+}
+
+export interface ScriptClassification {
+  /** The script's strongest action; "runner" = starts node / nodemon / tsx / ts-node / bun directly; null = nothing recognized. */
+  kind: InvocationKind | "runner" | null;
+  /** The framework whose tool produced `kind` (null for runners or nothing recognized). */
+  frameworkId: FrameworkId | null;
+  tool: string | null;
+  /** The command uses quotes or escapes, so it wasn't classified (kind is null). */
+  quoting?: true;
+  /** The scanner changed the command for display, so it wasn't classified (kind is null). */
+  commandAltered?: true;
+  /** Some segment ran something RepoRunner doesn't recognize (npm run x, a custom tool): what it does is unknown. */
+  unclassifiedSegments?: true;
+}
+
+const KIND_ORDER: Record<InvocationKind | "runner", number> = { develop: 5, start: 4, runner: 3, preview: 2, other: 1, build: 0 };
+
+/**
+ * Classifies a script by its strongest recognized segment, so
+ * "tsc && node dist/index.js" starts something while "vite build" only builds.
+ * Only the given frameworks' tables are consulted. Bounded, never executes.
+ */
+export function classifyScript(command: string, frameworkIds: readonly FrameworkId[]): ScriptClassification {
+  if (usesShellQuoting(command)) return { kind: null, frameworkId: null, tool: null, quoting: true };
+  let best: ScriptClassification = { kind: null, frameworkId: null, tool: null };
+  const better = (kind: InvocationKind | "runner") => best.kind === null || KIND_ORDER[kind] > KIND_ORDER[best.kind];
+  let unclassified = false;
+  for (const tokens of commandSegments(command)) {
+    let recognized = false;
+    for (const id of frameworkIds) {
+      const kind = classifySegment(tokens, RUN_INVOCATIONS[id]);
+      if (kind) recognized = true;
+      if (kind && better(kind)) best = { kind, frameworkId: id, tool: tokens[0] };
+    }
+    if ([...NODE_RUNNERS, ...BUN_RUNNERS].some((r) => r.tool === tokens[0])) {
+      recognized = true;
+      if (better("runner")) best = { kind: "runner", frameworkId: null, tool: tokens[0] };
+    }
+    if (!recognized) unclassified = true;
+  }
+  return unclassified ? { ...best, unclassifiedSegments: true } : best;
+}
+
+/**
+ * A script that only builds: its strongest action is a build and every
+ * segment was recognized. "vite build && npm run launch" isn't one, since
+ * what npm run launch does is unknown (it may start a server). Shared by
+ * runnability and suggestions.
+ */
+export function onlyBuilds(classification: ScriptClassification): boolean {
+  return classification.kind === "build" && !classification.unclassifiedSegments;
+}
+
+/**
+ * Every unsupported framework (Nuxt, Astro, Remix) whose command-line tool any
+ * segment of the script invokes, whatever the subcommand, and whether or not
+ * the framework was detected from dependencies. Unlike classifyScript, this
+ * doesn't stop at the strongest invocation: "vite & astro dev" also runs Astro.
+ * Only a segment's first token (after the wrappers commandSegments strips)
+ * counts, so "echo astro dev" doesn't.
+ */
+export function unsupportedInvocations(command: string): { frameworkId: FrameworkId; label: string; tool: string }[] {
+  const found: { frameworkId: FrameworkId; label: string; tool: string }[] = [];
+  for (const tokens of commandSegments(command)) {
+    for (const rule of FRAMEWORK_RULES) {
+      if (rule.suggestionsSupported || found.some((f) => f.frameworkId === rule.id)) continue;
+      if (classifySegment(tokens, RUN_INVOCATIONS[rule.id]) !== null) found.push({ frameworkId: rule.id, label: rule.label, tool: tokens[0] });
+    }
+  }
+  return found;
+}
+
+/** Shared by runnability (Stage 2A) and suggestions (Stage 2B), so both read a script the same way. */
+export function runStrength(classification: ScriptClassification, frameworks: readonly { id: FrameworkId; confidence: "high" | "medium" | "low" }[]): "high" | "medium" | "low" {
+  switch (classification.kind) {
+    case "develop":
+    case "start": {
+      const framework = frameworks.find((f) => f.id === classification.frameworkId);
+      return framework?.confidence === "high" ? "high" : "medium";
+    }
+    case "runner":
+      return "medium";
+    default:
+      // preview serves a build; "other" and unrecognized invocations aren't classified; build doesn't run.
+      return "low";
+  }
+}
+
+export function runEvidenceText(scriptName: string, classification: ScriptClassification): string {
+  const label = FRAMEWORK_RULES.find((r) => r.id === classification.frameworkId)?.label ?? classification.tool ?? "";
+  const script = `Script "${scriptName}"`;
+  switch (classification.kind) {
+    case "develop":
+      return `${script} starts ${label}'s development server`;
+    case "start":
+      return `${script} starts ${label}'s production server`;
+    case "preview":
+      return `${script} runs ${label}'s preview of a production build`;
+    case "build":
+      return classification.unclassifiedSegments
+        ? `${script} runs a ${label} build and other commands RepoRunner doesn't classify, so whether it starts a server isn't known`
+        : `${script} runs a ${label} build and doesn't start a server`;
+    case "runner":
+      return `${script} starts ${classification.tool}`;
+    case "other":
+      return `${script} invokes ${classification.tool} in a way RepoRunner doesn't classify`;
+    default:
+      if (classification.commandAltered) return `${script}'s command was changed or shortened for display, so what it runs can't be determined`;
+      return classification.quoting
+        ? `${script} uses quotes or escapes, which RepoRunner doesn't interpret, so what it runs isn't classified`
+        : `${script} is defined`;
+  }
+}

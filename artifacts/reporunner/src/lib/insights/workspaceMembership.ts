@@ -1,0 +1,216 @@
+// Whether a nested package is a workspace member of an ancestor package, from
+// the bounded scan only. A lockfile in a parent folder says which package
+// manager is used; it doesn't make the parent's install cover a nested
+// package. Only workspace configuration does, so membership is established
+// from the ancestor's package.json "workspaces" patterns, and anything that
+// can't be decided is reported as unknown rather than guessed. Patterns are
+// untrusted text: they're matched by hand, segment by segment, and nothing is
+// built from them. Matching work is bounded: see MATCH_STATE_BUDGET.
+import type { RepoScanResult } from "../../types";
+
+export type Membership =
+  | { status: "member"; pattern: string }
+  | { status: "not-member"; reason: "no-workspaces" | "no-pattern-matches" }
+  | { status: "unknown"; reason: "workspace-file-unread" | "pattern-unsupported" | "patterns-truncated" | "patterns-altered" | "negated-pattern" | "scan-incomplete" | "match-budget-exceeded" | "hidden-folder-wildcard" }
+  /** A "workspaces" pattern matches, but a workspace file RepoRunner doesn't read decides membership instead. */
+  | { status: "unknown"; reason: "workspace-file-governs"; pattern: string; file: string };
+
+/** Workspace files that define membership themselves; RepoRunner doesn't read them. (turbo.json and nx.json don't define it.) */
+const MEMBERSHIP_FILES = new Set(["pnpm-workspace.yaml", "lerna.json", "rush.json"]);
+/**
+ * Of those, the files that replace package.json "workspaces" for installing:
+ * pnpm reads only pnpm-workspace.yaml (it ignores "workspaces"), and Rush
+ * installs its own projects from rush.json. lerna.json isn't one: npm and Yarn
+ * still install from "workspaces". Such a file governs everything below its
+ * folder, so a matching "workspaces" pattern there proves nothing.
+ */
+const GOVERNING_FILES = new Set(["pnpm-workspace.yaml", "rush.json"]);
+const MAX_SEGMENTS = 16;
+/**
+ * Most pattern-matching work spent on one membership decision (one ancestor,
+ * one package), counted in matching states: a (pattern segment, path segment)
+ * position pair, each evaluated at most once per pattern. A pattern costs at
+ * most (segments + 1) x (path segments + 1) states: 17 x 10 = 170 within the
+ * scanner's limits (16 segments, depth 8), so its 50 patterns could reach
+ * 8,500. Ordinary patterns ("apps/*", "packages/**") need a handful each, so a
+ * whole real workspaces list stays far below this; only long chains of "**"
+ * get near it. When the budget runs out the decision is unknown, never "not a
+ * member". It's scoped to the one decision, so an expensive pattern list only
+ * makes its own packages' membership unknown, and a full analysis (at most 200
+ * packages, each with at most 8 ancestors) evaluates at most 1,600 x 2,048
+ * states.
+ */
+export const MATCH_STATE_BUDGET = 2048;
+const SAFE_SEGMENT_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._@-*";
+
+/** Splits a pattern into segments, or null when it uses syntax RepoRunner doesn't interpret (braces, character classes, "..", etc.). */
+function patternSegments(pattern: string): string[] | null {
+  let p = pattern.trim();
+  if (p.startsWith("./")) p = p.slice(2);
+  while (p.endsWith("/")) p = p.slice(0, -1);
+  if (p === "") return null;
+  const segments = p.split("/");
+  if (segments.length > MAX_SEGMENTS) return null;
+  for (const s of segments) {
+    if (s === "" || s === "." || s === "..") return null;
+    if (s.includes("**") && s !== "**") return null;
+    for (const c of s) if (!SAFE_SEGMENT_CHARS.includes(c)) return null;
+  }
+  return segments;
+}
+
+/**
+ * Whether a wildcard reaching a hidden folder (a name starting with ".")
+ * matches it depends on the package manager's glob options: npm's doesn't, and
+ * RepoRunner doesn't establish what the others do. So such a match is
+ * "uncertain": never a membership, and never a definite "not a member" either.
+ * A pattern that names the dot itself (".web", ".*") matches it plainly.
+ */
+const isHidden = (name: string) => name.startsWith(".");
+
+/** "*" in a segment matches any run of characters (not "/"). */
+function segmentMatches(pattern: string, name: string): boolean {
+  const parts = pattern.split("*");
+  if (parts.length === 1) return pattern === name;
+  if (!name.startsWith(parts[0]) || !name.endsWith(parts[parts.length - 1])) return false;
+  let at = parts[0].length;
+  const end = name.length - parts[parts.length - 1].length;
+  if (at > end) return false;
+  for (const part of parts.slice(1, -1)) {
+    const found = name.indexOf(part, at);
+    if (found < 0 || found + part.length > end) return false;
+    at = found + part.length;
+  }
+  return true;
+}
+
+export type MatchOutcome = "match" | "no-match" | "hidden-uncertain" | "budget-exceeded";
+
+// Per-state results, ordered so that the better of two alternatives is the larger.
+const NO = 1;
+const UNCERTAIN = 2; // matches only if a wildcard may reach a hidden folder
+const YES = 3;
+
+/**
+ * Whether pattern segments match path segments ("**" matches zero or more
+ * folders). Each (pattern position, path position) state is evaluated once and
+ * remembered, so repeated "**" can't revisit the same splits; every evaluation
+ * is taken from `budget`, and running out gives "budget-exceeded". A match
+ * that needs "*" or "**" to cover a hidden folder is "hidden-uncertain"; a
+ * plain match elsewhere in the same pattern still wins.
+ */
+export function matchSegments(pattern: readonly string[], path: readonly string[], budget: { remaining: number }): MatchOutcome {
+  const width = path.length + 1;
+  const memo = new Int8Array((pattern.length + 1) * width); // 0 not evaluated, else NO / UNCERTAIN / YES
+  let exhausted = false;
+  const matchesFrom = (i: number, j: number): number => {
+    const key = i * width + j;
+    if (memo[key] !== 0) return memo[key];
+    if (exhausted || budget.remaining <= 0) {
+      exhausted = true;
+      return NO;
+    }
+    budget.remaining--;
+    let r: number;
+    if (i === pattern.length) r = j === path.length ? YES : NO;
+    else if (pattern[i] === "**") {
+      r = matchesFrom(i + 1, j);
+      if (r !== YES && j < path.length) {
+        const deeper = matchesFrom(i, j + 1);
+        r = Math.max(r, isHidden(path[j]) ? Math.min(deeper, UNCERTAIN) : deeper);
+      }
+    } else if (j < path.length && segmentMatches(pattern[i], path[j])) {
+      r = matchesFrom(i + 1, j + 1);
+      if (isHidden(path[j]) && !pattern[i].startsWith(".")) r = Math.min(r, UNCERTAIN);
+    } else r = NO;
+    if (exhausted) return NO;
+    memo[key] = r;
+    return r;
+  };
+  const r = matchesFrom(0, 0);
+  return exhausted ? "budget-exceeded" : r === YES ? "match" : r === UNCERTAIN ? "hidden-uncertain" : "no-match";
+}
+
+/** Folder "a/b" relative to ancestor "a" ("." for the root); null when it isn't below it. */
+export function relativeTo(ancestor: string, directory: string): string[] | null {
+  if (ancestor === directory) return null;
+  if (ancestor === ".") return directory.split("/");
+  return directory.startsWith(`${ancestor}/`) ? directory.slice(ancestor.length + 1).split("/") : null;
+}
+
+export function workspaceMembership(result: RepoScanResult, ancestor: string, directory: string, matchBudget = MATCH_STATE_BUDGET): Membership {
+  const relative = relativeTo(ancestor, directory);
+  const ancestorPath = ancestor === "." ? "package.json" : `${ancestor}/package.json`;
+  const ancestorPkg = result.packages.find((p) => p.path === ancestorPath);
+  if (!relative || !ancestorPkg) return { status: "not-member", reason: "no-workspaces" };
+
+  // Verified-membership gate. A "workspaces" list decides anything only when
+  // it is known to be complete, exactly as written and fully interpretable;
+  // otherwise it is neither matched nor used to rule membership out. (Some
+  // real memberships are given up as unknown rather than risk a false one.)
+  if (ancestorPkg.workspacesTruncated || (ancestor === "." && result.workspace.patternsTruncated)) return { status: "unknown", reason: "patterns-truncated" };
+  if (ancestorPkg.workspacesExact !== true) return { status: "unknown", reason: "patterns-altered" };
+  const positives: { pattern: string; segments: string[] }[] = [];
+  for (const pattern of ancestorPkg.workspaces) {
+    if (pattern.startsWith("!")) continue;
+    const segments = patternSegments(pattern);
+    if (!segments) return { status: "unknown", reason: "pattern-unsupported" };
+    positives.push({ pattern, segments });
+  }
+  const negated = positives.length < ancestorPkg.workspaces.length;
+  const governing = result.manifests.find((m) => {
+    const slash = m.path.lastIndexOf("/");
+    const dir = slash < 0 ? "." : m.path.slice(0, slash);
+    return GOVERNING_FILES.has(m.path.slice(slash + 1).toLowerCase()) && (dir === "." || dir === ancestor || ancestor.startsWith(`${dir}/`));
+  });
+  const scanIncomplete = result.status !== "complete" || result.manifestsTruncated || result.packagesTruncated;
+
+  const budget = { remaining: matchBudget };
+  let hiddenUncertain = false;
+  for (const { pattern, segments } of positives) {
+    const outcome = matchSegments(segments, relative, budget);
+    // Patterns left unchecked could still match it.
+    if (outcome === "budget-exceeded") return { status: "unknown", reason: "match-budget-exceeded" };
+    // Keep looking: another pattern may match it plainly.
+    if (outcome === "hidden-uncertain") hiddenUncertain = true;
+    if (outcome === "match") {
+      // The rest of the gate: nothing that wasn't examined may overrule the match.
+      if (governing) return { status: "unknown", reason: "workspace-file-governs", pattern, file: governing.path };
+      // RepoRunner doesn't interpret exclusions.
+      if (negated) return { status: "unknown", reason: "negated-pattern" };
+      // A file that decides membership may be among what wasn't scanned.
+      if (scanIncomplete) return { status: "unknown", reason: "scan-incomplete" };
+      return { status: "member", pattern };
+    }
+  }
+
+  // Nothing matched plainly. That's a definite "not a member" only when every
+  // way of declaring membership was seen and understood.
+  if (hiddenUncertain) return { status: "unknown", reason: "hidden-folder-wildcard" };
+  const workspaceFileHere = result.manifests.some((m) => {
+    const slash = m.path.lastIndexOf("/");
+    const dir = slash < 0 ? "." : m.path.slice(0, slash);
+    return dir === ancestor && MEMBERSHIP_FILES.has(m.path.slice(slash + 1).toLowerCase());
+  });
+  if (workspaceFileHere) return { status: "unknown", reason: "workspace-file-unread" };
+  if (scanIncomplete) return { status: "unknown", reason: "scan-incomplete" };
+  return { status: "not-member", reason: ancestorPkg.workspaces.length > 0 ? "no-pattern-matches" : "no-workspaces" };
+}
+
+const UNKNOWN_TEXT: Record<Exclude<Extract<Membership, { status: "unknown" }>["reason"], "workspace-file-governs">, string> = {
+  "workspace-file-unread": "workspace membership is set in a workspace file RepoRunner doesn't read",
+  "pattern-unsupported": "a workspaces pattern uses syntax RepoRunner doesn't interpret",
+  "patterns-truncated": "the workspaces list was cut short",
+  "patterns-altered": "the workspaces list had characters or entries RepoRunner removed for display, so it can't be matched as written",
+  "negated-pattern": "the workspaces list has exclusions RepoRunner doesn't interpret",
+  "scan-incomplete": "the analysis didn't finish",
+  "match-budget-exceeded": "the workspaces patterns were too complex to check completely",
+  "hidden-folder-wildcard": "it is in a hidden folder that a workspaces wildcard reaches, and package managers differ on whether wildcards include hidden folders",
+};
+
+export function unknownMembershipText(membership: Extract<Membership, { status: "unknown" }>): string {
+  if (membership.reason === "workspace-file-governs") {
+    return `it matches the "workspaces" pattern "${membership.pattern}", but ${membership.file} decides workspace membership for the package manager, and RepoRunner doesn't read it`;
+  }
+  return UNKNOWN_TEXT[membership.reason];
+}
