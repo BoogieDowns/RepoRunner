@@ -41,6 +41,17 @@ Save up to 5 repo setups in RepoRunner Free — repo paths, commands, ports, and
 
 RepoRunner is **not** an IDE, deployment platform, or AI assistant.
 
+### Coming in the next release (not in v0.1.3)
+
+These features are on the `main` branch and planned for v0.1.4. The v0.1.3 download doesn't include them.
+
+- **Analyze Repo**: reads your project's files locally and read-only. Nothing is run, installed, changed or sent anywhere.
+- **Suggested Setup**: suggests install, development and start commands, each with a confidence level and its evidence. Suggestions can be missing or uncertain.
+- **Use in Setup…**: review a suggested command, then **Apply to Setup** to fill one field of the form, or **Cancel** to change nothing. Applying doesn't save or run anything; you still save explicitly.
+- **Repo Safety Check**: points out `package.json` scripts worth a look, such as scripts that run during install, download and run code, run encoded commands, delete files outside the project, or refer to credential locations. It's an advisory hint, not a malware scan. It only reads `package.json` script text, can miss commands inside shell conditionals or loops ([#82](https://github.com/BoogieDowns/RepoRunner/issues/82)), and "no obvious warning signs" doesn't mean a repository is safe.
+
+See [Analyze Repo and suggestions](artifacts/reporunner/README.md#analyze-repo-and-suggestions-planned-for-v014) for details.
+
 ---
 
 ## Screenshots
@@ -60,6 +71,8 @@ Download the latest Windows installer from the GitHub Releases page:
 [Download latest Windows installer](https://github.com/BoogieDowns/RepoRunner/releases/latest)
 
 Windows may show an unsigned-app warning because RepoRunner is not code-signed yet.
+
+RepoRunner runs on Windows x64. It doesn't update itself: download new versions from the Releases page.
 
 ---
 
