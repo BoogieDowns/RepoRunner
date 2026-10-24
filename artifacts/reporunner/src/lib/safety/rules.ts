@@ -16,13 +16,24 @@ export const MAX_NESTING = 3;
 /** Words, stages and nested commands examined per script, at most. */
 const MAX_WORDS = 400;
 
+/**
+ * A substitution inside a word. "command" ($(...) or `...`) is replaced by the
+ * inner command's output text; "process" (<(...)) by a file path whose
+ * contents are that output.
+ */
+interface Substitution {
+  text: string;
+  start: number;
+  kind: "command" | "process";
+}
+
 interface Word {
   /** Text with quotes and escapes removed, as the shell would see it (substitutions left as written). */
   value: string;
   /** Offset in the script text where the word starts. */
   start: number;
   /** Inner text of command substitutions in the word: $(...), `...`, <(...). */
-  subs: { text: string; start: number }[];
+  subs: Substitution[];
 }
 type Stage = Word[];
 /** One command list: segments separated by ; && || &, each a pipeline of stages. */
@@ -62,7 +73,7 @@ function lex(text: string, offset: number): Array<Word | { op: string }> {
   };
   const substitution = (open: number, innerStart: number, close: number) => {
     const w = begin(open);
-    w.subs.push({ text: text.slice(innerStart, close), start: offset + innerStart });
+    w.subs.push({ text: text.slice(innerStart, close), start: offset + innerStart, kind: text[open] === "<" ? "process" : "command" });
   };
   for (let i = 0; i < text.length && out.length < MAX_WORDS; i++) {
     const c = text[i];
@@ -285,6 +296,59 @@ function executesStdin(stage: Stage): boolean {
   return false;
 }
 
+/**
+ * The substitutions in a stage whose content the program runs as code, by
+ * that program's own syntax:
+ *  - eval and iex: their arguments are the program ($(...) / `...`);
+ *  - sh/bash/zsh/dash/ksh: the -c string ($(...) / `...`), or a <(...) in the
+ *    script position (the script file is the substitution's output);
+ *  - source / .: a <(...) as the file;
+ *  - node -e/--eval/-p/--print, python -c, perl/ruby -e/-E: their program
+ *    argument ($(...) / `...`); a <(...) in the script position;
+ *  - powershell/pwsh -Command: the command text ($(...) / `...`); -File <(...).
+ * Anything after a named script, option values, and $(...) where a file name
+ * goes (bash "$(curl URL)" names a file) are arguments, not code. When a
+ * word's role can't be told, it isn't counted.
+ */
+function programSubstitutions(stage: Stage): Substitution[] {
+  const h = head(stage);
+  if (!h) return [];
+  const words = stage.slice(h.index + 1);
+  const name = h.name;
+  const asCode = (w: Word | undefined) => (w ? w.subs.filter((sub) => sub.kind === "command") : []);
+  const asScript = (w: Word | undefined) => (w ? w.subs.filter((sub) => sub.kind === "process") : []);
+  if (name === "eval" || name === "iex" || name === "invoke-expression") return words.flatMap(asCode);
+  if (POSIX_SHELLS.has(name) || name === "source" || name === ".") {
+    for (let i = 0; i < words.length; i++) {
+      const v = words[i].value;
+      if (POSIX_SHELLS.has(name) && /^-[a-zA-Z]+$/.test(v) && v.includes("c")) return asCode(words[i + 1]);
+      if (POSIX_SHELLS.has(name) && (/^-[a-zA-Z]+$/.test(v) || v.startsWith("--"))) continue;
+      return asScript(words[i]); // the script position; later words are its arguments
+    }
+    return [];
+  }
+  if (name === "node" || name === "python" || name === "python3" || name === "perl" || name === "ruby") {
+    const program = name === "node" ? ["-e", "--eval", "-p", "--print"] : name.startsWith("python") ? ["-c"] : ["-e", "-E"];
+    for (let i = 0; i < words.length; i++) {
+      const v = words[i].value;
+      if (program.includes(v)) return asCode(words[i + 1]);
+      if (name === "node" && (v.startsWith("--eval=") || v.startsWith("--print="))) return asCode(words[i]);
+      if (v.startsWith("-")) continue;
+      return asScript(words[i]);
+    }
+    return [];
+  }
+  if (name === "pwsh" || name === "powershell") {
+    for (let i = 0; i < words.length; i++) {
+      const opt = words[i].value.toLowerCase().replace(/^\//, "-");
+      if (opt === "-c" || (opt.length >= 3 && "-command".startsWith(opt))) return words.slice(i + 1).flatMap(asCode);
+      if (opt === "-f" || (opt.length >= 3 && "-file".startsWith(opt))) return asScript(words[i + 1]);
+    }
+    return [];
+  }
+  return [];
+}
+
 function isBase64Decode(stage: Stage): boolean {
   const h = head(stage);
   if (!h) return false;
@@ -296,7 +360,7 @@ function isBase64Decode(stage: Stage): boolean {
 
 /** The nested commands a stage hands to another program: substitutions and interpreter scripts. */
 function nestedTexts(stage: Stage): { text: string; start: number }[] {
-  const out = stage.flatMap((w) => w.subs);
+  const out: { text: string; start: number }[] = stage.flatMap((w) => w.subs);
   const h = head(stage);
   if (h && SHELLS_WITH_SCRIPT_ARG.has(h.name)) {
     const words = stage.slice(h.index + 1);
@@ -342,8 +406,10 @@ export function parseScript(text: string): ParsedScript {
  *    irm URL | iex, (New-Object Net.WebClient).DownloadString(URL) | iex;
  *    not curl URL | node script.js (the script runs; the download is its
  *    input), not plain wget URL | sh (wget saves to a file by default);
- *  - an interpreter given a downloader's output as its script: bash <(curl URL),
- *    sh -c "$(curl URL)", source <(wget -qO- URL), eval "$(curl URL)";
+ *  - an interpreter given a download as its program (see programSubstitutions):
+ *    bash <(curl URL), sh -c "$(curl URL)", node -e "$(curl URL)",
+ *    source <(wget -qO- URL), eval "$(curl URL)"; not a download passed as an
+ *    argument to a named script (node check.js "$(curl URL)");
  *  - PowerShell iex / Invoke-Expression applied to a download: iex (iwr URL), iex(irm URL),
  *    Invoke-Expression (New-Object Net.WebClient).DownloadString(URL).
  * Any of these inside sh -c / cmd /c / powershell -Command scripts or substitutions.
@@ -358,13 +424,9 @@ export function downloadExecute(parsed: ParsedScript): number {
         if (stageDownloads(stage) && segment.slice(i + 1).some(executesStdin)) return stage[0].start;
         const h = head(stage);
         if (!h) continue;
-        if (INTERPRETERS.has(h.name) || h.name === "eval") {
-          for (const word of stage.slice(h.index + 1)) {
-            for (const sub of word.subs) {
-              const nested = parse(sub.text, sub.start);
-              if (nested.some((seg) => seg.length > 0 && stageDownloadsDirectly(seg[0]))) return stage[0].start;
-            }
-          }
+        for (const sub of programSubstitutions(stage)) {
+          const nested = parse(sub.text, sub.start);
+          if (nested.some((seg) => seg.length > 0 && stageDownloadsDirectly(seg[0]))) return stage[0].start;
         }
         if (h.name === "iex" || h.name === "invoke-expression" || h.name.startsWith("iex(") || h.name.startsWith("invoke-expression(")) {
           const rest = stage.slice(h.index).map((w) => w.value.toLowerCase());
@@ -412,13 +474,9 @@ export function encodedExecution(parsed: ParsedScript): number {
         }
         if (isBase64Decode(stage) && segment.slice(i + 1).some(executesStdin)) return stage[0].start;
         if (h.name === "eval" && args.some((w) => w.subs.length > 0)) return stage[0].start;
-        if (INTERPRETERS.has(h.name)) {
-          for (const word of args) {
-            for (const sub of word.subs) {
-              const nested = parse(sub.text, sub.start);
-              if (nested.some((seg) => seg.some(isBase64Decode))) return stage[0].start;
-            }
-          }
+        for (const sub of programSubstitutions(stage)) {
+          const nested = parse(sub.text, sub.start);
+          if (nested.some((seg) => seg.some(isBase64Decode))) return stage[0].start;
         }
         if (h.name === "node" || h.name === "python" || h.name === "python3") {
           for (let k = 0; k < args.length - 1; k++) {

