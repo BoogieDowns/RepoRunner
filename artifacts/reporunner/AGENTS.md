@@ -20,13 +20,40 @@ Do not expand RepoRunner into:
 
 - An IDE or code editor
 - A deployment or hosting platform
-- An AI debugging assistant
+- An autonomous agent that edits code or runs commands on its own
 - A project management or task tracking tool
-- A multi-project manager (currently single-project by design)
-- A GitHub OAuth / authentication system
+- A multi-project runner (RepoRunner keeps up to 5 saved setups but runs one active repo at a time)
+- A GitHub OAuth integration
 - A repo cloning tool
 
 If a feature request falls outside the core run-loop (pull → install → start → stop → restart → preview → logs), ask for explicit confirmation before implementing it.
+
+### Approved future directions (each needs separate authorization)
+
+RepoRunner is planned to become one app with three editions: **Free**, **BYOK** (bring your own AI provider key) and **Cloud**. See [Architecture notes](../../docs/ARCHITECTURE_NOTES.md#three-edition-direction). None of this is implemented yet. The following may be built **only when a task explicitly authorizes that stage**:
+
+- Free, BYOK and Cloud edition capabilities, through one central capability and entitlement model
+- Optional AI-powered repository assistance that explains or suggests, and never acts by itself
+- BYOK credential configuration for a supported AI provider
+- Browser-based sign-in for Cloud accounts (system browser, OAuth/OIDC with PKCE)
+- Server-side managed AI operations for Cloud
+- Entitlement, quota and usage enforcement
+
+### Guardrails for edition, account and AI work
+
+These always apply, whatever a task authorizes, unless the product owner explicitly changes them:
+
+- **No mandatory login.** The Free/local workflow (setups, pull, install, start, stop, restart, preview, logs, Analyze Repo, Suggested Setup, Use in Setup, Repo Safety Check) must keep working without an account, offline.
+- **Opt-in only.** Accounts, provider keys and AI features are additions the user turns on. Nothing is enabled or sent by default.
+- **No automatic upload.** Repository content (files, scripts, logs, paths) is never sent anywhere automatically. Each AI request shows what will be sent and needs the user's consent.
+- **No automatic execution.** AI output is shown as plain text. It never runs repository scripts or commands, and never applies or saves setup changes by itself.
+- **Secrets stay in the main process.** Provider keys and account tokens are never returned to the renderer over IPC, never written to `reporunner-project.json` or other ordinary setup/settings files, never logged, and never put in the environment of processes RepoRunner starts.
+- **Enforcement at the right boundary.** The renderer only displays capabilities. Desktop-sensitive operations are enforced in the main process; managed Cloud services are enforced by the backend. A disabled button is not security.
+- **Hardening stays.** Keep the Electron sandbox, context isolation, the production Content Security Policy (including `connect-src 'none'` for the renderer), navigation and new-window blocking, permission denial, and the read-only scanner and its limits. Don't loosen them to add accounts or AI.
+- **Narrow network access.** Each new network integration must be explicitly authorized and limited to named endpoints for a named purpose. No general-purpose proxy, no arbitrary URLs, no unrestricted AI network access.
+- **Out of scope unless separately approved:** cloud sync of repositories or setups, remote command execution, broader scanner access, and GitHub OAuth.
+
+Don't remove the 5-saved-setup limit (`MAX_FREE_REPO_PROFILES`) or change edition wording in the UI unless a task authorizes it.
 
 ---
 
@@ -73,7 +100,7 @@ Field layout (top to bottom):
 2. Preview URL (full width)
 3. Install Command | Frontend Command | Backend Command (3-column)
 4. Frontend Port | Backend Port (2-column, left-anchored at ~50% width)
-5. Save Configuration button
+5. Save button: **Save Repo Setup** for a new setup, **Update Repo Setup** for a saved one
 
 ### Log panel
 
@@ -130,7 +157,9 @@ Current API methods:
 - `copyLogs()` / `clearLogs()` — clipboard + log management
 - `onLog(cb)` / `onStatus(cb)` — live event subscriptions (return unsubscribe functions)
 
-The `RepoRunnerAPI` interface in `src/types.ts` is the authoritative contract.
+The `RepoRunnerAPI` interface in `src/types.ts` is the authoritative contract; the list above is not complete (it predates saved-setup management, store recovery and Analyze Repo).
+
+Any new IPC handler that touches credentials, accounts, entitlements or AI must check its sender (as `isTrustedSender` in `electron/repoAnalysisIpc.ts` does) and must never return a secret.
 
 ---
 
