@@ -192,7 +192,7 @@ describe("quoted commands are not classified", () => {
     expect(runs(viteApp({ dev: "vite" }))[0].confidence).toBe("high");
     expect(runs(nextApp({ dev: "next dev" }))[0].confidence).toBe("high");
     expect(runs(nextApp({ dev: "cross-env NODE_ENV=development next dev" }))[0].confidence).toBe("high");
-    expect(classifyScript("echo ready && vite --host", ["react-vite"])).toEqual({ kind: "develop", frameworkId: "react-vite", tool: "vite" }); // real separator
+    expect(classifyScript("echo ready && vite --host", ["react-vite"])).toEqual({ kind: "develop", frameworkId: "react-vite", tool: "vite", unclassifiedSegments: true }); // real separator
   });
 
   it("quotes anywhere in a complex command leave the whole command unclassified", () => {

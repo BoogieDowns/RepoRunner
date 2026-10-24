@@ -13,6 +13,7 @@ import {
   commandSegments,
   invokedTool,
   leadingWords,
+  onlyBuilds,
   runEvidenceText,
   runStrength,
   packageManagerFromField,
@@ -383,7 +384,7 @@ function detectRunnability(pkg: PackageSummary, frameworks: FrameworkDetection[]
     const script = scripts.find((s) => s.name === name)!;
     const classification = classifyScript(script.command, frameworkIds);
     evidence.push({ kind: "script", text: runEvidenceText(name, classification) });
-    if (classification.kind === "build") {
+    if (onlyBuilds(classification)) {
       buildOnlyScripts.push(name);
       continue;
     }

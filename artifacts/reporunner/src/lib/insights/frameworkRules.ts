@@ -385,6 +385,8 @@ export interface ScriptClassification {
   tool: string | null;
   /** The command uses quotes or escapes, so it wasn't classified (kind is null). */
   quoting?: true;
+  /** Some segment ran something RepoRunner doesn't recognize (npm run x, a custom tool): what it does is unknown. */
+  unclassifiedSegments?: true;
 }
 
 const KIND_ORDER: Record<InvocationKind | "runner", number> = { develop: 5, start: 4, runner: 3, preview: 2, other: 1, build: 0 };
@@ -398,16 +400,31 @@ export function classifyScript(command: string, frameworkIds: readonly Framework
   if (usesShellQuoting(command)) return { kind: null, frameworkId: null, tool: null, quoting: true };
   let best: ScriptClassification = { kind: null, frameworkId: null, tool: null };
   const better = (kind: InvocationKind | "runner") => best.kind === null || KIND_ORDER[kind] > KIND_ORDER[best.kind];
+  let unclassified = false;
   for (const tokens of commandSegments(command)) {
+    let recognized = false;
     for (const id of frameworkIds) {
       const kind = classifySegment(tokens, RUN_INVOCATIONS[id]);
+      if (kind) recognized = true;
       if (kind && better(kind)) best = { kind, frameworkId: id, tool: tokens[0] };
     }
-    if ([...NODE_RUNNERS, ...BUN_RUNNERS].some((r) => r.tool === tokens[0]) && better("runner")) {
-      best = { kind: "runner", frameworkId: null, tool: tokens[0] };
+    if ([...NODE_RUNNERS, ...BUN_RUNNERS].some((r) => r.tool === tokens[0])) {
+      recognized = true;
+      if (better("runner")) best = { kind: "runner", frameworkId: null, tool: tokens[0] };
     }
+    if (!recognized) unclassified = true;
   }
-  return best;
+  return unclassified ? { ...best, unclassifiedSegments: true } : best;
+}
+
+/**
+ * A script that only builds: its strongest action is a build and every
+ * segment was recognized. "vite build && npm run launch" isn't one, since
+ * what npm run launch does is unknown (it may start a server). Shared by
+ * runnability and suggestions.
+ */
+export function onlyBuilds(classification: ScriptClassification): boolean {
+  return classification.kind === "build" && !classification.unclassifiedSegments;
 }
 
 /**
@@ -456,7 +473,9 @@ export function runEvidenceText(scriptName: string, classification: ScriptClassi
     case "preview":
       return `${script} runs ${label}'s preview of a production build`;
     case "build":
-      return `${script} runs a ${label} build and doesn't start a server`;
+      return classification.unclassifiedSegments
+        ? `${script} runs a ${label} build and other commands RepoRunner doesn't classify, so whether it starts a server isn't known`
+        : `${script} runs a ${label} build and doesn't start a server`;
     case "runner":
       return `${script} starts ${classification.tool}`;
     case "other":
