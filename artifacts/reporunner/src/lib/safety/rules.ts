@@ -34,8 +34,14 @@ interface Word {
   start: number;
   /** Inner text of command substitutions in the word: $(...), `...`, <(...). */
   subs: Substitution[];
+  /** Some part was quoted or escaped: then it is never a redirection. */
+  quoted: boolean;
 }
-type Stage = Word[];
+/** A pipeline stage's words, without its redirections. */
+type Stage = Word[] & {
+  /** Its standard input comes from a redirection (<file, <<EOF, <<<text, <&3), not from the pipe. */
+  stdinRedirected?: boolean;
+};
 /** One command list: segments separated by ; && || &, each a pipeline of stages. */
 type Command = Stage[][];
 
@@ -66,7 +72,7 @@ function closingParen(text: string, from: number): number {
 function lex(text: string, offset: number): Array<Word | { op: string }> {
   const out: Array<Word | { op: string }> = [];
   let word: Word | null = null;
-  const begin = (at: number) => (word ??= { value: "", start: offset + at, subs: [] });
+  const begin = (at: number) => (word ??= { value: "", start: offset + at, subs: [], quoted: false });
   const end = () => {
     if (word) out.push(word);
     word = null;
@@ -77,8 +83,13 @@ function lex(text: string, offset: number): Array<Word | { op: string }> {
   };
   for (let i = 0; i < text.length && out.length < MAX_WORDS; i++) {
     const c = text[i];
+    const current = word as Word | null;
     if (c === " " || c === "\t") {
       end();
+    } else if ((c === "&" || c === "|") && current && !current.quoted && /^(?:\d*|&)(?:<|>)$/.test(current.value)) {
+      current.value += c; // 2>&1, <&3, >|file
+    } else if (c === "&" && current === null && text[i + 1] === ">") {
+      begin(i).value += c; // &>file, &>>file
     } else if (c === "|" || c === "&" || c === ";") {
       end();
       const two = text.slice(i, i + 2);
@@ -89,10 +100,13 @@ function lex(text: string, offset: number): Array<Word | { op: string }> {
     } else if (c === "'") {
       const close = text.indexOf("'", i + 1);
       const stop = close < 0 ? text.length : close;
-      begin(i).value += text.slice(i + 1, stop);
+      const w = begin(i);
+      w.quoted = true;
+      w.value += text.slice(i + 1, stop);
       i = stop;
     } else if (c === '"') {
       const w = begin(i);
+      w.quoted = true;
       let j = i + 1;
       for (; j < text.length && text[j] !== '"'; j++) {
         if (text[j] === "\\" && j + 1 < text.length && ESCAPABLE.has(text[j + 1])) {
@@ -112,7 +126,9 @@ function lex(text: string, offset: number): Array<Word | { op: string }> {
       }
       i = j;
     } else if (c === "\\" && i + 1 < text.length && ESCAPABLE.has(text[i + 1])) {
-      begin(i).value += text[++i];
+      const w = begin(i);
+      w.quoted = true;
+      w.value += text[++i];
     } else if ((c === "$" || c === "<") && text[i + 1] === "(") {
       const close = closingParen(text, i + 2);
       substitution(i, i + 2, Math.max(i + 2, close - 1));
@@ -132,22 +148,55 @@ function lex(text: string, offset: number): Array<Word | { op: string }> {
   return out;
 }
 
+/**
+ * Reads an unquoted word as a redirection: an optional fd number (or &),
+ * an operator, and the target, attached or (when missing) the next word.
+ * Supported: < > >> >| <> <& >& &> &>> << <<- <<<, e.g. 2>/dev/null, >out,
+ * 2>&1, <in, 0<in, <<EOF, <<<text, &>log, 2> /dev/null. <(...) is a process
+ * substitution, not a redirection. `input`: it replaces standard input
+ * (fd 0, the default for < forms).
+ */
+const REDIRECTION = /^(\d*)(<<<|<<-|<<|<>|<&|<|>>|>&|>\||>|&>>|&>)(.*)$/;
+function redirection(word: Word): { input: boolean; attached: boolean } | null {
+  if (word.quoted) return null;
+  const m = REDIRECTION.exec(word.value);
+  if (!m) return null;
+  const [, fd, op, target] = m;
+  if (op === "<" && target.startsWith("(")) return null; // <(...)
+  const input = op.startsWith("<") ? fd === "" || fd === "0" : fd === "0";
+  return { input, attached: target !== "" };
+}
+
 function parse(text: string, offset: number): Command {
   const segments: Command = [];
   let stages: Stage[] = [];
   let stage: Stage = [];
+  let targetPending = false;
   for (const token of lex(text, offset)) {
-    if ("op" in token) {
-      if (token.op === "|") {
-        stages.push(stage);
-        stage = [];
-      } else if (SEPARATORS.has(token.op)) {
-        stages.push(stage);
-        segments.push(stages.filter((s) => s.length > 0));
-        stages = [];
-        stage = [];
+    if (!("op" in token)) {
+      if (targetPending) {
+        targetPending = false; // the target of the redirection before it
+        continue;
       }
-    } else stage.push(token);
+      const r = redirection(token);
+      if (r) {
+        if (r.input) stage.stdinRedirected = true;
+        targetPending = !r.attached;
+        continue;
+      }
+      stage.push(token);
+      continue;
+    }
+    targetPending = false;
+    if (token.op === "|") {
+      stages.push(stage);
+      stage = [];
+    } else if (SEPARATORS.has(token.op)) {
+      stages.push(stage);
+      segments.push(stages.filter((s) => s.length > 0));
+      stages = [];
+      stage = [];
+    }
   }
   stages.push(stage);
   segments.push(stages.filter((s) => s.length > 0));
@@ -311,6 +360,7 @@ const PS_VALUE_OPTIONS = ["-executionpolicy", "-ep", "-windowstyle", "-inputform
  * counts as a script name: no claim is made then. eval ignores stdin.
  */
 function executesStdin(stage: Stage): boolean {
+  if (stage.stdinRedirected) return false; // sh <file reads the file, not the pipe
   const h = head(stage);
   if (!h) return false;
   const args = stage.slice(h.index + 1).map((w) => w.value);
