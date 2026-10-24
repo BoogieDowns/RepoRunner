@@ -34,8 +34,10 @@ interface Word {
   start: number;
   /** Inner text of command substitutions in the word: $(...), `...`, <(...). */
   subs: Substitution[];
-  /** Some part was quoted or escaped: then it is never a redirection. */
+  /** Some part was quoted or escaped. */
   quoted: boolean;
+  /** Length of `value` before its first quoted or escaped character (all of it when nothing is). */
+  unquotedPrefix: number;
 }
 /** A pipeline stage's words, without its redirections. */
 type Stage = Word[] & {
@@ -74,7 +76,12 @@ function closingParen(text: string, from: number): number {
 function lex(text: string, offset: number): Array<Word | { op: string }> {
   const out: Array<Word | { op: string }> = [];
   let word: Word | null = null;
-  const begin = (at: number) => (word ??= { value: "", start: offset + at, subs: [], quoted: false });
+  const begin = (at: number) => (word ??= { value: "", start: offset + at, subs: [], quoted: false, unquotedPrefix: 0 });
+  /** Marks the start of quoting in a word (the first time only). */
+  const quoting = (w: Word) => {
+    if (!w.quoted) w.unquotedPrefix = w.value.length;
+    w.quoted = true;
+  };
   const end = () => {
     if (word) out.push(word);
     word = null;
@@ -103,12 +110,12 @@ function lex(text: string, offset: number): Array<Word | { op: string }> {
       const close = text.indexOf("'", i + 1);
       const stop = close < 0 ? text.length : close;
       const w = begin(i);
-      w.quoted = true;
+      quoting(w);
       w.value += text.slice(i + 1, stop);
       i = stop;
     } else if (c === '"') {
       const w = begin(i);
-      w.quoted = true;
+      quoting(w);
       let j = i + 1;
       for (; j < text.length && text[j] !== '"'; j++) {
         if (text[j] === "\\" && j + 1 < text.length && ESCAPABLE.has(text[j + 1])) {
@@ -129,7 +136,7 @@ function lex(text: string, offset: number): Array<Word | { op: string }> {
       i = j;
     } else if (c === "\\" && i + 1 < text.length && ESCAPABLE.has(text[i + 1])) {
       const w = begin(i);
-      w.quoted = true;
+      quoting(w);
       w.value += text[++i];
     } else if ((c === "$" || c === "<") && text[i + 1] === "(") {
       const close = closingParen(text, i + 2);
@@ -166,10 +173,12 @@ interface Redirection {
   target: string;
 }
 function redirection(word: Word): Redirection | null {
-  if (word.quoted) return null;
   const m = REDIRECTION.exec(word.value);
   if (!m) return null;
   const [, fd, op, target] = m;
+  // The fd and operator must be unquoted; the target may be quoted (2>"/dev/null").
+  // A quoted or escaped operator ("2>x", \>x, 2\>x) is ordinary text.
+  if (word.quoted && fd.length + op.length > word.unquotedPrefix) return null;
   if (op === "<" && target.startsWith("(")) return null; // <(...)
   return { fd, op, target };
 }
@@ -537,13 +546,16 @@ function evaluatedProgram(name: string, args: readonly Word[]): string | null {
 /**
  * Whether what stage `from` writes to stdout reaches a later stage of the
  * pipeline that runs its input as code. The content flows on only while each
- * stage's stdout goes to the pipe: curl URL > setup.sh | sh sends nothing to
- * sh, and neither does a middle stage that redirects its output.
+ * stage's stdout goes to the pipe and each next stage reads the pipe:
+ * curl URL > setup.sh | sh sends nothing to sh, and neither does a middle
+ * stage that redirects its output or replaces its input (cat </dev/null).
  */
 function reachesStdinExecution(segment: Stage[], from: number): boolean {
   for (let k = from; k < segment.length - 1; k++) {
     if (segment[k].stdoutRedirected) return false;
     if (executesStdin(segment[k + 1])) return true;
+    // A stage that reads another input (cat </dev/null) passes none of the content on.
+    if (segment[k + 1].stdinRedirected) return false;
   }
   return false;
 }
