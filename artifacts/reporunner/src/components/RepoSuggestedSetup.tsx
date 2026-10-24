@@ -1,7 +1,10 @@
 // "Suggested Setup": a read-only view of Stage 2A/2B insights for the result
 // the Analyze Repo panel already holds. No scan, IPC, storage or execution;
 // everything from the repository is rendered as plain React text, and there
-// are deliberately no Run / Apply / Save / Copy controls.
+// are no Run / Save / Copy controls. The only control is the optional "Use in
+// Setup…" button (Stage 3B), shown only when the caller passes `actions` and
+// its canUse() accepts that suggestion; it just reports the choice so the
+// caller can show a review. Without `actions` nothing is clickable.
 // Relative imports keep it renderable in tests.
 import * as React from "react";
 import { detectProjects } from "../lib/insights/detectProjects";
@@ -17,6 +20,17 @@ import type { RepoScanResult } from "../types";
 
 const MONO: React.CSSProperties = { fontFamily: "'JetBrains Mono', monospace" };
 const APPS_SHOWN = 6;
+
+/**
+ * Optional "Use in Setup…" actions. Whether a suggestion can be used is decided
+ * by the caller (with the Stage 3A planner and the live Setup state), never
+ * here: a button is shown only where canUse() returns true, and clicking it
+ * only calls onUse(). canUse() is called while rendering, so it must be pure.
+ */
+export interface SuggestedSetupActions {
+  canUse: (suggestion: CommandSuggestion) => boolean;
+  onUse: (suggestion: CommandSuggestion) => void;
+}
 
 export const SAFETY_NOTICE = "Suggestions are based on repository files. Commands have not been run, tested or security-checked.";
 export const SAFETY_DETAIL =
@@ -95,7 +109,7 @@ export function buildSuggestedSetupView(result: RepoScanResult, insights: Projec
 // ---------------------------------------------------------------------------
 // Rendering
 
-const CONFIDENCE_STYLE: Record<Confidence, { label: string; color: string; border: string }> = {
+export const CONFIDENCE_STYLE: Record<Confidence, { label: string; color: string; border: string }> = {
   high: { label: "High confidence", color: "#9bd59b", border: "#1d2a1d" },
   medium: { label: "Medium confidence", color: "#ffb06a", border: "#3a2a14" },
   low: { label: "Low confidence: weak evidence", color: "#ff8a94", border: "#4a1218" },
@@ -129,7 +143,24 @@ function ConfidenceBadge({ confidence }: { confidence: Confidence | null }) {
   );
 }
 
-function CommandRow({ suggestion }: { suggestion: CommandSuggestion }) {
+/** "Use in Setup…" for one suggestion. Clicking only reports the choice; nothing is applied. */
+export function UseInSetupButton({ suggestion, onUse }: { suggestion: CommandSuggestion; onUse: (suggestion: CommandSuggestion) => void }) {
+  return (
+    <button
+      type="button"
+      className="rounded px-2 py-0.5 text-[10px] font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+      style={{ background: "#160a0c", border: "1px solid #4a1a20", color: "#e6c9cc" }}
+      onClick={() => onUse(suggestion)}
+      aria-label={`Use in Setup: review ${suggestion.command ?? "this suggestion"} before it fills a Setup field`}
+      data-testid="suggestion-use"
+      data-suggestion-id={suggestion.id}
+    >
+      Use in Setup…
+    </button>
+  );
+}
+
+function CommandRow({ suggestion, actions }: { suggestion: CommandSuggestion; actions?: SuggestedSetupActions }) {
   const unavailable =
     suggestion.unavailableReason === "package-manager-unknown"
       ? "No command: the package manager is unknown"
@@ -159,6 +190,7 @@ function CommandRow({ suggestion }: { suggestion: CommandSuggestion }) {
           {suggestion.purpose === "develop" ? "develop" : suggestion.purpose === "start" ? "start" : "install"}
           {suggestion.scriptName ? ` · script ${JSON.stringify(suggestion.scriptName)}` : ""}
         </span>
+        {actions && actions.canUse(suggestion) && <UseInSetupButton suggestion={suggestion} onUse={actions.onUse} />}
       </div>
       <details>
         <summary className="cursor-pointer text-[10px]" style={subtle}>
@@ -187,7 +219,7 @@ function CommandRow({ suggestion }: { suggestion: CommandSuggestion }) {
   );
 }
 
-function AppCard({ app }: { app: AppGroup }) {
+function AppCard({ app, actions }: { app: AppGroup; actions?: SuggestedSetupActions }) {
   return (
     <div className="space-y-1.5 rounded-md px-3 py-2" style={{ background: "#080808", border: "1px solid #1a1717" }} data-testid="suggestion-app" data-directory={app.directory}>
       <div className="flex min-w-0 flex-wrap items-baseline gap-x-2">
@@ -210,14 +242,14 @@ function AppCard({ app }: { app: AppGroup }) {
       ))}
       <div className="space-y-1">
         {app.runs.map((s) => (
-          <CommandRow key={s.id} suggestion={s} />
+          <CommandRow key={s.id} suggestion={s} actions={actions} />
         ))}
       </div>
     </div>
   );
 }
 
-export function RepoSuggestedSetup({ result }: { result: RepoScanResult }) {
+export function RepoSuggestedSetup({ result, actions }: { result: RepoScanResult; actions?: SuggestedSetupActions }) {
   const view = React.useMemo(() => buildSuggestedSetupView(result), [result]);
   const shownApps = view.apps.slice(0, APPS_SHOWN);
   const moreApps = view.apps.slice(APPS_SHOWN);
@@ -256,7 +288,7 @@ export function RepoSuggestedSetup({ result }: { result: RepoScanResult }) {
         <div className="space-y-1.5" data-testid="suggestion-apps">
           <SubHeading>Applications</SubHeading>
           {shownApps.map((app) => (
-            <AppCard key={app.packagePath} app={app} />
+            <AppCard key={app.packagePath} app={app} actions={actions} />
           ))}
           {moreApps.length > 0 && (
             <details>
@@ -265,7 +297,7 @@ export function RepoSuggestedSetup({ result }: { result: RepoScanResult }) {
               </summary>
               <div className="mt-1.5 space-y-1.5">
                 {moreApps.map((app) => (
-                  <AppCard key={app.packagePath} app={app} />
+                  <AppCard key={app.packagePath} app={app} actions={actions} />
                 ))}
               </div>
             </details>
@@ -293,7 +325,7 @@ export function RepoSuggestedSetup({ result }: { result: RepoScanResult }) {
               <p className="text-[10px]" style={{ ...MONO, ...muted }}>
                 {s.directory === "." ? "repository root" : s.directory}
               </p>
-              <CommandRow suggestion={s} />
+              <CommandRow suggestion={s} actions={actions} />
             </div>
           ))}
         </div>
