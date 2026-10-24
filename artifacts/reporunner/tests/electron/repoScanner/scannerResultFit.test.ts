@@ -313,17 +313,35 @@ describe("the cap includes the final metadata", () => {
     for (let i = 0; i < 40; i++) tree[`p${i}/package.json`] = pkg({ name: `p${i}`, dependencies: deps, scripts: { build: "tsc" } });
     return tree;
   }
-  const settled = (r: RepoScanResult) => ({ ...r, stats: { ...r.stats, durationMs: 0 } });
+  /**
+   * A scan whose stats.durationMs is exactly `ms`. The size cap counts the
+   * result as sent, durationMs included, so a cap taken from one scan's size
+   * only means the same thing for a later scan if both report a duration of
+   * the same width (issue #83: 10 ms vs 9 ms is one byte). Date.now() returns
+   * the scan's start on the first call and start + ms afterwards.
+   */
+  async function scanTaking(ms: number, root: string, options?: Parameters<typeof scanRepository>[1]) {
+    const realNow = Date.now.bind(Date);
+    let start: number | undefined;
+    const clock = vi.spyOn(Date, "now").mockImplementation(() => (start === undefined ? (start = realNow()) : start + ms));
+    try {
+      return await scanRepository(root, options);
+    } finally {
+      clock.mockRestore();
+    }
+  }
+  const DURATION_MS = 7;
 
   it("every cap in a dense sweep: never over the cap, flagged, partial, no secrets", async () => {
     const root = space.repo("fit final sweep", workspaceRepo());
-    const fullSize = bytes(await scanRepository(root));
+    const fullSize = bytes(await scanTaking(DURATION_MS, root));
     const caps = new Set<number>([2_000]);
     for (let cap = 1_500; cap <= 4_000; cap += 9) caps.add(cap);
     for (let cap = 1_990; cap <= 2_010; cap++) caps.add(cap);
     for (const cap of [Math.floor(fullSize / 2), fullSize - 20, fullSize - 1]) caps.add(cap);
     for (const cap of caps) {
-      const result = await scanRepository(root, { limits: { maxResultBytes: cap } });
+      const result = await scanTaking(DURATION_MS, root, { limits: { maxResultBytes: cap } });
+      expect(result.stats.durationMs).toBe(DURATION_MS);
       expect(bytes(result), `cap ${cap}`).toBeLessThanOrEqual(cap);
       expect(result.limitsHit, `cap ${cap}`).toContain("result-size");
       expect(result, `cap ${cap}`).toMatchObject({ status: "truncated", partial: true });
@@ -335,19 +353,19 @@ describe("the cap includes the final metadata", () => {
 
   it("at and above the full size nothing changes: complete, no flags, identical output", async () => {
     const root = space.repo("fit final unchanged", workspaceRepo());
-    const full = await scanRepository(root);
+    const full = await scanTaking(DURATION_MS, root);
     expect(full.status).toBe("complete");
     for (const cap of [bytes(full), bytes(full) + 1, bytes(full) + 5_000]) {
-      const result = await scanRepository(root, { limits: { maxResultBytes: cap } });
-      expect(settled(result), `cap ${cap}`).toEqual(settled(full));
+      const result = await scanTaking(DURATION_MS, root, { limits: { maxResultBytes: cap } });
+      expect(result, `cap ${cap}`).toEqual(full);
     }
   });
 
   it("just below the full size: the smallest trim, and the status turns truncated within the cap", async () => {
     const root = space.repo("fit final threshold", workspaceRepo());
-    const full = await scanRepository(root);
+    const full = await scanTaking(DURATION_MS, root);
     const cap = bytes(full) - 1;
-    const result = await scanRepository(root, { limits: { maxResultBytes: cap } });
+    const result = await scanTaking(DURATION_MS, root, { limits: { maxResultBytes: cap } });
     expect(bytes(result)).toBeLessThanOrEqual(cap);
     expect([result.status, result.partial, result.limitsHit]).toEqual(["truncated", true, ["result-size"]]);
     // Priority order: warnings (none here), then dependency lists from the first package on.
@@ -355,6 +373,20 @@ describe("the cap includes the final metadata", () => {
     expect(result.packages.find((p) => p.dependencies.length > 0 || p.devDependencies.length > 0)).toBeDefined();
     const firstWithDeps = full.packages.findIndex((p) => p.dependencies.length > 0 || p.devDependencies.length > 0);
     expect(result.packages.findIndex((p) => p.dependenciesTruncated)).toBe(firstWithDeps);
+  });
+
+  it("the cap counts the result's own durationMs: one digit fewer can fit a cap a longer-running scan would exceed (#83)", async () => {
+    const root = space.repo("fit final duration", workspaceRepo());
+    const tenMs = await scanTaking(10, root);
+    const cap = bytes(tenMs) - 1;
+    // The same result, taking 9 ms, is one byte smaller and fits untouched...
+    const nineMs = await scanTaking(9, root, { limits: { maxResultBytes: cap } });
+    expect(bytes(nineMs)).toBe(cap);
+    expect(nineMs).toEqual({ ...tenMs, stats: { ...tenMs.stats, durationMs: 9 } });
+    // ...while taking 10 ms it's one byte over, so it's trimmed within the cap.
+    const trimmed = await scanTaking(10, root, { limits: { maxResultBytes: cap } });
+    expect(bytes(trimmed)).toBeLessThanOrEqual(cap);
+    expect([trimmed.status, trimmed.partial, trimmed.limitsHit]).toEqual(["truncated", true, ["result-size"]]);
   });
 
   it("limitsHit that is already long before trimming is counted too", async () => {
