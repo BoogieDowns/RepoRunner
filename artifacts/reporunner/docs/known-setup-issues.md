@@ -2,19 +2,22 @@
 
 RepoRunner runs the commands you save against the local repo path you choose. Most setup problems come from the project path, package scripts, missing environment variables, or ports that are already in use.
 
-## Use npm.cmd or pnpm.cmd on Windows
+## npm, npm.cmd and PowerShell on Windows
 
-On Windows, use `.cmd` commands in RepoRunner setup fields:
+On Windows, RepoRunner runs each saved command through `cmd.exe` (as `cmd.exe /d /s /c "<your command>"`). `cmd.exe` finds `npm.cmd` and `pnpm.cmd` by itself, so both forms work in RepoRunner setup fields:
 
-`npm.cmd install`
+`npm install` or `npm.cmd install`
 
-`npm.cmd run dev`
+`pnpm run dev` or `pnpm.cmd run dev`
 
-`pnpm.cmd install`
+Suggested Setup proposes the plain form (such as `npm run dev`). That's fine to use as is.
 
-`pnpm.cmd run dev`
+The `.cmd` form helps when PowerShell is involved, because PowerShell may pick `npm.ps1` and block it under its script execution policy:
 
-This avoids PowerShell execution policy problems that can happen with bare `npm` or `pnpm` commands.
+- In a PowerShell terminal, for example when you check a command works before saving it, use `npm.cmd` or `pnpm.cmd`.
+- If you start a RepoRunner command with `powershell` or `pwsh`, what follows runs in PowerShell, so use the `.cmd` form there.
+
+Either form runs the same npm or pnpm.
 
 ## Choose the actual repo root folder
 
@@ -141,6 +144,16 @@ This is best effort:
 
 - If RepoRunner is force-closed (for example with Task Manager's End task) or crashes, it can't stop its services, and they may keep running. Close them manually or restart your computer.
 - Install and Git Pull aren't stopped when RepoRunner closes. If one is still running, it continues in the background until it finishes.
+
+## Analyze Repo doesn't run or save anything (planned for v0.1.4)
+
+Analyze Repo, Suggested Setup and the Repo Safety Check are on `main` and planned for v0.1.4; they aren't in v0.1.3.
+
+- Analyze Repo only reads files. It never installs, runs a script or changes your repository.
+- **Apply to Setup** fills one field in the form. Your setup is saved only when you click **Save Repo Setup** or **Update Repo Setup**.
+- Suggested commands haven't been run or tested. If one fails, check it the same way as a command you typed yourself.
+- If the results say **Partial results**, **Analysis cancelled** or **Analysis timed out**, the scan didn't see everything. Some suggestions may be missing, and the Safety Check only covers what was read.
+- The Repo Safety Check is advisory and only reads `package.json` scripts. "No obvious warning signs" doesn't mean a repository is safe. See [issue #82](https://github.com/BoogieDowns/RepoRunner/issues/82) for what its simplified shell reading can miss.
 
 ## Unsigned Windows installer warning
 
