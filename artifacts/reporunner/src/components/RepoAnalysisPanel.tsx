@@ -4,7 +4,7 @@
 import * as React from "react";
 import { Loader2, ScanSearch, X } from "lucide-react";
 import type { PackageSummary, RepoScanResult } from "../types";
-import { RepoSuggestedSetup } from "./RepoSuggestedSetup";
+import { RepoSuggestedSetup, type SuggestedSetupActions } from "./RepoSuggestedSetup";
 import {
   MAX_DEPENDENCIES_SHOWN,
   packageManagerSummary,
@@ -175,7 +175,7 @@ const TONE_COLORS = {
   stopped: { border: "#4a1218", text: "#ff8a94" },
 } as const;
 
-function Results({ result }: { result: RepoScanResult }) {
+function Results({ result, suggestionActions }: { result: RepoScanResult; suggestionActions?: SuggestedSetupActions }) {
   const status = summarizeStatus(result);
   const colors = TONE_COLORS[status.tone];
   const manager = packageManagerSummary(result);
@@ -208,7 +208,7 @@ function Results({ result }: { result: RepoScanResult }) {
         </p>
       </div>
 
-      <RepoSuggestedSetup result={result} />
+      <RepoSuggestedSetup result={result} actions={suggestionActions} />
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Section title="Package manager">
@@ -314,7 +314,19 @@ function Results({ result }: { result: RepoScanResult }) {
   );
 }
 
-export function RepoAnalysisPanel({ state, onCancel }: { state: RepoAnalysisState; onCancel: () => void }) {
+export function RepoAnalysisPanel({
+  state,
+  onCancel,
+  suggestionActions,
+  draftReview,
+}: {
+  state: RepoAnalysisState;
+  onCancel: () => void;
+  /** Optional "Use in Setup…" actions, passed through to Suggested Setup. */
+  suggestionActions?: SuggestedSetupActions;
+  /** A setup-draft review (or notice) shown above the results, outside their scroll area. */
+  draftReview?: React.ReactNode;
+}) {
   if (state.phase === "idle") return null;
 
   return (
@@ -359,9 +371,11 @@ export function RepoAnalysisPanel({ state, onCancel }: { state: RepoAnalysisStat
         </p>
       )}
 
+      {state.phase === "done" && draftReview}
+
       {state.phase === "done" && (
         <div className="max-h-[360px] overflow-y-auto pr-1" data-testid="analysis-results">
-          <Results result={state.result} />
+          <Results result={state.result} suggestionActions={suggestionActions} />
         </div>
       )}
     </section>

@@ -48,17 +48,23 @@ import {
   runStoreMutation,
   type ProjectStoreNoticeAction,
 } from "@/lib/projectStoreRecovery";
+import type { SetupDraftForm, SetupDraftPlan } from "@/lib/setupDraft";
+import {
+  applyFromScreen,
+  canUseSuggestion,
+  fieldEdited,
+  initialFieldOrigins,
+  planFromScreen,
+  reviewInvalidation,
+  type FieldOrigins,
+  type SetupScreenDraftState,
+} from "@/lib/setupDraftSession";
+import type { SuggestedSetupActions } from "@/components/RepoSuggestedSetup";
+import { SetupDraftReview } from "@/components/SetupDraftReview";
 
-type SetupFormState = {
-  name: string;
-  repoPath: string;
-  installCommand: string;
-  frontendCommand: string;
-  backendCommand: string;
-  previewUrl: string;
-  frontendPort: string;
-  backendPort: string;
-};
+// The form's fields are exactly the setup-draft form (Stage 3), so a draft
+// can be planned and applied against the form as it is.
+type SetupFormState = SetupDraftForm;
 
 const setupSchema = z.object({
   name: z.string().trim().min(1, "Project name is required"),
@@ -285,6 +291,12 @@ export function SetupScreen({
   const [formData, setFormData] = useState<SetupFormState>(() =>
     projectToFormValues(activeProject),
   );
+  // Where the install and frontend command values came from (recorded, never
+  // guessed from the text): RepoRunner's starting defaults until edited, or
+  // the user's. Reset with the form whenever another setup is shown.
+  const [fieldOrigins, setFieldOrigins] = useState<FieldOrigins>(() =>
+    initialFieldOrigins(activeProject ? "saved" : "initial-defaults"),
+  );
   const [errors, setErrors] = useState<SetupErrors>({});
   const mutationsBlocked = isStoreBlocked(storeStatus);
   // After a conflict or unverified save the persisted state is re-read; keep
@@ -298,6 +310,22 @@ export function SetupScreen({
   // results for one path are dropped as soon as the path changes.
   const [analysisState, setAnalysisState] = useState<RepoAnalysisState>({ phase: "idle" });
   const analysisController = useRef<RepoAnalysisController | null>(null);
+
+  // "Use in Setup…" review (Stage 3). Opening it changes nothing; Apply
+  // re-checks the plan against the live form and analysis and fills one field.
+  // Nothing is saved, installed or run.
+  const [draft, setDraft] = useState<{ plan: SetupDraftPlan } | null>(null);
+  const [draftNotice, setDraftNotice] = useState<string | null>(null);
+  const draftReviewRef = useRef<HTMLDivElement | null>(null);
+  // Where focus goes after the review closes: the filled field, or back to the Use button.
+  const focusAfterDraft = useRef<string | null>(null);
+  const appliedPlan = useRef<SetupDraftPlan | null>(null);
+  const draftState: SetupScreenDraftState = {
+    form: formData,
+    fieldOrigins,
+    setupId: isAddingNew ? null : activeProfileId ?? null,
+    analysis: analysisState,
+  };
 
   useEffect(() => {
     const controller = createRepoAnalysisController(() => window.repoRunner, setAnalysisState);
@@ -327,9 +355,30 @@ export function SetupScreen({
         if (keep) return;
       }
       setFormData(projectToFormValues(activeProject));
+      setFieldOrigins(initialFieldOrigins(activeProject ? "saved" : "initial-defaults"));
       setErrors({});
     }
   }, [activeProject, isAddingNew]);
+
+  // A review belongs to one repository path, analysis and setup: close it as
+  // soon as any of them changes (Apply would refuse it anyway).
+  useEffect(() => {
+    if (draft && reviewInvalidation(draft.plan, draftState) !== null) setDraft(null);
+  });
+
+  useEffect(() => {
+    setDraftNotice(null);
+  }, [analysisState]);
+
+  useEffect(() => {
+    if (draft) {
+      draftReviewRef.current?.focus();
+      return;
+    }
+    const target = focusAfterDraft.current;
+    focusAfterDraft.current = null;
+    if (target) (document.getElementById(target) ?? document.querySelector<HTMLElement>(`[data-suggestion-id="${CSS.escape(target)}"]`))?.focus();
+  }, [draft]);
 
   useEffect(() => {
     const pendingId = unverifiedNewProfileId.current;
@@ -342,8 +391,66 @@ export function SetupScreen({
 
   const updateField = (field: keyof SetupFormState, value: string) => {
     setFormData((current) => ({ ...current, [field]: value }));
+    setFieldOrigins((current) => fieldEdited(current, field));
     setErrors((current) => ({ ...current, [field]: undefined }));
   };
+
+  const suggestionActions: SuggestedSetupActions = {
+    canUse: (suggestion) => canUseSuggestion(suggestion, draftState),
+    onUse: (suggestion) => {
+      const planned = planFromScreen(suggestion, draftState);
+      if (planned.status !== "eligible") {
+        setDraft(null);
+        setDraftNotice("This suggestion can't be used in Setup any more. Analyze the repository again.");
+        return;
+      }
+      appliedPlan.current = null;
+      setDraftNotice(null);
+      setDraft({ plan: planned });
+    },
+  };
+
+  const cancelDraft = () => {
+    if (!draft) return;
+    focusAfterDraft.current = draft.plan.provenance.suggestionId;
+    setDraft(null);
+  };
+
+  const applyDraft = () => {
+    if (!draft || appliedPlan.current === draft.plan) return;
+    const plan = draft.plan;
+    const outcome = applyFromScreen(plan, draftState);
+    appliedPlan.current = plan;
+    setDraft(null);
+    if (outcome.status !== "applied") {
+      setDraftNotice(outcome.message);
+      return;
+    }
+    // Re-checked again against the newest form, so a queued edit is never overwritten.
+    setFormData((current) => {
+      const again = applyFromScreen(plan, { ...draftState, form: current });
+      return again.status === "applied" ? again.form : current;
+    });
+    setFieldOrigins(outcome.fieldOrigins);
+    setErrors((current) => ({ ...current, [outcome.field]: undefined }));
+    focusAfterDraft.current = `setup-${outcome.field}`;
+  };
+
+  const draftReview =
+    draft || draftNotice ? (
+      <div className="mb-3 space-y-2">
+        {draftNotice && (
+          <p className="text-[11px]" style={{ color: "#ffb06a" }} role="status" data-testid="setup-draft-notice">
+            {draftNotice}
+          </p>
+        )}
+        {draft && (
+          <div ref={draftReviewRef} tabIndex={-1} className="rounded-md outline-none focus-visible:ring-1 focus-visible:ring-[#b90e1c]/40">
+            <SetupDraftReview plan={draft.plan} onApply={applyDraft} onCancel={cancelDraft} />
+          </div>
+        )}
+      </div>
+    ) : null;
 
   const handleSelectFolder = async () => {
     try {
@@ -386,6 +493,8 @@ export function SetupScreen({
 
     setIsAddingNew(true);
     setFormData(blankFormValues);
+    setFieldOrigins(initialFieldOrigins("blank"));
+    setDraft(null);
     setErrors({});
   };
 
@@ -403,6 +512,8 @@ export function SetupScreen({
 
       setIsAddingNew(true);
       setFormData(blankFormValues);
+      setFieldOrigins(initialFieldOrigins("blank"));
+      setDraft(null);
       setErrors({});
       return;
     }
@@ -422,6 +533,8 @@ export function SetupScreen({
       await onSelectProfile(profileId);
       setIsAddingNew(false);
       setFormData(projectToFormValues(selectedProfile));
+      setFieldOrigins(initialFieldOrigins("saved"));
+      setDraft(null);
       setErrors({});
     } catch (error) {
       setErrors({ form: getSaveProjectErrorMessage(error) });
@@ -959,6 +1072,8 @@ export function SetupScreen({
             <RepoAnalysisPanel
               state={analysisState}
               onCancel={() => analysisController.current?.cancel()}
+              suggestionActions={suggestionActions}
+              draftReview={draftReview}
             />
 
             {/* Row 2: Preview URL — full width */}

@@ -86,7 +86,7 @@ describe("a normal analysis", () => {
     const r = result({ rootName: "my app" });
     calls[0].resolve(r);
     await done;
-    expect(controller.state).toEqual({ phase: "done", path: "C:\\Projects\\my app", result: r });
+    expect(controller.state).toEqual({ phase: "done", path: "C:\\Projects\\my app", result: r, id: expect.any(String) });
     expect(states.map((s) => s.phase)).toEqual(["running", "done"]);
   });
 

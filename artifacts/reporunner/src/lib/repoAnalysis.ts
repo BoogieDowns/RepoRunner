@@ -20,7 +20,8 @@ export type AnalysisFailureCode = RepoAnalysisErrorCode | "ipc-unavailable";
 export type RepoAnalysisState =
   | { phase: "idle" }
   | { phase: "running"; path: string; cancelling: boolean }
-  | { phase: "done"; path: string; result: RepoScanResult }
+  /** `id` is new for every completed analysis, even of the same path; it names this exact `result`. */
+  | { phase: "done"; path: string; result: RepoScanResult; id: string }
   | { phase: "error"; path: string; code: AnalysisFailureCode; message: string };
 
 export const IPC_UNAVAILABLE_MESSAGE = "Repository analysis isn't available in this window.";
@@ -128,7 +129,7 @@ export function createRepoAnalysisController(
 
       try {
         const result = await api.analyzeRepo(path);
-        if (request === currentRequest) set({ phase: "done", path, result });
+        if (request === currentRequest) set({ phase: "done", path, result, id: globalThis.crypto.randomUUID() });
       } catch (error) {
         if (request === currentRequest) {
           const code = classifyAnalysisError(error);
