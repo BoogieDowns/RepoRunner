@@ -30,6 +30,7 @@ describe("status", () => {
       "Only package.json script commands are inspected for these indicators.",
       "Files those scripts run or refer to are not opened.",
       "Dependencies' own install scripts are not inspected.",
+      "Commands are read with a simplified shell reading: conditionals and loops (if, then, for, while), variables and functions aren't interpreted, so indicators inside them can be missed.",
       "No match is not evidence that the repository is free of malicious behavior.",
     ]);
     expect(JSON.stringify(r)).not.toMatch(/"(safe|clean|cleared|verified)"/i);

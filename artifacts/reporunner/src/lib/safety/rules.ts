@@ -41,6 +41,8 @@ interface Word {
 type Stage = Word[] & {
   /** Its standard input comes from a redirection (<file, <<EOF, <<<text, <&3), not from the pipe. */
   stdinRedirected?: boolean;
+  /** Its standard output (fd 1) ends somewhere other than the pipe (>file, &>file, 1>&2), or can't be told. */
+  stdoutRedirected?: boolean;
 };
 /** One command list: segments separated by ; && || &, each a pipeline of stages. */
 type Command = Stage[][];
@@ -157,47 +159,94 @@ function lex(text: string, offset: number): Array<Word | { op: string }> {
  * (fd 0, the default for < forms).
  */
 const REDIRECTION = /^(\d*)(<<<|<<-|<<|<>|<&|<|>>|>&|>\||>|&>>|&>)(.*)$/;
-function redirection(word: Word): { input: boolean; attached: boolean } | null {
+interface Redirection {
+  fd: string;
+  op: string;
+  /** The attached target, or "" when it is the next word. */
+  target: string;
+}
+function redirection(word: Word): Redirection | null {
   if (word.quoted) return null;
   const m = REDIRECTION.exec(word.value);
   if (!m) return null;
   const [, fd, op, target] = m;
   if (op === "<" && target.startsWith("(")) return null; // <(...)
-  const input = op.startsWith("<") ? fd === "" || fd === "0" : fd === "0";
-  return { input, attached: target !== "" };
+  return { fd, op, target };
+}
+
+/** Where a stage's file descriptors point: the pipe, or anywhere else. */
+type FdTable = Map<string, "pipe" | "other">;
+
+/**
+ * Applies one redirection to a stage, in order, as the shell does: fd 1
+ * starts at the pipe and fd 2 at the terminal. >F, 1>F, >>F, >|F send fd 1
+ * to a file; 2>F only fd 2; &>F, &>>F and >&F (F not a number) send both;
+ * N>&M copies fd M into fd N, so "2>&1 >file" and ">file 2>&1" differ;
+ * N>&- closes fd N. Any < form (or fd 0) replaces stdin. A duplication from
+ * a descriptor that can't be resolved (a variable) counts as "other": no
+ * claim that output reaches the pipe.
+ */
+function applyRedirection(stage: Stage, fds: FdTable, r: Redirection, target: string): void {
+  const { fd, op } = r;
+  if (op.startsWith("<")) {
+    if (fd === "" || fd === "0") stage.stdinRedirected = true;
+    return;
+  }
+  if (fd === "0") stage.stdinRedirected = true;
+  if (op === "&>" || op === "&>>") {
+    fds.set("1", "other");
+    fds.set("2", "other");
+  } else if (op === ">&") {
+    const into = fd === "" ? "1" : fd;
+    if (/^\d+$/.test(target)) fds.set(into, fds.get(target) ?? "other");
+    else if (target === "-" || fd !== "") fds.set(into, "other");
+    else {
+      fds.set("1", "other"); // >&file: both, as &>file
+      fds.set("2", "other");
+    }
+  } else fds.set(fd === "" ? "1" : fd, "other");
 }
 
 function parse(text: string, offset: number): Command {
   const segments: Command = [];
   let stages: Stage[] = [];
   let stage: Stage = [];
-  let targetPending = false;
+  let fds: FdTable = new Map([["1", "pipe"], ["2", "other"]]);
+  let pending: Redirection | null = null;
+  const close = () => {
+    if (pending) applyRedirection(stage, fds, pending, ""); // target missing: still a redirection
+    pending = null;
+    if (fds.get("1") !== "pipe") stage.stdoutRedirected = true;
+    stages.push(stage);
+    stage = [];
+    fds = new Map([["1", "pipe"], ["2", "other"]]);
+  };
   for (const token of lex(text, offset)) {
     if (!("op" in token)) {
-      if (targetPending) {
-        targetPending = false; // the target of the redirection before it
+      if (pending) {
+        applyRedirection(stage, fds, pending, token.value); // the target of the redirection before it
+        pending = null;
         continue;
       }
       const r = redirection(token);
       if (r) {
-        if (r.input) stage.stdinRedirected = true;
-        targetPending = !r.attached;
+        if (r.target !== "") applyRedirection(stage, fds, r, r.target);
+        else pending = r;
         continue;
       }
       stage.push(token);
       continue;
     }
-    targetPending = false;
     if (token.op === "|") {
-      stages.push(stage);
-      stage = [];
+      close();
     } else if (SEPARATORS.has(token.op)) {
-      stages.push(stage);
+      close();
       segments.push(stages.filter((s) => s.length > 0));
       stages = [];
-      stage = [];
     }
   }
+  if (pending) applyRedirection(stage, fds, pending, "");
+  if (fds.get("1") !== "pipe") stage.stdoutRedirected = true;
   stages.push(stage);
   segments.push(stages.filter((s) => s.length > 0));
   return segments.filter((s) => s.length > 0);
@@ -485,6 +534,20 @@ function evaluatedProgram(name: string, args: readonly Word[]): string | null {
   return null;
 }
 
+/**
+ * Whether what stage `from` writes to stdout reaches a later stage of the
+ * pipeline that runs its input as code. The content flows on only while each
+ * stage's stdout goes to the pipe: curl URL > setup.sh | sh sends nothing to
+ * sh, and neither does a middle stage that redirects its output.
+ */
+function reachesStdinExecution(segment: Stage[], from: number): boolean {
+  for (let k = from; k < segment.length - 1; k++) {
+    if (segment[k].stdoutRedirected) return false;
+    if (executesStdin(segment[k + 1])) return true;
+  }
+  return false;
+}
+
 function isBase64Decode(stage: Stage): boolean {
   const h = head(stage);
   if (!h) return false;
@@ -560,7 +623,7 @@ export function downloadExecute(parsed: ParsedScript): number {
     for (const segment of command) {
       for (let i = 0; i < segment.length; i++) {
         const stage = segment[i];
-        if (stageDownloads(stage) && segment.slice(i + 1).some(executesStdin)) return stage[0].start;
+        if (stageDownloads(stage) && reachesStdinExecution(segment, i)) return stage[0].start;
         const h = head(stage);
         if (!h) continue;
         for (const sub of programSubstitutions(stage)) {
@@ -611,7 +674,7 @@ export function encodedExecution(parsed: ParsedScript): number {
             if ((opt === "e" || opt === "en") && BASE64ISH.test(args[k + 1]?.value ?? "")) return stage[0].start;
           }
         }
-        if (isBase64Decode(stage) && segment.slice(i + 1).some(executesStdin)) return stage[0].start;
+        if (isBase64Decode(stage) && reachesStdinExecution(segment, i)) return stage[0].start;
         if (h.name === "eval" && args.some((w) => w.subs.length > 0)) return stage[0].start;
         for (const sub of programSubstitutions(stage)) {
           const nested = parse(sub.text, sub.start);
