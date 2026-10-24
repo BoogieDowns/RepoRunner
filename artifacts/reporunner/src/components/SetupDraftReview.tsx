@@ -37,7 +37,7 @@ export const CURRENT_KIND_TEXT: Record<ValueKind, string> = {
 export function reviewSafetyText(field: DraftField): string[] {
   return [
     `Apply to Setup only fills the ${DRAFT_FIELD_LABEL[field]} field in this form. You can still edit it.`,
-    "It doesn't save the setup: use Save Configuration when you're ready.",
+    "It doesn't save the setup: use Save Repo Setup or Update Repo Setup when you're ready.",
     "It doesn't install dependencies or run any command.",
     "Ports, Preview URL, Backend Command and the repository folder aren't changed.",
   ];

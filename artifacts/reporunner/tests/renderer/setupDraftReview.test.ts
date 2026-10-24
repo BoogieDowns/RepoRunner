@@ -211,6 +211,22 @@ describe("SetupDraftReview", () => {
     expect(t).not.toMatch(/\b(is verified|been verified|verified to|is safe|safe to run|guaranteed|will work)\b/i);
   });
 
+  it("names the Setup screen's real save buttons, and Apply stays separate from saving", () => {
+    const result = scan(viteApp({ dev: "vite" }, ["pnpm-lock.yaml", "vite.config.ts"]));
+    const plan = planFor(result, (s) => s.scriptName === "dev");
+    const t = text(renderReview(plan));
+    expect(t).toContain("It doesn't save the setup: use Save Repo Setup or Update Repo Setup when you're ready.");
+    expect(t).not.toContain("Save Configuration");
+    // Both labels are the Setup screen's save button (new setup / saved setup).
+    const screen = fs.readFileSync(path.resolve(import.meta.dirname, "../../src/components/SetupScreen.tsx"), "utf-8");
+    expect(screen).toContain('"Save Repo Setup"');
+    expect(screen).toContain('"Update Repo Setup"');
+    // The review's own controls are only Cancel and Apply to Setup; neither saves.
+    const tree = SetupDraftReview({ plan, onApply: vi.fn(), onCancel: vi.fn() });
+    const labels = hostElements(tree).filter((el) => el.type === "button").map((b) => text(renderToStaticMarkup(b)).trim());
+    expect(labels).toEqual(["Cancel", "Apply to Setup"]);
+  });
+
   it("long values wrap and are shown in full", () => {
     const result = scan(viteApp());
     const long = `npm run dev -- ${"--flag-with-a-long-name ".repeat(20)}`.trim();
