@@ -1,0 +1,463 @@
+// Stage 4A: the deterministic rules. Each script command (the scanner's
+// display-safe text, at most 500 characters) is split by a small, bounded
+// lexer into commands, pipeline stages and words, and the rules look for
+// structure (a downloader stage piped into an interpreter stage), not just
+// words appearing somewhere. Quoted text is data unless it is the script of
+// an interpreter (sh -c "...", cmd /c "...", powershell -Command ...) or a
+// command substitution ($(...), `...`, <(...)); those are parsed as nested
+// commands. Nothing is ever evaluated, executed, decoded or resolved on disk,
+// and no pattern is built from repository text.
+import type { SafetyRuleId } from "./types";
+
+/** Text longer than this isn't examined further (the scanner already caps commands at 500). */
+export const MAX_COMMAND_TEXT = 2000;
+/** Nesting depth for substitutions and interpreter scripts. */
+export const MAX_NESTING = 3;
+/** Words, stages and nested commands examined per script, at most. */
+const MAX_WORDS = 400;
+
+interface Word {
+  /** Text with quotes and escapes removed, as the shell would see it (substitutions left as written). */
+  value: string;
+  /** Offset in the script text where the word starts. */
+  start: number;
+  /** Inner text of command substitutions in the word: $(...), `...`, <(...). */
+  subs: { text: string; start: number }[];
+}
+type Stage = Word[];
+/** One command list: segments separated by ; && || &, each a pipeline of stages. */
+type Command = Stage[][];
+
+const SEPARATORS = new Set(["&&", "||", ";", "&"]);
+/**
+ * A backslash escapes only these (POSIX shells); before anything else it is
+ * kept, so Windows paths (C:\Windows\Temp, %USERPROFILE%\.aws) stay intact,
+ * as cmd.exe, which runs npm scripts on Windows, treats them.
+ */
+const ESCAPABLE = new Set(['"', "'", "\\", "$", "`", " ", "|", "&", ";", "(", ")", "<", ">"]);
+
+/** Index just after the ")" closing the "(" before `from`, skipping quoted text. */
+function closingParen(text: string, from: number): number {
+  let depth = 1;
+  for (let i = from; i < text.length; i++) {
+    const c = text[i];
+    if (c === "'" || c === '"') {
+      const end = text.indexOf(c, i + 1);
+      if (end < 0) return text.length;
+      i = end;
+    } else if (c === "(") depth++;
+    else if (c === ")" && --depth === 0) return i + 1;
+  }
+  return text.length;
+}
+
+/** Splits `text` into words and separators. Linear in the text length. */
+function lex(text: string, offset: number): Array<Word | { op: string }> {
+  const out: Array<Word | { op: string }> = [];
+  let word: Word | null = null;
+  const begin = (at: number) => (word ??= { value: "", start: offset + at, subs: [] });
+  const end = () => {
+    if (word) out.push(word);
+    word = null;
+  };
+  const substitution = (open: number, innerStart: number, close: number) => {
+    const w = begin(open);
+    w.subs.push({ text: text.slice(innerStart, close), start: offset + innerStart });
+  };
+  for (let i = 0; i < text.length && out.length < MAX_WORDS; i++) {
+    const c = text[i];
+    if (c === " " || c === "\t") {
+      end();
+    } else if (c === "|" || c === "&" || c === ";") {
+      end();
+      const two = text.slice(i, i + 2);
+      if (two === "||" || two === "&&") {
+        out.push({ op: two });
+        i++;
+      } else out.push({ op: c });
+    } else if (c === "'") {
+      const close = text.indexOf("'", i + 1);
+      const stop = close < 0 ? text.length : close;
+      begin(i).value += text.slice(i + 1, stop);
+      i = stop;
+    } else if (c === '"') {
+      const w = begin(i);
+      let j = i + 1;
+      for (; j < text.length && text[j] !== '"'; j++) {
+        if (text[j] === "\\" && j + 1 < text.length && ESCAPABLE.has(text[j + 1])) {
+          w.value += text[++j];
+        } else if (text[j] === "$" && text[j + 1] === "(") {
+          const close = closingParen(text, j + 2);
+          substitution(j, j + 2, Math.max(j + 2, close - 1));
+          w.value += text.slice(j, close);
+          j = close - 1;
+        } else if (text[j] === "`") {
+          const close = text.indexOf("`", j + 1);
+          const stop = close < 0 ? text.length : close;
+          substitution(j, j + 1, stop);
+          w.value += text.slice(j, stop + 1);
+          j = stop;
+        } else w.value += text[j];
+      }
+      i = j;
+    } else if (c === "\\" && i + 1 < text.length && ESCAPABLE.has(text[i + 1])) {
+      begin(i).value += text[++i];
+    } else if ((c === "$" || c === "<") && text[i + 1] === "(") {
+      const close = closingParen(text, i + 2);
+      substitution(i, i + 2, Math.max(i + 2, close - 1));
+      begin(i).value += text.slice(i, close);
+      i = close - 1;
+    } else if (c === "`") {
+      const close = text.indexOf("`", i + 1);
+      const stop = close < 0 ? text.length : close;
+      substitution(i, i + 1, stop);
+      begin(i).value += text.slice(i, stop + 1);
+      i = stop;
+    } else {
+      begin(i).value += c;
+    }
+  }
+  end();
+  return out;
+}
+
+function parse(text: string, offset: number): Command {
+  const segments: Command = [];
+  let stages: Stage[] = [];
+  let stage: Stage = [];
+  for (const token of lex(text, offset)) {
+    if ("op" in token) {
+      if (token.op === "|") {
+        stages.push(stage);
+        stage = [];
+      } else if (SEPARATORS.has(token.op)) {
+        stages.push(stage);
+        segments.push(stages.filter((s) => s.length > 0));
+        stages = [];
+        stage = [];
+      }
+    } else stage.push(token);
+  }
+  stages.push(stage);
+  segments.push(stages.filter((s) => s.length > 0));
+  return segments.filter((s) => s.length > 0);
+}
+
+/** "/usr/bin/Curl.exe" -> "curl"; leading "(" "{" and trailing ")" "}" are dropped. */
+function commandName(value: string): string {
+  let v = value.toLowerCase();
+  while (v.startsWith("(") || v.startsWith("{")) v = v.slice(1);
+  while (v.endsWith(")") || v.endsWith("}") || v.endsWith(";")) v = v.slice(0, -1);
+  const slash = Math.max(v.lastIndexOf("/"), v.lastIndexOf("\\"));
+  if (slash >= 0) v = v.slice(slash + 1);
+  return v.endsWith(".exe") ? v.slice(0, -4) : v;
+}
+
+const WRAPPERS = new Set(["sudo", "env", "command", "exec", "nohup", "time"]);
+const ASSIGNMENT = /^[A-Za-z_][A-Za-z0-9_]*=/;
+
+/** The stage's program (after sudo, env, assignments) and the words after it. */
+function head(stage: Stage): { name: string; index: number } | null {
+  for (let i = 0; i < stage.length && i < 8; i++) {
+    const name = commandName(stage[i].value);
+    if (ASSIGNMENT.test(stage[i].value) || WRAPPERS.has(name)) continue;
+    return { name, index: i };
+  }
+  return null;
+}
+
+const DOWNLOADERS = new Set(["curl", "wget", "iwr", "invoke-webrequest", "irm", "invoke-restmethod"]);
+/** Programs that run what they're given: piped input, or a script argument. */
+const INTERPRETERS = new Set(["sh", "bash", "zsh", "dash", "ksh", "node", "python", "python3", "perl", "ruby", "pwsh", "powershell", "iex", "invoke-expression", "source", "."]);
+const SHELLS_WITH_SCRIPT_ARG = new Set(["sh", "bash", "zsh", "dash", "ksh", "cmd", "pwsh", "powershell"]);
+
+/** curl/wget writing to a file (not stdout): a plain download, not direct execution. */
+function writesToFile(name: string, words: Word[]): boolean {
+  for (let i = 0; i < words.length; i++) {
+    const v = words[i].value;
+    const next = words[i + 1]?.value;
+    if (name === "curl" && (v === "-o" || v === "--output" || /^-[a-zA-Z]+o$/.test(v))) return next !== "-";
+    if (name === "curl" && (v === "-O" || v === "--remote-name" || v === "--remote-name-all" || /^-[a-zA-Z]*O[a-zA-Z]*$/.test(v))) return true;
+    if (name === "wget" && (v === "-O" || v === "--output-document" || /^-[a-zA-Z]+O$/.test(v))) return next !== "-";
+    if (name === "wget" && /^-[a-zA-Z]*O.+$/.test(v)) return !v.endsWith("O-");
+    if ((name === "iwr" || name === "invoke-webrequest" || name === "irm" || name === "invoke-restmethod") && /^-outf(i(le?)?)?$/i.test(v)) return true;
+  }
+  return false;
+}
+
+/** The stage itself downloads to its output: a downloader, or PowerShell's DownloadString. */
+function stageDownloadsDirectly(stage: Stage): boolean {
+  const h = head(stage);
+  if (!h) return false;
+  if (DOWNLOADERS.has(h.name)) return !writesToFile(h.name, stage.slice(h.index + 1));
+  // PowerShell: (New-Object Net.WebClient).DownloadString(...)
+  return stage.some((w) => w.value.toLowerCase().includes(".downloadstring("));
+}
+
+/** The stage outputs downloaded content: directly, or through a substitution (echo "$(curl URL)"). */
+function stageDownloads(stage: Stage): boolean {
+  if (stageDownloadsDirectly(stage)) return true;
+  return stage.some((w) => w.subs.some((sub) => parse(sub.text, sub.start).some((seg) => seg.length > 0 && stageDownloadsDirectly(seg[0]))));
+}
+
+function stageInterprets(stage: Stage): boolean {
+  const h = head(stage);
+  return h !== null && (INTERPRETERS.has(h.name) || h.name === "eval");
+}
+
+function isBase64Decode(stage: Stage): boolean {
+  const h = head(stage);
+  if (!h) return false;
+  const args = stage.slice(h.index + 1).map((w) => w.value);
+  if (h.name === "base64") return args.some((a) => a === "-d" || a === "-D" || a === "--decode");
+  if (h.name === "openssl") return args.some((a) => a === "base64" || a === "-base64") && args.some((a) => a === "-d");
+  return false;
+}
+
+/** The nested commands a stage hands to another program: substitutions and interpreter scripts. */
+function nestedTexts(stage: Stage): { text: string; start: number }[] {
+  const out = stage.flatMap((w) => w.subs);
+  const h = head(stage);
+  if (h && SHELLS_WITH_SCRIPT_ARG.has(h.name)) {
+    const words = stage.slice(h.index + 1);
+    const isPowerShell = h.name === "pwsh" || h.name === "powershell";
+    for (let i = 0; i < words.length; i++) {
+      const v = words[i].value.toLowerCase();
+      const scriptFlag = h.name === "cmd" ? v === "/c" || v === "/k" : isPowerShell ? v === "-c" || (v.length >= 3 && "-command".startsWith(v)) : v === "-c";
+      if (!scriptFlag || i + 1 >= words.length) continue;
+      // PowerShell -Command takes the rest of the line; sh -c and cmd /c take one argument (cmd: the rest).
+      const rest = isPowerShell || h.name === "cmd" ? words.slice(i + 1) : [words[i + 1]];
+      out.push({ text: rest.map((w) => w.value).join(" "), start: rest[0].start });
+      break;
+    }
+  }
+  return out;
+}
+
+interface ParsedScript {
+  commands: { command: Command; depth: number }[];
+}
+
+/** The script's command and every nested command in it, up to MAX_NESTING deep. */
+export function parseScript(text: string): ParsedScript {
+  const commands: ParsedScript["commands"] = [];
+  const queue: { text: string; start: number; depth: number }[] = [{ text: text.slice(0, MAX_COMMAND_TEXT), start: 0, depth: 0 }];
+  while (queue.length > 0 && commands.length < 64) {
+    const item = queue.shift()!;
+    const command = parse(item.text, item.start);
+    commands.push({ command, depth: item.depth });
+    if (item.depth >= MAX_NESTING) continue;
+    for (const segment of command) for (const stage of segment) for (const nested of nestedTexts(stage)) queue.push({ ...nested, depth: item.depth + 1 });
+  }
+  return { commands };
+}
+
+// ---------------------------------------------------------------------------
+// Rules. Each returns the offset of its first match in the script text, or -1.
+
+/**
+ * R2. Detected forms:
+ *  - a downloader stage piped into an interpreter stage: curl URL | sh,
+ *    wget -qO- URL | bash, irm URL | iex, (New-Object Net.WebClient).DownloadString(URL) | iex;
+ *  - an interpreter given a downloader's output as its script: bash <(curl URL),
+ *    sh -c "$(curl URL)", source <(wget -qO- URL), eval "$(curl URL)";
+ *  - PowerShell iex / Invoke-Expression applied to a download: iex (iwr URL), iex(irm URL),
+ *    Invoke-Expression (New-Object Net.WebClient).DownloadString(URL).
+ * Any of these inside sh -c / cmd /c / powershell -Command scripts or substitutions.
+ * Not detected: downloading to a file and running it later (curl -o x && sh x),
+ * downloads in files the script runs, and downloads through other tools.
+ */
+export function downloadExecute(parsed: ParsedScript): number {
+  for (const { command } of parsed.commands) {
+    for (const segment of command) {
+      for (let i = 0; i < segment.length; i++) {
+        const stage = segment[i];
+        if (stageDownloads(stage) && segment.slice(i + 1).some(stageInterprets)) return stage[0].start;
+        const h = head(stage);
+        if (!h) continue;
+        if (INTERPRETERS.has(h.name) || h.name === "eval") {
+          for (const word of stage.slice(h.index + 1)) {
+            for (const sub of word.subs) {
+              const nested = parse(sub.text, sub.start);
+              if (nested.some((seg) => seg.length > 0 && stageDownloadsDirectly(seg[0]))) return stage[0].start;
+            }
+          }
+        }
+        if (h.name === "iex" || h.name === "invoke-expression" || h.name.startsWith("iex(") || h.name.startsWith("invoke-expression(")) {
+          const rest = stage.slice(h.index).map((w) => w.value.toLowerCase());
+          const tail = rest.join(" ").replace(/^(iex|invoke-expression)/, "");
+          const words = tail.split(/[\s()]+/).filter(Boolean);
+          if (words.some((w) => DOWNLOADERS.has(commandName(w))) || tail.includes(".downloadstring(")) return stage[0].start;
+        }
+      }
+    }
+  }
+  return -1;
+}
+
+const BASE64ISH = /^[A-Za-z0-9+/=]{20,}$/;
+
+/**
+ * R3. Detected forms:
+ *  - powershell / pwsh with an encoded command: -EncodedCommand or its prefixes
+ *    down to -enc, -ec, and -e / -en followed by a base64-looking argument;
+ *  - base64 decoding (base64 -d, base64 --decode, openssl base64 -d) piped into
+ *    an interpreter or eval, or used as an interpreter's script ($(... | base64 -d));
+ *  - eval of a command substitution: eval "$(...)", eval `...`;
+ *  - node -e / python -c scripts that decode base64 and evaluate it
+ *    (node: "base64" with eval(; python: b64decode with exec( or eval().
+ * The payload is never decoded. Not detected: other encodings, obfuscation in
+ * files the script runs, and long encoded strings without an execution link.
+ */
+export function encodedExecution(parsed: ParsedScript): number {
+  for (const { command } of parsed.commands) {
+    for (const segment of command) {
+      for (let i = 0; i < segment.length; i++) {
+        const stage = segment[i];
+        const h = head(stage);
+        if (!h) continue;
+        const args = stage.slice(h.index + 1);
+        if (h.name === "powershell" || h.name === "pwsh") {
+          for (let k = 0; k < args.length; k++) {
+            const v = args[k].value.toLowerCase();
+            if (v.length < 2 || (v[0] !== "-" && v[0] !== "/")) continue;
+            const opt = v.slice(1);
+            if (opt === "ec" || (opt.length >= 3 && "encodedcommand".startsWith(opt))) return stage[0].start;
+            if ((opt === "e" || opt === "en") && BASE64ISH.test(args[k + 1]?.value ?? "")) return stage[0].start;
+          }
+        }
+        if (isBase64Decode(stage) && segment.slice(i + 1).some(stageInterprets)) return stage[0].start;
+        if (h.name === "eval" && args.some((w) => w.subs.length > 0)) return stage[0].start;
+        if (INTERPRETERS.has(h.name)) {
+          for (const word of args) {
+            for (const sub of word.subs) {
+              const nested = parse(sub.text, sub.start);
+              if (nested.some((seg) => seg.some(isBase64Decode))) return stage[0].start;
+            }
+          }
+        }
+        if (h.name === "node" || h.name === "python" || h.name === "python3") {
+          for (let k = 0; k < args.length - 1; k++) {
+            const flag = args[k].value;
+            const script = args[k + 1].value.toLowerCase();
+            if (h.name === "node" && (flag === "-e" || flag === "--eval" || flag === "-p" || flag === "--print") && script.includes("base64") && script.includes("eval(")) return stage[0].start;
+            if (h.name !== "node" && flag === "-c" && script.includes("b64decode") && (script.includes("exec(") || script.includes("eval("))) return stage[0].start;
+          }
+        }
+      }
+    }
+  }
+  return -1;
+}
+
+const ROOT_TARGETS = new Set(["/", "/*", "/.", "\\", "\\*"]);
+const DRIVE_ROOT = /^[a-z]:[\\/]?\*?$/;
+const HOME_PREFIXES = ["~", "$home", "${home}", "%userprofile%", "%homepath%", "%homedrive%%homepath%", "$env:userprofile", "$env:home", "%appdata%", "%localappdata%", "$env:appdata", "$env:localappdata"];
+const SYSTEM_PREFIXES = ["/etc", "/usr", "/bin", "/sbin", "/boot", "/lib", "/lib64", "/var", "/opt", "/home", "/users", "/root", "/system", "/library", "/private"];
+const WINDOWS_SYSTEM = /^[a-z]:\/(windows|program files|program files \(x86\)|programdata|users)(\/|$)/;
+
+function hasPrefix(path: string, prefix: string): boolean {
+  return path === prefix || path.startsWith(`${prefix}/`) || path.startsWith(`${prefix}\\`);
+}
+
+/** Where a delete target points, if that is clear from its text alone. */
+export function externalTarget(raw: string, packageDepth: number, cwdUnknown: boolean): "root" | "home" | "system" | "outside-repository" | null {
+  const v = raw.toLowerCase();
+  if (ROOT_TARGETS.has(v) || DRIVE_ROOT.test(v)) return "root";
+  if (HOME_PREFIXES.some((p) => hasPrefix(v, p))) return "home";
+  const slashed = v.replace(/\\/g, "/");
+  if (SYSTEM_PREFIXES.some((p) => hasPrefix(slashed, p)) || WINDOWS_SYSTEM.test(slashed)) return "system";
+  if (cwdUnknown) return null;
+  // Relative to the package folder: escapes the repository only with more "../" than the package is deep.
+  let ups = 0;
+  for (const part of slashed.split("/")) {
+    if (part === "..") ups++;
+    else if (part !== "." && part !== "") break;
+  }
+  return ups > packageDepth ? "outside-repository" : null;
+}
+
+function recursiveFlag(option: string): boolean {
+  const v = option.toLowerCase();
+  if (v === "--recursive") return true;
+  if (/^-[a-z]{1,3}$/.test(v) && v.includes("r")) return true; // -r, -rf, -fr, -Rf
+  return v.length >= 4 && v.startsWith("-rec") && "-recurse".startsWith(v);
+}
+
+const CHANGES_DIRECTORY = new Set(["cd", "pushd", "set-location", "sl", "chdir"]);
+
+/**
+ * R4. Detected: a recursive delete whose target is a filesystem or drive root,
+ * a home or user-profile folder (~, $HOME, %USERPROFILE%, %APPDATA%, $env:...),
+ * a system folder (/etc, /usr, /home, C:\Windows, C:\Users, ...), or a
+ * relative path with more "../" than the package is deep inside the repository
+ * (only when nothing earlier in the command changes directory). Commands:
+ * rm -r/-rf/--recursive, rimraf, del or erase /s, rd or rmdir /s,
+ * Remove-Item / ri -Recurse. Not detected: targets given by variables, other
+ * absolute paths (/tmp/..., D:\data), deletes through other tools or files.
+ */
+export function destructiveOutsideProject(parsed: ParsedScript, packageDepth: number): number {
+  for (const { command, depth } of parsed.commands) {
+    let cwdUnknown = depth > 0; // a nested script may run anywhere
+    for (const segment of command) {
+      for (const stage of segment) {
+        const h = head(stage);
+        if (!h) continue;
+        if (CHANGES_DIRECTORY.has(h.name)) cwdUnknown = true;
+        const args = stage.slice(h.index + 1).map((w) => w.value);
+        let recursive = false;
+        let targets: string[] = [];
+        if (h.name === "rm" || h.name === "remove-item" || h.name === "ri") {
+          const end = args.indexOf("--");
+          const opts = end < 0 ? args : args.slice(0, end);
+          recursive = opts.some((a) => a.startsWith("-") && recursiveFlag(a));
+          targets = [...opts.filter((a) => !a.startsWith("-")), ...(end < 0 ? [] : args.slice(end + 1))];
+        } else if (h.name === "rimraf") {
+          recursive = true;
+          targets = args.filter((a) => !a.startsWith("-"));
+        } else if (h.name === "del" || h.name === "erase" || h.name === "rd" || h.name === "rmdir") {
+          recursive = args.some((a) => a.toLowerCase() === "/s");
+          targets = args.filter((a) => !/^\/[a-z]$/i.test(a));
+        }
+        if (recursive && targets.some((t) => externalTarget(t, packageDepth, cwdUnknown) !== null)) return stage[0].start;
+      }
+    }
+  }
+  return -1;
+}
+
+/**
+ * R5. Literal references (case-insensitive, either slash) to: an .ssh folder
+ * under a home or user profile, SSH private keys (id_rsa, id_ed25519,
+ * id_ecdsa, id_dsa; not .pub), .aws/credentials under a home, .git-credentials,
+ * a user-level .npmrc (under a home, never a bare project .npmrc),
+ * .config/gcloud or %APPDATA%\gcloud, and browser profile stores (Chrome or
+ * Edge "User Data" / "Login Data", .config/google-chrome, Firefox profiles).
+ * The whole command text is searched, quoted or not: a reference is reported
+ * as a reference, never as proof that anything is read or sent.
+ */
+const CREDENTIAL_PATTERNS: readonly RegExp[] = [
+  // An .ssh folder under a home or user profile.
+  /(?:~|\$home|\$\{home\}|%userprofile%|%homepath%|\$env:userprofile|\$env:home|\/home\/[^/\s"']+|\/users\/[^/\s"']+|\/root|[a-z]:\/users\/[^/\s"']+)\/\.ssh(?:\/|\b)/,
+  // SSH private keys (not the .pub public keys).
+  /(?:^|[/\s"'=])id_(?:rsa|ed25519|ecdsa|dsa)(?![\w.-]*\.pub)(?![\w-])/,
+  // AWS credentials under a home.
+  /(?:~|\$home|\$\{home\}|%userprofile%|%homepath%|\$env:userprofile|\$env:home|\/home\/[^/\s"']+|\/users\/[^/\s"']+|\/root|[a-z]:\/users\/[^/\s"']+)\/\.aws\/credentials\b/,
+  /\.git-credentials\b/,
+  // A user-level .npmrc (a bare .npmrc is the project's own).
+  /(?:~|\$home|\$\{home\}|%userprofile%|%homepath%|\$env:userprofile|\$env:home|\/home\/[^/\s"']+|\/users\/[^/\s"']+|\/root|[a-z]:\/users\/[^/\s"']+)\/\.npmrc\b/,
+  /\.config\/gcloud\b|%appdata%\/gcloud\b|\$env:appdata\/gcloud\b/,
+  /(?:google\/chrome|microsoft\/edge|brave-browser|bravesoftware\/brave-browser)\/user data\b|\/login data\b|\.config\/(?:google-chrome|chromium)\b|mozilla\/firefox\/profiles\b|\.mozilla\/firefox\b|library\/application support\/(?:google\/chrome|firefox)\b/,
+];
+
+export function credentialPath(text: string): number {
+  const normalized = text.slice(0, MAX_COMMAND_TEXT).toLowerCase().replace(/\\/g, "/");
+  let first = -1;
+  for (const pattern of CREDENTIAL_PATTERNS) {
+    const m = pattern.exec(normalized);
+    if (m && (first < 0 || m.index < first)) first = m.index;
+  }
+  return first;
+}
+
+export const RULE_ORDER: readonly SafetyRuleId[] = ["install-script", "download-execute", "encoded-execution", "destructive-outside-project", "credential-path"];
