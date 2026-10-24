@@ -4,7 +4,9 @@
 import * as React from "react";
 import { Loader2, ScanSearch, X } from "lucide-react";
 import type { PackageSummary, RepoScanResult } from "../types";
+import { RepoSafetyCheck } from "./RepoSafetyCheck";
 import { RepoSuggestedSetup, type SuggestedSetupActions } from "./RepoSuggestedSetup";
+import { checkRepository, unavailableReport } from "../lib/safety/checkRepository";
 import {
   MAX_DEPENDENCIES_SHOWN,
   packageManagerSummary,
@@ -180,6 +182,8 @@ function Results({ result, suggestionActions }: { result: RepoScanResult; sugges
   const colors = TONE_COLORS[status.tone];
   const manager = packageManagerSummary(result);
   const otherManifests = result.manifests.filter((m) => m.kind !== "package-json");
+  // Derived from exactly the result shown, so it can't outlive or precede it.
+  const safety = React.useMemo(() => checkRepository(result), [result]);
 
   return (
     <div className="space-y-4">
@@ -207,6 +211,8 @@ function Results({ result, suggestionActions }: { result: RepoScanResult; sugges
           in {result.stats.durationMs} ms
         </p>
       </div>
+
+      <RepoSafetyCheck report={safety} />
 
       <RepoSuggestedSetup result={result} actions={suggestionActions} />
 
@@ -369,6 +375,11 @@ export function RepoAnalysisPanel({
         >
           {state.message}
         </p>
+      )}
+      {state.phase === "error" && (
+        <div className="mt-3">
+          <RepoSafetyCheck report={unavailableReport("analysis-failed")} />
+        </div>
       )}
 
       {state.phase === "done" && draftReview}
