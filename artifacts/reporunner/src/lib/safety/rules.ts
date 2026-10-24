@@ -171,15 +171,37 @@ const DOWNLOADERS = new Set(["curl", "wget", "iwr", "invoke-webrequest", "irm", 
 const INTERPRETERS = new Set(["sh", "bash", "zsh", "dash", "ksh", "node", "python", "python3", "perl", "ruby", "pwsh", "powershell", "iex", "invoke-expression", "source", "."]);
 const SHELLS_WITH_SCRIPT_ARG = new Set(["sh", "bash", "zsh", "dash", "ksh", "cmd", "pwsh", "powershell"]);
 
+const STDOUT_TARGETS = new Set(["-", "/dev/stdout"]);
+
+/**
+ * wget saves to a file unless its output document is stdout: -O -, -O-,
+ * -qO-, -qO -, --output-document=-, --output-document -, or /dev/stdout in
+ * place of "-". The last -O wins, as in wget. (-o / --output-file is wget's
+ * own log, never the download, so "-o -" doesn't count.)
+ */
+function wgetToStdout(words: Word[]): boolean {
+  let stdout = false;
+  for (let i = 0; i < words.length; i++) {
+    const v = words[i].value;
+    const next = words[i + 1]?.value ?? "";
+    if (v === "--output-document" || /^-[a-zA-Z]*O$/.test(v)) stdout = STDOUT_TARGETS.has(next);
+    else if (v.startsWith("--output-document=")) stdout = STDOUT_TARGETS.has(v.slice("--output-document=".length));
+    else {
+      const attached = /^-[a-zA-Z]*O(.+)$/.exec(v);
+      if (attached) stdout = STDOUT_TARGETS.has(attached[1]);
+    }
+  }
+  return stdout;
+}
+
 /** curl/wget writing to a file (not stdout): a plain download, not direct execution. */
 function writesToFile(name: string, words: Word[]): boolean {
+  if (name === "wget") return !wgetToStdout(words);
   for (let i = 0; i < words.length; i++) {
     const v = words[i].value;
     const next = words[i + 1]?.value;
     if (name === "curl" && (v === "-o" || v === "--output" || /^-[a-zA-Z]+o$/.test(v))) return next !== "-";
     if (name === "curl" && (v === "-O" || v === "--remote-name" || v === "--remote-name-all" || /^-[a-zA-Z]*O[a-zA-Z]*$/.test(v))) return true;
-    if (name === "wget" && (v === "-O" || v === "--output-document" || /^-[a-zA-Z]+O$/.test(v))) return next !== "-";
-    if (name === "wget" && /^-[a-zA-Z]*O.+$/.test(v)) return !v.endsWith("O-");
     if ((name === "iwr" || name === "invoke-webrequest" || name === "irm" || name === "invoke-restmethod") && /^-outf(i(le?)?)?$/i.test(v)) return true;
   }
   return false;
@@ -200,9 +222,67 @@ function stageDownloads(stage: Stage): boolean {
   return stage.some((w) => w.subs.some((sub) => parse(sub.text, sub.start).some((seg) => seg.length > 0 && stageDownloadsDirectly(seg[0]))));
 }
 
-function stageInterprets(stage: Stage): boolean {
+const STDIN_OPERANDS = new Set(["-", "/dev/stdin"]);
+const POSIX_SHELLS = new Set(["sh", "bash", "zsh", "dash", "ksh"]);
+/** PowerShell options that take a value (so the value isn't a command). */
+const PS_VALUE_OPTIONS = ["-executionpolicy", "-ep", "-windowstyle", "-inputformat", "-outputformat", "-configurationname", "-workingdirectory", "-settingsfile"];
+
+/**
+ * Whether a stage runs the content piped into it as code, by that program's
+ * own rules. A named script file runs that file, with the piped content as
+ * plain input; a program given on the command line (-c, -e, -m, -Command,
+ * -File) runs that program. Only an explicit stdin operand ("-",
+ * /dev/stdin), a stdin switch (sh -s), or no program at all means the input
+ * itself is run. An option whose value can't be told from a script name
+ * counts as a script name: no claim is made then. eval ignores stdin.
+ */
+function executesStdin(stage: Stage): boolean {
   const h = head(stage);
-  return h !== null && (INTERPRETERS.has(h.name) || h.name === "eval");
+  if (!h) return false;
+  const args = stage.slice(h.index + 1).map((w) => w.value);
+  const name = h.name;
+  if (POSIX_SHELLS.has(name)) {
+    for (let i = 0; i < args.length; i++) {
+      const a = args[i];
+      if (a === "--") return i + 1 >= args.length || STDIN_OPERANDS.has(args[i + 1]);
+      if (a === "-") return true;
+      if (/^-[a-zA-Z]+$/.test(a)) {
+        if (a.includes("c")) return false; // sh -c / -ec: runs the given string
+        if (a.includes("s")) return true; // sh -s: reads commands from stdin
+        continue;
+      }
+      if (a.startsWith("--")) continue; // --login, --noprofile, ...
+      return STDIN_OPERANDS.has(a); // a script file (or /dev/stdin)
+    }
+    return true; // no script: reads stdin
+  }
+  if (name === "node" || name === "python" || name === "python3" || name === "perl" || name === "ruby") {
+    const program = name === "node" ? ["-e", "--eval", "-p", "--print"] : name.startsWith("python") ? ["-c", "-m"] : ["-e", "-E"];
+    for (const a of args) {
+      if (program.includes(a) || (name === "node" && (a.startsWith("--eval=") || a.startsWith("--print=")))) return false;
+      if (STDIN_OPERANDS.has(a)) return true;
+      if (a.startsWith("-")) continue;
+      return false; // a script file
+    }
+    return true;
+  }
+  if (name === "pwsh" || name === "powershell") {
+    for (let i = 0; i < args.length; i++) {
+      const a = args[i].toLowerCase();
+      if (!a.startsWith("-") && !a.startsWith("/")) return false; // positional: a command
+      const opt = a.replace(/^\//, "-");
+      if (PS_VALUE_OPTIONS.some((o) => o.startsWith(opt) && opt.length >= 3) || opt === "-ex" || opt === "-w") {
+        i++;
+        continue;
+      }
+      if (opt === "-c" || (opt.length >= 3 && "-command".startsWith(opt)) || opt === "-f" || (opt.length >= 3 && "-file".startsWith(opt))) return args[i + 1] === "-";
+      if (opt === "-ec" || (opt.length >= 4 && "-encodedcommand".startsWith(opt))) return false;
+    }
+    return true; // no command or file: reads stdin
+  }
+  if (name === "iex" || name === "invoke-expression") return args.length === 0; // with an argument it runs that instead
+  if (name === "source" || name === ".") return args.length > 0 && STDIN_OPERANDS.has(args[0]);
+  return false;
 }
 
 function isBase64Decode(stage: Stage): boolean {
@@ -257,8 +337,11 @@ export function parseScript(text: string): ParsedScript {
 
 /**
  * R2. Detected forms:
- *  - a downloader stage piped into an interpreter stage: curl URL | sh,
- *    wget -qO- URL | bash, irm URL | iex, (New-Object Net.WebClient).DownloadString(URL) | iex;
+ *  - a downloader stage piped into a stage that runs its input as code (see
+ *    executesStdin): curl URL | sh, curl URL | node -, wget -qO- URL | bash,
+ *    irm URL | iex, (New-Object Net.WebClient).DownloadString(URL) | iex;
+ *    not curl URL | node script.js (the script runs; the download is its
+ *    input), not plain wget URL | sh (wget saves to a file by default);
  *  - an interpreter given a downloader's output as its script: bash <(curl URL),
  *    sh -c "$(curl URL)", source <(wget -qO- URL), eval "$(curl URL)";
  *  - PowerShell iex / Invoke-Expression applied to a download: iex (iwr URL), iex(irm URL),
@@ -272,7 +355,7 @@ export function downloadExecute(parsed: ParsedScript): number {
     for (const segment of command) {
       for (let i = 0; i < segment.length; i++) {
         const stage = segment[i];
-        if (stageDownloads(stage) && segment.slice(i + 1).some(stageInterprets)) return stage[0].start;
+        if (stageDownloads(stage) && segment.slice(i + 1).some(executesStdin)) return stage[0].start;
         const h = head(stage);
         if (!h) continue;
         if (INTERPRETERS.has(h.name) || h.name === "eval") {
@@ -302,7 +385,8 @@ const BASE64ISH = /^[A-Za-z0-9+/=]{20,}$/;
  *  - powershell / pwsh with an encoded command: -EncodedCommand or its prefixes
  *    down to -enc, -ec, and -e / -en followed by a base64-looking argument;
  *  - base64 decoding (base64 -d, base64 --decode, openssl base64 -d) piped into
- *    an interpreter or eval, or used as an interpreter's script ($(... | base64 -d));
+ *    a stage that runs its input as code (not into a named script, not into
+ *    eval), or used as an interpreter's script ($(... | base64 -d));
  *  - eval of a command substitution: eval "$(...)", eval `...`;
  *  - node -e / python -c scripts that decode base64 and evaluate it
  *    (node: "base64" with eval(; python: b64decode with exec( or eval().
@@ -326,7 +410,7 @@ export function encodedExecution(parsed: ParsedScript): number {
             if ((opt === "e" || opt === "en") && BASE64ISH.test(args[k + 1]?.value ?? "")) return stage[0].start;
           }
         }
-        if (isBase64Decode(stage) && segment.slice(i + 1).some(stageInterprets)) return stage[0].start;
+        if (isBase64Decode(stage) && segment.slice(i + 1).some(executesStdin)) return stage[0].start;
         if (h.name === "eval" && args.some((w) => w.subs.length > 0)) return stage[0].start;
         if (INTERPRETERS.has(h.name)) {
           for (const word of args) {

