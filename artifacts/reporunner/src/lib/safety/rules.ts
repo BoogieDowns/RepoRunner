@@ -205,14 +205,55 @@ function wgetToStdout(words: Word[]): boolean {
   return stdout;
 }
 
+/** curl short options that take no value (they may be followed by more options in the same word). */
+const CURL_FLAGS = new Set([..."012346aBfgGhiIjJklLMnNpqRsSvVZ#"]);
+/** curl short options that take a value: the rest of the word, or the next word. */
+const CURL_VALUE_OPTIONS = new Set([..."AbcCdDeEFHKmoPQrtTuUwxXyYz"]);
+
+/**
+ * curl writes the download to stdout unless told otherwise. It saves to a
+ * file with -o FILE / -oFILE / --output FILE / --output=FILE (FILE not "-" or
+ * /dev/stdout), or with -O / --remote-name(-all). Short options are read as
+ * curl reads them: value-less flags may share a word (-fsSL); "o" takes the
+ * rest of the word (-fsSLoout.sh) or else the next word (-fsSLo out.sh); any
+ * other value-taking option ends the word (-H, -d: the rest is their value,
+ * not an output). An unknown letter makes the word ambiguous: then a file is
+ * assumed, so no download-and-execute claim is made.
+ */
+function curlWritesToFile(words: Word[]): boolean {
+  let file = false;
+  const target = (value: string | undefined) => (file = value === undefined ? true : !STDOUT_TARGETS.has(value));
+  for (let i = 0; i < words.length; i++) {
+    const v = words[i].value;
+    if (v === "--output") target(words[++i]?.value);
+    else if (v.startsWith("--output=")) target(v.slice("--output=".length));
+    else if (v === "--remote-name" || v === "--remote-name-all") file = true;
+    else if (/^-[^-]/.test(v)) {
+      for (let k = 1; k < v.length; k++) {
+        const c = v[k];
+        if (c === "O") file = true;
+        else if (c === "o") {
+          target(k + 1 < v.length ? v.slice(k + 1) : words[++i]?.value);
+          break;
+        } else if (CURL_VALUE_OPTIONS.has(c)) {
+          if (k + 1 >= v.length) i++; // its value is the next word
+          break;
+        } else if (!CURL_FLAGS.has(c)) {
+          file = true; // unknown option letter: can't tell where the output goes
+          break;
+        }
+      }
+    }
+  }
+  return file;
+}
+
 /** curl/wget writing to a file (not stdout): a plain download, not direct execution. */
 function writesToFile(name: string, words: Word[]): boolean {
   if (name === "wget") return !wgetToStdout(words);
+  if (name === "curl") return curlWritesToFile(words);
   for (let i = 0; i < words.length; i++) {
     const v = words[i].value;
-    const next = words[i + 1]?.value;
-    if (name === "curl" && (v === "-o" || v === "--output" || /^-[a-zA-Z]+o$/.test(v))) return next !== "-";
-    if (name === "curl" && (v === "-O" || v === "--remote-name" || v === "--remote-name-all" || /^-[a-zA-Z]*O[a-zA-Z]*$/.test(v))) return true;
     if ((name === "iwr" || name === "invoke-webrequest" || name === "irm" || name === "invoke-restmethod") && /^-outf(i(le?)?)?$/i.test(v)) return true;
   }
   return false;
@@ -235,6 +276,28 @@ function stageDownloads(stage: Stage): boolean {
 
 const STDIN_OPERANDS = new Set(["-", "/dev/stdin"]);
 const POSIX_SHELLS = new Set(["sh", "bash", "zsh", "dash", "ksh"]);
+
+/**
+ * For a POSIX shell's arguments: the index of the command string given with
+ * -c, or -1. Any short-option word containing "c" (-c, -ec, -euc, -xc) makes
+ * the next non-option word the command string, as in sh and bash. A word
+ * that isn't an option, reached first, is a script name (no command string);
+ * so is anything after "--".
+ */
+function shellCommandIndex(words: readonly Word[]): number {
+  for (let i = 0; i < words.length; i++) {
+    const v = words[i].value;
+    if (v === "--" || v === "-") return -1;
+    if (/^-[a-zA-Z]+$/.test(v)) {
+      if (!v.includes("c")) continue;
+      for (let j = i + 1; j < words.length; j++) if (!/^-[a-zA-Z]+$/.test(words[j].value)) return j;
+      return -1;
+    }
+    if (v.startsWith("--")) continue; // --login, --norc, ...
+    return -1;
+  }
+  return -1;
+}
 /** PowerShell options that take a value (so the value isn't a command). */
 const PS_VALUE_OPTIONS = ["-executionpolicy", "-ep", "-windowstyle", "-inputformat", "-outputformat", "-configurationname", "-workingdirectory", "-settingsfile"];
 
@@ -319,9 +382,13 @@ function programSubstitutions(stage: Stage): Substitution[] {
   const asScript = (w: Word | undefined) => (w ? w.subs.filter((sub) => sub.kind === "process") : []);
   if (name === "eval" || name === "iex" || name === "invoke-expression") return words.flatMap(asCode);
   if (POSIX_SHELLS.has(name) || name === "source" || name === ".") {
+    if (POSIX_SHELLS.has(name)) {
+      const command = shellCommandIndex(words);
+      if (command >= 0) return asCode(words[command]);
+    }
     for (let i = 0; i < words.length; i++) {
       const v = words[i].value;
-      if (POSIX_SHELLS.has(name) && /^-[a-zA-Z]+$/.test(v) && v.includes("c")) return asCode(words[i + 1]);
+      if (POSIX_SHELLS.has(name) && /^-[a-zA-Z]+$/.test(v) && v.includes("c")) return [];
       if (POSIX_SHELLS.has(name) && (/^-[a-zA-Z]+$/.test(v) || v.startsWith("--"))) continue;
       return asScript(words[i]); // the script position; later words are its arguments
     }
@@ -349,6 +416,25 @@ function programSubstitutions(stage: Stage): Substitution[] {
   return [];
 }
 
+/**
+ * The program text node (-e, --eval, --eval=, -p, --print, --print=) or
+ * python (-c) is given on its command line, or null. Options are read only
+ * up to the first script name (node tools/check.js -e '...': the -e belongs
+ * to the script) or python -m MODULE.
+ */
+function evaluatedProgram(name: string, args: readonly Word[]): string | null {
+  const flags = name === "node" ? ["-e", "--eval", "-p", "--print"] : ["-c"];
+  for (let k = 0; k < args.length; k++) {
+    const v = args[k].value;
+    if (flags.includes(v)) return args[k + 1]?.value ?? null;
+    if (name === "node" && (v.startsWith("--eval=") || v.startsWith("--print="))) return v.slice(v.indexOf("=") + 1);
+    if (name !== "node" && v === "-m") return null;
+    if (v.startsWith("-") && v !== "-") continue;
+    return null; // a script (or stdin): the rest are its arguments
+  }
+  return null;
+}
+
 function isBase64Decode(stage: Stage): boolean {
   const h = head(stage);
   if (!h) return false;
@@ -362,15 +448,18 @@ function isBase64Decode(stage: Stage): boolean {
 function nestedTexts(stage: Stage): { text: string; start: number }[] {
   const out: { text: string; start: number }[] = stage.flatMap((w) => w.subs);
   const h = head(stage);
-  if (h && SHELLS_WITH_SCRIPT_ARG.has(h.name)) {
+  if (h && POSIX_SHELLS.has(h.name)) {
     const words = stage.slice(h.index + 1);
-    const isPowerShell = h.name === "pwsh" || h.name === "powershell";
+    const command = shellCommandIndex(words);
+    if (command >= 0) out.push({ text: words[command].value, start: words[command].start });
+  } else if (h && SHELLS_WITH_SCRIPT_ARG.has(h.name)) {
+    const words = stage.slice(h.index + 1);
     for (let i = 0; i < words.length; i++) {
       const v = words[i].value.toLowerCase();
-      const scriptFlag = h.name === "cmd" ? v === "/c" || v === "/k" : isPowerShell ? v === "-c" || (v.length >= 3 && "-command".startsWith(v)) : v === "-c";
+      const scriptFlag = h.name === "cmd" ? v === "/c" || v === "/k" : v === "-c" || (v.length >= 3 && "-command".startsWith(v));
       if (!scriptFlag || i + 1 >= words.length) continue;
-      // PowerShell -Command takes the rest of the line; sh -c and cmd /c take one argument (cmd: the rest).
-      const rest = isPowerShell || h.name === "cmd" ? words.slice(i + 1) : [words[i + 1]];
+      // PowerShell -Command and cmd /c take the rest of the line.
+      const rest = words.slice(i + 1);
       out.push({ text: rest.map((w) => w.value).join(" "), start: rest[0].start });
       break;
     }
@@ -479,12 +568,11 @@ export function encodedExecution(parsed: ParsedScript): number {
           if (nested.some((seg) => seg.some(isBase64Decode))) return stage[0].start;
         }
         if (h.name === "node" || h.name === "python" || h.name === "python3") {
-          for (let k = 0; k < args.length - 1; k++) {
-            const flag = args[k].value;
-            const script = args[k + 1].value.toLowerCase();
-            if (h.name === "node" && (flag === "-e" || flag === "--eval" || flag === "-p" || flag === "--print") && script.includes("base64") && script.includes("eval(")) return stage[0].start;
-            if (h.name !== "node" && flag === "-c" && script.includes("b64decode") && (script.includes("exec(") || script.includes("eval("))) return stage[0].start;
-          }
+          // Only the interpreter's own options, before a script or module: what follows belongs to that program.
+          const program = evaluatedProgram(h.name, args);
+          const text = program?.toLowerCase() ?? "";
+          if (h.name === "node" && text.includes("base64") && text.includes("eval(")) return stage[0].start;
+          if (h.name !== "node" && text.includes("b64decode") && (text.includes("exec(") || text.includes("eval("))) return stage[0].start;
         }
       }
     }
