@@ -1,6 +1,7 @@
 // Blocked filesystem calls (Finding A) and unknown directory-entry types
 // (Finding B). Blocking is simulated with deferred gates on fs.promises, so
 // no real hanging drive is needed.
+import { getEventListeners } from "node:events";
 import fs from "node:fs";
 import path from "node:path";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
@@ -38,9 +39,48 @@ function blockFs(method: FsMethod, matches: (p: string) => boolean) {
   return { entered, release };
 }
 
-const within = <T>(promise: Promise<T>, ms: number) =>
-  Promise.race([promise, new Promise<never>((_, reject) => setTimeout(() => reject(new Error(`not settled within ${ms} ms`)), ms))]);
-const timers = () => process.getActiveResourcesInfo().filter((r) => r === "Timeout").length;
+/** Rejects if `promise` takes longer than `ms`. Its own timer is cleared either way, so it can't outlive the test. */
+const within = <T>(promise: Promise<T>, ms: number) => {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const late = new Promise<never>((_, reject) => (timer = setTimeout(() => reject(new Error(`not settled within ${ms} ms`)), ms)));
+  return Promise.race([promise, late]).finally(() => clearTimeout(timer));
+};
+
+/**
+ * Counts the timers set while tracking is on that are still pending (neither
+ * cleared nor fired). Only timers created through setTimeout from then on are
+ * seen, so timers set earlier (by other tests or Vitest) can't change the
+ * count when they fire. A process-wide count could: an earlier test's timer
+ * expiring mid-check made it one lower than before.
+ */
+function trackTimers() {
+  const realSetTimeout = globalThis.setTimeout;
+  const realClearTimeout = globalThis.clearTimeout;
+  const pending = new Set<unknown>();
+  let created = 0;
+  vi.spyOn(globalThis, "setTimeout").mockImplementation(((callback: (...a: unknown[]) => void, ms?: number, ...args: unknown[]) => {
+    const handle = realSetTimeout(() => {
+      pending.delete(handle);
+      callback(...args);
+    }, ms);
+    pending.add(handle);
+    created++;
+    return handle;
+  }) as never);
+  vi.spyOn(globalThis, "clearTimeout").mockImplementation(((handle: unknown) => {
+    pending.delete(handle);
+    realClearTimeout(handle as never);
+  }) as never);
+  return {
+    get created() {
+      return created;
+    },
+    get pending() {
+      return pending.size;
+    },
+  };
+}
+const abortListeners = (signal: AbortSignal) => getEventListeners(signal, "abort").length;
 
 describe("Finding A: cancel and timeout answer promptly while a filesystem call is blocked", () => {
   it("cancel during root resolution: prompt cancelled answer; ownership held until the call returns; no overlap", async () => {
@@ -143,18 +183,44 @@ describe("Finding A: cancel and timeout answer promptly while a filesystem call 
     }
   });
 
-  it("no timers or abort listeners are left once the work settles", async () => {
-    const root = space.repo("timer cleanup", { "package.json": pkg({ name: "x" }) });
-    const before = timers();
+  it.each(["cancelled", "timed out", "completed"] as const)("no timers or abort listeners are left once the work settles (%s)", async (outcome) => {
+    const root = space.repo(`timer cleanup ${outcome}`, { "package.json": pkg({ name: "x" }) });
     const gate = blockFs("realpath", (p) => p === root);
+    const timers = trackTimers();
     const controller = new AbortController();
-    const run = startScan(root, { signal: controller.signal });
+    const run = startScan(root, { signal: controller.signal, ...(outcome === "timed out" ? { limits: { timeBudgetMs: 20 } } : {}) });
     await gate.entered;
-    controller.abort();
-    await run.result;
+    // The scan's own time budget and abort listener are in place, so the checks below measure something.
+    expect(timers.pending).toBeGreaterThan(0);
+    expect(abortListeners(controller.signal)).toBe(1);
+    if (outcome === "cancelled") controller.abort();
+    if (outcome !== "completed") expect((await within(run.result, 1000)).status).toBe(outcome === "cancelled" ? "cancelled" : "timed-out");
     gate.release();
-    await run.settled;
-    expect(timers()).toBe(before);
+    await within(run.settled, 2000);
+    if (outcome === "completed") expect((await run.result).status).toBe("complete");
+    expect(timers.pending).toBe(0);
+    expect(abortListeners(controller.signal)).toBe(0);
+  });
+
+  it("the timer check ignores unrelated timers firing meanwhile, and still sees a leaked one", async () => {
+    // The original false failure: a timer set before the check fires while the scan is held.
+    let fired = false;
+    setTimeout(() => (fired = true), 1);
+    const root = space.repo("timer cleanup unrelated", { "package.json": pkg({ name: "x" }) });
+    const gate = blockFs("realpath", (p) => p === root);
+    const timers = trackTimers();
+    const run = startScan(root);
+    await gate.entered;
+    await new Promise((resolve) => globalThis.setTimeout(resolve, 20));
+    expect(fired).toBe(true);
+    gate.release();
+    await within(run.settled, 2000);
+    expect(timers.pending).toBe(0);
+    // A timer that is never cleared is counted.
+    const leaked = setTimeout(() => {}, 60_000);
+    expect(timers.pending).toBe(1);
+    clearTimeout(leaked);
+    expect(timers.pending).toBe(0);
   });
 
   it("the time budget now covers root resolution (it used to start after it)", async () => {
