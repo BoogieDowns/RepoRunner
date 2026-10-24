@@ -9,10 +9,11 @@ import {
   NODE_RUNNERS,
   ORCHESTRATORS,
   RUN_SCRIPT_CANDIDATES,
-  classifyScript,
   commandSegments,
   invokedTool,
   leadingWords,
+  analyzedCommand,
+  classifyPackageScript,
   onlyBuilds,
   runEvidenceText,
   runStrength,
@@ -183,7 +184,8 @@ function orchestrationOf(rootPackage: PackageSummary): OrchestrationSignal[] {
   const signals: OrchestrationSignal[] = [];
   for (const script of rootPackage.scripts) {
     // With quotes, only the program the command starts with can be named.
-    const segments = usesShellQuoting(script.command) ? [leadingWords(script.command)] : commandSegments(script.command);
+    const command = analyzedCommand(script);
+    const segments = usesShellQuoting(command) ? [leadingWords(command)] : commandSegments(command);
     for (const tokens of segments) {
       if (tokens.length === 0) continue;
       const match = ORCHESTRATORS.find((o) => o.match(tokens));
@@ -247,13 +249,13 @@ function detectFrameworks(pkg: PackageSummary, directory: string, context: Conte
     if (!depsMatched) evidence.length = 0;
 
     const config = files.find((file) => rule.configFiles.some((pattern) => pattern.test(file)));
-    const script = rule.scriptTools.length > 0 ? pkg.scripts.find((s) => invokedTool(s.command, rule.scriptTools)) : undefined;
+    const script = rule.scriptTools.length > 0 ? pkg.scripts.find((s) => invokedTool(analyzedCommand(s), rule.scriptTools)) : undefined;
     const identifiedIndirectly = (config && rule.configIdentifies) || (script && rule.scriptIdentifies);
     if (!depsMatched && !identifiedIndirectly) continue;
 
     if (config) evidence.push({ kind: "config-file", text: `${directory === "." ? config : `${directory}/${config}`} is present` });
     if (script) {
-      const tool = invokedTool(script.command, rule.scriptTools) as ScriptTool;
+      const tool = invokedTool(analyzedCommand(script), rule.scriptTools) as ScriptTool;
       evidence.push({ kind: "script", text: `Script ${quote(script.name)} invokes ${tool.tool}` });
     }
 
@@ -382,8 +384,9 @@ function detectRunnability(pkg: PackageSummary, frameworks: FrameworkDetection[]
   let confidence: Confidence = "low";
   for (const name of candidates) {
     const script = scripts.find((s) => s.name === name)!;
-    const classification = classifyScript(script.command, frameworkIds);
+    const classification = classifyPackageScript(script, frameworkIds);
     evidence.push({ kind: "script", text: runEvidenceText(name, classification) });
+    if (classification.commandAltered && !uncertainties.includes("script-commands-altered")) uncertainties.push("script-commands-altered");
     if (onlyBuilds(classification)) {
       buildOnlyScripts.push(name);
       continue;
@@ -455,9 +458,9 @@ function detectRuntimes(
       break;
     }
   }
-  const nodeScript = pkg.scripts.find((s) => invokedTool(s.command, NODE_RUNNERS));
+  const nodeScript = pkg.scripts.find((s) => invokedTool(analyzedCommand(s), NODE_RUNNERS));
   if (nodeScript) {
-    node.push({ kind: "script", text: `Script ${quote(nodeScript.name)} starts ${invokedTool(nodeScript.command, NODE_RUNNERS)!.tool}` });
+    node.push({ kind: "script", text: `Script ${quote(nodeScript.name)} starts ${invokedTool(analyzedCommand(nodeScript), NODE_RUNNERS)!.tool}` });
     nodeConfidence = "high";
   }
   if (frameworks.length > 0) {
@@ -474,9 +477,9 @@ function detectRuntimes(
     bun.push(...bunCandidate.evidence);
     bunConfidence = bunCandidate.evidence.some((e) => e.kind === "lockfile" || e.kind === "package-manager-field") ? "high" : "medium";
   }
-  const bunScript = pkg.scripts.find((s) => invokedTool(s.command, BUN_RUNNERS));
+  const bunScript = pkg.scripts.find((s) => invokedTool(analyzedCommand(s), BUN_RUNNERS));
   if (bunScript) {
-    bun.push({ kind: "script", text: `Script ${quote(bunScript.name)} runs ${invokedTool(bunScript.command, BUN_RUNNERS)!.tool}` });
+    bun.push({ kind: "script", text: `Script ${quote(bunScript.name)} runs ${invokedTool(analyzedCommand(bunScript), BUN_RUNNERS)!.tool}` });
     if (bunConfidence === "low") bunConfidence = "medium";
   }
   if (bun.length > 0) signals.push({ runtime: "bun", confidence: capAt(bunConfidence, context.scanCap), evidence: bun });
@@ -503,7 +506,7 @@ function roleOf(directory: string, frameworks: FrameworkDetection[], runnability
   if (runnability.status === "has-run-script") {
     const startsNode = runnability.runScripts.some((name) => {
       const script = pkg.scripts.find((s) => s.name === name);
-      return script ? invokedTool(script.command, NODE_RUNNERS) !== null : false;
+      return script ? invokedTool(analyzedCommand(script), NODE_RUNNERS) !== null : false;
     });
     if (startsNode) return "node-app";
   }

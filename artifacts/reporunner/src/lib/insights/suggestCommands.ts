@@ -19,9 +19,9 @@
 // hooks depends on the manager and its settings (npm and Yarn 1 do; Yarn 2+
 // doesn't; pnpm and Bun depend on version and configuration). Hook caveats
 // therefore say "may run".
-import type { PackageManagerName, PackageSummary, RepoScanResult } from "../../types";
+import type { PackageManagerName, PackageScript, PackageSummary, RepoScanResult } from "../../types";
 import { detectProjects, directoryOf } from "./detectProjects";
-import { RUN_SCRIPT_CANDIDATES, classifyScript, runEvidenceText, runStrength, unsupportedInvocations } from "./frameworkRules";
+import { RUN_SCRIPT_CANDIDATES, analyzedCommand, classifyPackageScript, runEvidenceText, runStrength, unsupportedInvocations } from "./frameworkRules";
 import { invocableScripts, scriptNameProblemText, unusableScriptNames } from "./scriptNames";
 import { relativeTo, unknownMembershipText, workspaceMembership, type Membership } from "./workspaceMembership";
 import type {
@@ -156,14 +156,14 @@ function scriptSuggestions(insight: PackageInsight, pkg: PackageSummary, insight
     // A script that invokes a recognized-but-unsupported framework (Nuxt,
     // Astro, Remix) anywhere isn't suggested, even when it also starts a
     // supported one ("vite & astro dev") or the package uses a supported one.
-    const unsupported = unsupportedInvocations(script.command);
+    const unsupported = unsupportedInvocations(analyzedCommand(script));
     if (unsupported.length > 0) {
       const labels = unsupported.map((u) => u.label).join(" and ");
       skip("unsupported-framework", `Script "${name}" in ${insight.packagePath} runs ${labels}, which RepoRunner doesn't suggest commands for yet.`);
       continue;
     }
     const orchestration = orchestrated.find((o) => o.scriptName === name)?.tool ?? null;
-    out.push(...forEachManager(insight, pkg, name, script.command, orchestration));
+    out.push(...forEachManager(insight, pkg, name, script, orchestration));
   }
   return out;
 }
@@ -179,12 +179,12 @@ function scriptSuggestions(insight: PackageInsight, pkg: PackageSummary, insight
 function scriptStrength(
   insight: PackageInsight,
   name: string,
-  command: string,
+  script: PackageScript,
   purpose: SuggestionPurpose,
 ): { strength: Confidence; evidence: Evidence[]; servesPreview: boolean } {
-  const classification = classifyScript(command, insight.frameworks.map((f) => f.id));
+  const classification = classifyPackageScript(script, insight.frameworks.map((f) => f.id));
   const evidence: Evidence[] = [];
-  if (classification.kind !== null || classification.quoting) evidence.push({ kind: "script", text: runEvidenceText(name, classification) });
+  if (classification.kind !== null || classification.quoting || classification.commandAltered) evidence.push({ kind: "script", text: runEvidenceText(name, classification) });
   let strength = runStrength(classification, insight.frameworks);
   const serves = classification.kind === "develop" ? "develop" : classification.kind === "start" ? "start" : null;
   if (serves && serves !== purpose) {
@@ -198,7 +198,7 @@ function forEachManager(
   insight: PackageInsight,
   pkg: PackageSummary,
   name: string,
-  scriptText: string,
+  script: PackageScript,
   orchestration: CommandSuggestion["orchestration"],
 ): CommandSuggestion[] {
   const purpose = purposeOf(name);
@@ -209,7 +209,8 @@ function forEachManager(
     purpose,
     source: "script" as const,
     scriptName: name,
-    scriptCommandText: scriptText,
+    scriptCommandText: script.command,
+    scriptCommandExact: script.commandExact === true,
     scanIncomplete: insight.uncertainties.includes("scan-incomplete"),
     orchestration,
     frameworks: insight.frameworks.map((f) => f.id),
@@ -218,10 +219,16 @@ function forEachManager(
   const caveats: Caveat[] = [NOT_VERIFIED_SCRIPT, RUNS_REPOSITORY_SCRIPT];
   const caps: Confidence[] = [];
 
-  const { strength, evidence: strengthEvidence, servesPreview } = scriptStrength(insight, name, scriptText, purpose);
+  const { strength, evidence: strengthEvidence, servesPreview } = scriptStrength(insight, name, script, purpose);
   evidence.push(...strengthEvidence);
   caps.push(strength);
 
+  if (script.commandExact !== true) {
+    caveats.push({
+      code: "script-command-altered",
+      text: "The script's command was changed or shortened for display (line breaks, spacing, hidden characters or length), so the text shown isn't an exact copy and what it runs can't be fully determined.",
+    });
+  }
   // Low confidence for a preview comes from the command's invocation kind
   // (scriptStrength); the name alone doesn't decide.
   if (name === "preview" || servesPreview) {
@@ -484,6 +491,7 @@ function installSuggestions(result: RepoScanResult, insights: ProjectInsights, s
         source: "install",
         scriptName: null,
         scriptCommandText: null,
+        scriptCommandExact: null,
         packageManager: manager,
         command: manager ? INSTALL_COMMAND[manager] : null,
         unavailableReason: manager ? null : "package-manager-unknown",

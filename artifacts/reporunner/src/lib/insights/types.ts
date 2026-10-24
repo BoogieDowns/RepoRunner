@@ -41,7 +41,9 @@ export type UncertaintyCode =
   | "unrecognized-package-manager-field"
   | "multiple-frameworks"
   | "indirect-evidence-only"
-  | "script-names-unusable";
+  | "script-names-unusable"
+  /** A run script's command was changed for display, so it couldn't be classified. */
+  | "script-commands-altered";
 
 export type FrameworkId =
   | "react-vite"
@@ -185,7 +187,8 @@ export type CaveatCode =
   | "workspace-membership-unknown"
   | "members-unconfirmed"
   | "nested-workspace-root"
-  | "workspace-ownership-ambiguous";
+  | "workspace-ownership-ambiguous"
+  | "script-command-altered";
 
 export interface Caveat {
   code: CaveatCode;
@@ -206,6 +209,8 @@ export interface CommandSuggestion {
   scriptName: string | null;
   /** What that script runs, as passive text for review. Never part of `command`. */
   scriptCommandText: string | null;
+  /** False when that text was changed for display (not an exact copy of the script); null for installs. */
+  scriptCommandExact: boolean | null;
   /** The package manager this alternative uses; null when it couldn't be determined. */
   packageManager: PackageManagerName | null;
   /**

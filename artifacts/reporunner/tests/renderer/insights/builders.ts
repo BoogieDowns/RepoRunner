@@ -25,7 +25,7 @@ export function pkg(path: string, options: PkgOptions = {}): PackageSummary {
     packageManager: options.packageManager ?? null,
     engines: { node: options.node ?? null },
     // Builders describe exact package.json names; scriptNames.test.ts covers altered ones.
-    scripts: Object.entries(options.scripts ?? {}).map(([name, command]) => ({ name, nameExact: true, command })),
+    scripts: Object.entries(options.scripts ?? {}).map(([name, command]) => ({ name, nameExact: true, command, commandExact: true })),
     scriptsTruncated: options.scriptsTruncated ?? false,
     dependencies: options.deps ?? [],
     devDependencies: options.dev ?? [],

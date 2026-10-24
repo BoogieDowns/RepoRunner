@@ -172,7 +172,8 @@ function CommandRow({ suggestion }: { suggestion: CommandSuggestion }) {
           </ul>
           {suggestion.scriptCommandText !== null && (
             <p className="break-all" style={subtle}>
-              The script runs: <span style={{ ...MONO, color: "#9a9896" }}>{suggestion.scriptCommandText}</span>
+              {suggestion.scriptCommandExact === true ? "The script runs: " : "The script's command, changed for display (not an exact copy): "}
+              <span style={{ ...MONO, color: "#9a9896" }}>{suggestion.scriptCommandText}</span>
             </p>
           )}
           <ul className="list-disc space-y-0.5 pl-4" style={{ color: "#c8a2a6" }} data-testid="suggestion-caveats">

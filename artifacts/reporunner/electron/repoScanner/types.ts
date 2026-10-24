@@ -76,6 +76,14 @@ export interface PackageScript {
   nameExact: boolean;
   /** Passive text from package.json. RepoRunner never runs it on its own. */
   command: string;
+  /**
+   * True only when `command` is exactly the package.json value. False when
+   * cleaning for display changed it (line breaks or tabs turned into spaces,
+   * whitespace collapsed or trimmed, characters removed, shortened), so it
+   * doesn't show what the script runs: "vite build\nvite preview" is two
+   * commands, its display text one. The original is never included.
+   */
+  commandExact: boolean;
 }
 
 export interface PackageSummary {

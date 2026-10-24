@@ -140,6 +140,12 @@ function PackageCard({ pkg, open }: { pkg: PackageSummary; open: boolean }) {
                     </td>
                     <td className="break-all py-0.5" style={{ color: "#9a9896" }}>
                       {script.command}
+                      {script.commandExact !== true && (
+                        <span style={{ color: "#5a5856" }} data-testid="script-command-altered">
+                          {" "}
+                          (changed for display)
+                        </span>
+                      )}
                     </td>
                   </tr>
                 ))}

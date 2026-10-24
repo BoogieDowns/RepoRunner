@@ -52,7 +52,7 @@ describe("scanner: script-name integrity metadata", () => {
 
   it("2. the raw name is never exposed, only the cleaned one", () => {
     const summary = parsed({ scripts: { [`dev${ZWSP}`]: "vite" } });
-    expect(summary.scripts).toEqual([{ name: "dev", nameExact: false, command: "vite" }]);
+    expect(summary.scripts).toEqual([{ name: "dev", nameExact: false, command: "vite", commandExact: true }]);
     expect(JSON.stringify(summary)).not.toContain(ZWSP);
   });
 
@@ -224,7 +224,7 @@ describe("end to end: real scanner and suggestion engine", () => {
       "vite.config.ts": "export default {}",
     });
     const result = await scanRepository(hostile);
-    expect(result.packages[0].scripts).toEqual([{ name: "dev", nameExact: false, command: "vite" }]);
+    expect(result.packages[0].scripts).toEqual([{ name: "dev", nameExact: false, command: "vite", commandExact: true }]);
     const set = suggestCommands(result);
     expect(set.suggestions.filter((s) => s.source === "script")).toEqual([]);
     expect(set.skipped.some((s) => s.reason === "script-name-unusable")).toBe(true);

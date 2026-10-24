@@ -219,6 +219,30 @@ const MAX_TOKENS = 32;
 const ENV_ASSIGNMENT = /^[A-Za-z_][A-Za-z0-9_]*=/;
 const WRAPPERS = new Set(["cross-env", "npx", "bunx", "dotenv"]);
 
+/** A package.json script as Stage 2 reads it (see PackageScript). */
+export interface ScriptText {
+  command: string;
+  /** The scanner's integrity flag; missing means unverified. */
+  commandExact?: boolean;
+}
+
+/**
+ * The command text Stage 2 may analyze: the package.json command when the
+ * scanner kept it exactly, otherwise "" (nothing in it is detected or
+ * classified). Display cleaning can join lines ("vite build\nvite preview"
+ * shows as one command) or cut a command short, so altered text says
+ * nothing reliable about what the script runs.
+ */
+export function analyzedCommand(script: ScriptText): string {
+  return script.commandExact === true ? script.command : "";
+}
+
+/** classifyScript for a package.json script, honoring command integrity. */
+export function classifyPackageScript(script: ScriptText, frameworkIds: readonly FrameworkId[]): ScriptClassification {
+  if (script.commandExact !== true) return { kind: null, frameworkId: null, tool: null, commandAltered: true };
+  return classifyScript(script.command, frameworkIds);
+}
+
 /**
  * Whether a command uses quotes or escapes ("..." '...' `...` \). Inside them
  * &&, | or ; aren't separators and words aren't programs, so splitting the
@@ -385,6 +409,8 @@ export interface ScriptClassification {
   tool: string | null;
   /** The command uses quotes or escapes, so it wasn't classified (kind is null). */
   quoting?: true;
+  /** The scanner changed the command for display, so it wasn't classified (kind is null). */
+  commandAltered?: true;
   /** Some segment ran something RepoRunner doesn't recognize (npm run x, a custom tool): what it does is unknown. */
   unclassifiedSegments?: true;
 }
@@ -481,6 +507,7 @@ export function runEvidenceText(scriptName: string, classification: ScriptClassi
     case "other":
       return `${script} invokes ${classification.tool} in a way RepoRunner doesn't classify`;
     default:
+      if (classification.commandAltered) return `${script}'s command was changed or shortened for display, so what it runs can't be determined`;
       return classification.quoting
         ? `${script} uses quotes or escapes, which RepoRunner doesn't interpret, so what it runs isn't classified`
         : `${script} is defined`;
