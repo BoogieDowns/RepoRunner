@@ -184,7 +184,7 @@ function scriptStrength(
 ): { strength: Confidence; evidence: Evidence[]; servesPreview: boolean } {
   const classification = classifyScript(command, insight.frameworks.map((f) => f.id));
   const evidence: Evidence[] = [];
-  if (classification.kind !== null) evidence.push({ kind: "script", text: runEvidenceText(name, classification) });
+  if (classification.kind !== null || classification.quoting) evidence.push({ kind: "script", text: runEvidenceText(name, classification) });
   let strength = runStrength(classification, insight.frameworks);
   const serves = classification.kind === "develop" ? "develop" : classification.kind === "start" ? "start" : null;
   if (serves && serves !== purpose) {

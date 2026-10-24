@@ -11,7 +11,7 @@ import type { RepoScanResult } from "../../types";
 export type Membership =
   | { status: "member"; pattern: string }
   | { status: "not-member"; reason: "no-workspaces" | "no-pattern-matches" }
-  | { status: "unknown"; reason: "workspace-file-unread" | "pattern-unsupported" | "patterns-truncated" | "patterns-altered" | "negated-pattern" | "scan-incomplete" | "match-budget-exceeded" }
+  | { status: "unknown"; reason: "workspace-file-unread" | "pattern-unsupported" | "patterns-truncated" | "patterns-altered" | "negated-pattern" | "scan-incomplete" | "match-budget-exceeded" | "hidden-folder-wildcard" }
   /** A "workspaces" pattern matches, but a workspace file RepoRunner doesn't read decides membership instead. */
   | { status: "unknown"; reason: "workspace-file-governs"; pattern: string; file: string };
 
@@ -59,6 +59,15 @@ function patternSegments(pattern: string): string[] | null {
   return segments;
 }
 
+/**
+ * Whether a wildcard reaching a hidden folder (a name starting with ".")
+ * matches it depends on the package manager's glob options: npm's doesn't, and
+ * RepoRunner doesn't establish what the others do. So such a match is
+ * "uncertain": never a membership, and never a definite "not a member" either.
+ * A pattern that names the dot itself (".web", ".*") matches it plainly.
+ */
+const isHidden = (name: string) => name.startsWith(".");
+
 /** "*" in a segment matches any run of characters (not "/"). */
 function segmentMatches(pattern: string, name: string): boolean {
   const parts = pattern.split("*");
@@ -75,36 +84,51 @@ function segmentMatches(pattern: string, name: string): boolean {
   return true;
 }
 
-export type MatchOutcome = "match" | "no-match" | "budget-exceeded";
+export type MatchOutcome = "match" | "no-match" | "hidden-uncertain" | "budget-exceeded";
+
+// Per-state results, ordered so that the better of two alternatives is the larger.
+const NO = 1;
+const UNCERTAIN = 2; // matches only if a wildcard may reach a hidden folder
+const YES = 3;
 
 /**
  * Whether pattern segments match path segments ("**" matches zero or more
  * folders). Each (pattern position, path position) state is evaluated once and
  * remembered, so repeated "**" can't revisit the same splits; every evaluation
- * is taken from `budget`, and running out gives "budget-exceeded".
+ * is taken from `budget`, and running out gives "budget-exceeded". A match
+ * that needs "*" or "**" to cover a hidden folder is "hidden-uncertain"; a
+ * plain match elsewhere in the same pattern still wins.
  */
 export function matchSegments(pattern: readonly string[], path: readonly string[], budget: { remaining: number }): MatchOutcome {
   const width = path.length + 1;
-  const memo = new Int8Array((pattern.length + 1) * width); // 0 not evaluated, 1 match, 2 no match
+  const memo = new Int8Array((pattern.length + 1) * width); // 0 not evaluated, else NO / UNCERTAIN / YES
   let exhausted = false;
-  const matchesFrom = (i: number, j: number): boolean => {
+  const matchesFrom = (i: number, j: number): number => {
     const key = i * width + j;
-    if (memo[key] !== 0) return memo[key] === 1;
+    if (memo[key] !== 0) return memo[key];
     if (exhausted || budget.remaining <= 0) {
       exhausted = true;
-      return false;
+      return NO;
     }
     budget.remaining--;
-    let ok: boolean;
-    if (i === pattern.length) ok = j === path.length;
-    else if (pattern[i] === "**") ok = matchesFrom(i + 1, j) || (j < path.length && matchesFrom(i, j + 1));
-    else ok = j < path.length && segmentMatches(pattern[i], path[j]) && matchesFrom(i + 1, j + 1);
-    if (exhausted) return false;
-    memo[key] = ok ? 1 : 2;
-    return ok;
+    let r: number;
+    if (i === pattern.length) r = j === path.length ? YES : NO;
+    else if (pattern[i] === "**") {
+      r = matchesFrom(i + 1, j);
+      if (r !== YES && j < path.length) {
+        const deeper = matchesFrom(i, j + 1);
+        r = Math.max(r, isHidden(path[j]) ? Math.min(deeper, UNCERTAIN) : deeper);
+      }
+    } else if (j < path.length && segmentMatches(pattern[i], path[j])) {
+      r = matchesFrom(i + 1, j + 1);
+      if (isHidden(path[j]) && !pattern[i].startsWith(".")) r = Math.min(r, UNCERTAIN);
+    } else r = NO;
+    if (exhausted) return NO;
+    memo[key] = r;
+    return r;
   };
-  const ok = matchesFrom(0, 0);
-  return exhausted ? "budget-exceeded" : ok ? "match" : "no-match";
+  const r = matchesFrom(0, 0);
+  return exhausted ? "budget-exceeded" : r === YES ? "match" : r === UNCERTAIN ? "hidden-uncertain" : "no-match";
 }
 
 /** Folder "a/b" relative to ancestor "a" ("." for the root); null when it isn't below it. */
@@ -142,10 +166,13 @@ export function workspaceMembership(result: RepoScanResult, ancestor: string, di
   const scanIncomplete = result.status !== "complete" || result.manifestsTruncated || result.packagesTruncated;
 
   const budget = { remaining: matchBudget };
+  let hiddenUncertain = false;
   for (const { pattern, segments } of positives) {
     const outcome = matchSegments(segments, relative, budget);
     // Patterns left unchecked could still match it.
     if (outcome === "budget-exceeded") return { status: "unknown", reason: "match-budget-exceeded" };
+    // Keep looking: another pattern may match it plainly.
+    if (outcome === "hidden-uncertain") hiddenUncertain = true;
     if (outcome === "match") {
       // The rest of the gate: nothing that wasn't examined may overrule the match.
       if (governing) return { status: "unknown", reason: "workspace-file-governs", pattern, file: governing.path };
@@ -157,8 +184,9 @@ export function workspaceMembership(result: RepoScanResult, ancestor: string, di
     }
   }
 
-  // Nothing matched. That's a definite "not a member" only when every way of
-  // declaring membership was seen and understood.
+  // Nothing matched plainly. That's a definite "not a member" only when every
+  // way of declaring membership was seen and understood.
+  if (hiddenUncertain) return { status: "unknown", reason: "hidden-folder-wildcard" };
   const workspaceFileHere = result.manifests.some((m) => {
     const slash = m.path.lastIndexOf("/");
     const dir = slash < 0 ? "." : m.path.slice(0, slash);
@@ -177,6 +205,7 @@ const UNKNOWN_TEXT: Record<Exclude<Extract<Membership, { status: "unknown" }>["r
   "negated-pattern": "the workspaces list has exclusions RepoRunner doesn't interpret",
   "scan-incomplete": "the analysis didn't finish",
   "match-budget-exceeded": "the workspaces patterns were too complex to check completely",
+  "hidden-folder-wildcard": "it is in a hidden folder that a workspaces wildcard reaches, and package managers differ on whether wildcards include hidden folders",
 };
 
 export function unknownMembershipText(membership: Extract<Membership, { status: "unknown" }>): string {

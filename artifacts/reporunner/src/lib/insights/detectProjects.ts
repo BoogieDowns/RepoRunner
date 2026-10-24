@@ -12,9 +12,11 @@ import {
   classifyScript,
   commandSegments,
   invokedTool,
+  leadingWords,
   runEvidenceText,
   runStrength,
   packageManagerFromField,
+  usesShellQuoting,
   type FrameworkRule,
   type ScriptTool,
 } from "./frameworkRules";
@@ -179,7 +181,10 @@ function repositoryKind(
 function orchestrationOf(rootPackage: PackageSummary): OrchestrationSignal[] {
   const signals: OrchestrationSignal[] = [];
   for (const script of rootPackage.scripts) {
-    for (const tokens of commandSegments(script.command)) {
+    // With quotes, only the program the command starts with can be named.
+    const segments = usesShellQuoting(script.command) ? [leadingWords(script.command)] : commandSegments(script.command);
+    for (const tokens of segments) {
+      if (tokens.length === 0) continue;
       const match = ORCHESTRATORS.find((o) => o.match(tokens));
       if (match) {
         signals.push({ scriptName: script.name, tool: match.id, evidence: [{ kind: "script", text: `Root script ${quote(script.name)} invokes ${match.id}` }] });

@@ -220,26 +220,60 @@ const ENV_ASSIGNMENT = /^[A-Za-z_][A-Za-z0-9_]*=/;
 const WRAPPERS = new Set(["cross-env", "npx", "bunx", "dotenv"]);
 
 /**
+ * Whether a command uses quotes or escapes ("..." '...' `...` \). Inside them
+ * &&, | or ; aren't separators and words aren't programs, so splitting the
+ * text would read quoted text as commands (echo "ready && vite" doesn't start
+ * Vite). RepoRunner doesn't parse shell quoting; such a command is left
+ * unclassified instead.
+ */
+export function usesShellQuoting(command: string): boolean {
+  return /["'`\\]/.test(command);
+}
+
+/**
  * Splits a script's command text into command segments (on &&, ||, ;, |, &)
  * and each segment into whitespace tokens, skipping leading environment
  * assignments and simple wrappers (cross-env, npx). Bounded; never executes
- * or evaluates anything. Quotes are not interpreted: a quoted program name
- * simply won't match, which errs on the side of not detecting.
+ * or evaluates anything. A command that uses quotes or escapes has no
+ * segments (see usesShellQuoting): nothing in it is detected or classified.
  */
 export function commandSegments(command: string): string[][] {
   const segments: string[][] = [];
+  if (usesShellQuoting(command)) return segments;
   for (const raw of command.split(/&&|\|\||[;|&]/).slice(0, MAX_SEGMENTS)) {
-    let tokens = raw.trim().split(/\s+/).filter(Boolean).slice(0, MAX_TOKENS);
-    let guard = 0;
-    while (tokens.length > 0 && guard++ < 8) {
-      if (ENV_ASSIGNMENT.test(tokens[0])) tokens = tokens.slice(1);
-      else if (WRAPPERS.has(tokens[0])) tokens = tokens.slice(1);
-      else if ((tokens[0] === "pnpm" || tokens[0] === "npm") && (tokens[1] === "exec" || tokens[1] === "dlx")) tokens = tokens.slice(2);
-      else break;
-    }
+    const tokens = segmentTokens(raw);
     if (tokens.length > 0) segments.push(tokens);
   }
   return segments;
+}
+
+function segmentTokens(raw: string): string[] {
+  let tokens = raw.trim().split(/\s+/).filter(Boolean).slice(0, MAX_TOKENS);
+  let guard = 0;
+  while (tokens.length > 0 && guard++ < 8) {
+    if (ENV_ASSIGNMENT.test(tokens[0])) tokens = tokens.slice(1);
+    else if (WRAPPERS.has(tokens[0])) tokens = tokens.slice(1);
+    else if ((tokens[0] === "pnpm" || tokens[0] === "npm") && (tokens[1] === "exec" || tokens[1] === "dlx")) tokens = tokens.slice(2);
+    else break;
+  }
+  return tokens;
+}
+
+/**
+ * The unquoted words a command starts with, for naming the program it runs
+ * when the rest of it uses quotes: concurrently "npm:dev:*" is still
+ * concurrently. Only the text before the first quote or escape counts, only
+ * when no separator comes before it, and a word that runs into the quote
+ * (vite"x") is dropped. Arguments after it aren't seen, so this names the
+ * program but doesn't say what it does.
+ */
+export function leadingWords(command: string): string[] {
+  if (!usesShellQuoting(command)) return commandSegments(command)[0] ?? [];
+  const at = command.search(/["'`\\]/);
+  let lead = command.slice(0, at);
+  if (/[;|&]/.test(lead)) return [];
+  if (!/\s$/.test(lead)) lead = lead.replace(/\S+$/, "");
+  return segmentTokens(lead);
 }
 
 /** The first tool from `tools` that some segment of `command` invokes, if any. */
@@ -349,6 +383,8 @@ export interface ScriptClassification {
   /** The framework whose tool produced `kind` (null for runners or nothing recognized). */
   frameworkId: FrameworkId | null;
   tool: string | null;
+  /** The command uses quotes or escapes, so it wasn't classified (kind is null). */
+  quoting?: true;
 }
 
 const KIND_ORDER: Record<InvocationKind | "runner", number> = { develop: 5, start: 4, runner: 3, preview: 2, other: 1, build: 0 };
@@ -359,6 +395,7 @@ const KIND_ORDER: Record<InvocationKind | "runner", number> = { develop: 5, star
  * Only the given frameworks' tables are consulted. Bounded, never executes.
  */
 export function classifyScript(command: string, frameworkIds: readonly FrameworkId[]): ScriptClassification {
+  if (usesShellQuoting(command)) return { kind: null, frameworkId: null, tool: null, quoting: true };
   let best: ScriptClassification = { kind: null, frameworkId: null, tool: null };
   const better = (kind: InvocationKind | "runner") => best.kind === null || KIND_ORDER[kind] > KIND_ORDER[best.kind];
   for (const tokens of commandSegments(command)) {
@@ -425,6 +462,8 @@ export function runEvidenceText(scriptName: string, classification: ScriptClassi
     case "other":
       return `${script} invokes ${classification.tool} in a way RepoRunner doesn't classify`;
     default:
-      return `${script} is defined`;
+      return classification.quoting
+        ? `${script} uses quotes or escapes, which RepoRunner doesn't interpret, so what it runs isn't classified`
+        : `${script} is defined`;
   }
 }
