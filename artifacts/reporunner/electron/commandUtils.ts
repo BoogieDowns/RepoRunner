@@ -1,4 +1,5 @@
 import { spawn, type ChildProcess } from "child_process";
+import { buildChildEnvironment } from "./childEnvironment.js";
 
 const COMMAND_LABEL_PATTERN =
   /^(?:install|frontend|backend|pull)\s+command\s*:\s*/i;
@@ -60,7 +61,8 @@ export function prepareCommandForExecution(command: string): PreparedCommand {
 
 /** Starts a prepared command in `cwd`. The only place RepoRunner spawns configured commands. */
 export function spawnPreparedCommand(preparedCommand: PreparedCommand, cwd: string): ChildProcess {
-  const env = { ...process.env };
+  // RepoRunner's environment minus reserved secret names (see childEnvironment.ts).
+  const env = buildChildEnvironment(process.env);
   return preparedCommand.kind === "file"
     ? spawn(preparedCommand.file, preparedCommand.args, {
         cwd,

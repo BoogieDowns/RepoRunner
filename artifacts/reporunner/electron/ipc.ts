@@ -36,6 +36,7 @@ import {
   validateRepoPathDirectoryForSave,
 } from "./projectProfileValidation.js";
 import { clearLogs, emitLog, formatLogsForClipboard } from "./logSink.js";
+import { buildChildEnvironment } from "./childEnvironment.js";
 import { registerRepoAnalysisIpc } from "./repoAnalysisIpc.js";
 import { isTrustedSender, untrustedSenderError, type TrustedRenderer } from "./ipcTrust.js";
 
@@ -70,7 +71,7 @@ function runStreamingPull(cwd: string): Promise<void> {
     const child = spawn("git", ["pull"], {
       cwd,
       shell: false,
-      env: { ...process.env },
+      env: buildChildEnvironment(process.env),
     });
 
     
