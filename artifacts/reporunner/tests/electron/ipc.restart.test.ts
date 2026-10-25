@@ -2,6 +2,7 @@
 // process and port operations mocked. Nothing on the host can be terminated.
 import { EventEmitter } from "node:events";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { trustedRenderer } from "./fakeSender.js";
 
 type TreeKillCallback = (error?: Error) => void;
 type Handler = (event?: unknown, ...args: unknown[]) => Promise<unknown>;
@@ -77,10 +78,13 @@ let children: Map<number, FakeChild>;
 let nextPid: number;
 let processManager: typeof import("../../electron/processManager.js");
 
+const app = trustedRenderer();
+
 function handler(channel: string): Handler {
   const fn = h.handlers.get(channel);
   if (!fn) throw new Error(`No handler registered for ${channel}`);
-  return fn as Handler;
+  // Called as RepoRunner's own page, the only caller the handlers accept.
+  return (...args: unknown[]) => (fn as Handler)(app.event(), ...args);
 }
 
 async function run<T>(promise: Promise<T>): Promise<T> {
@@ -129,7 +133,7 @@ beforeEach(async () => {
   vi.resetModules();
   processManager = await import("../../electron/processManager.js");
   const ipc = await import("../../electron/ipc.js");
-  ipc.setupIpc();
+  ipc.setupIpc(app.trust);
 });
 
 afterEach(() => {
