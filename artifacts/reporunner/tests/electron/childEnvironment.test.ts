@@ -175,7 +175,7 @@ describe("repository-facing spawns use it", () => {
       const source = fs.readFileSync(path.join(dir, file), "utf8");
       expect(source, file).not.toMatch(/\.\.\.process\.env|Object\.assign\([^)]*process\.env|env:\s*process\.env/);
     }
-    expect(fs.readFileSync(path.join(dir, "commandUtils.ts"), "utf8")).toMatch(/const env = buildChildEnvironment\(process\.env\);/);
+    expect(fs.readFileSync(path.join(dir, "commandUtils.ts"), "utf8")).toMatch(/const env = withWindowsCommandLookupProtection\(buildChildEnvironment\(process\.env\)\);/);
     expect(fs.readFileSync(path.join(dir, "ipc.ts"), "utf8")).toMatch(/spawn\("git", \["pull"\], \{[^}]*env: buildChildEnvironment\(process\.env\),/);
   });
 });

@@ -36,6 +36,34 @@ export function isReservedSecretVariable(name: string, platform: NodeJS.Platform
 }
 
 /**
+ * When this variable is defined (any value), cmd.exe stops looking in the
+ * current directory for bare command names. RepoRunner runs saved commands
+ * with the repository as the current directory, so without it a repository
+ * could ship its own npm.cmd, node.cmd, git.cmd, ... and have it run instead
+ * of the real tool (issue #95). Explicit paths (.\gradlew.bat, C:\...) still
+ * work. Child cmd.exe processes inherit it.
+ */
+export const WINDOWS_NO_CWD_LOOKUP_VARIABLE = "NoDefaultCurrentDirectoryInExePath";
+
+/**
+ * A fresh copy of `env`. On Windows it also sets NoDefaultCurrentDirectoryInExePath=1,
+ * replacing any existing entry whatever its case so there is exactly one.
+ * Elsewhere nothing else changes (POSIX shells don't search the current directory).
+ */
+export function withWindowsCommandLookupProtection(env: NodeJS.ProcessEnv, platform: NodeJS.Platform = process.platform): NodeJS.ProcessEnv {
+  const out: NodeJS.ProcessEnv = {};
+  const protect = platform === "win32";
+  const target = WINDOWS_NO_CWD_LOOKUP_VARIABLE.toUpperCase();
+  for (const [name, value] of Object.entries(env)) {
+    if (typeof value !== "string") continue;
+    if (protect && name.toUpperCase() === target) continue;
+    Object.defineProperty(out, name, { value, enumerable: true, writable: true, configurable: true });
+  }
+  if (protect) out[WINDOWS_NO_CWD_LOOKUP_VARIABLE] = "1";
+  return out;
+}
+
+/**
  * A fresh copy of `base` without the reserved names. Only string values are
  * kept (an undefined value would mean "unset" anyway); `base` is not changed.
  */
