@@ -34,8 +34,10 @@ const FORMAT = "reporunner-credentials";
 const FORMAT_VERSION = 1;
 /** Larger than any real file of three encrypted keys; anything bigger is refused unread. */
 export const MAX_FILE_BYTES = 64 * 1024;
-export const MAX_SECRET_LENGTH = 8192;
-const MAX_ENCRYPTED_BASE64_LENGTH = 16 * 1024;
+/** Maximum credential size in UTF-8 bytes (not characters: multibyte text is counted by its encoded size). */
+export const MAX_SECRET_BYTES = 8192;
+/** Maximum stored (base64 ciphertext) length per slot. The writer checks it too, so it never writes a file the reader would refuse. */
+export const MAX_ENCRYPTED_BASE64_LENGTH = 16 * 1024;
 const BASE64 = /^[A-Za-z0-9+/]+={0,2}$/;
 
 export type CredentialStoreErrorCode =
@@ -119,7 +121,7 @@ function assertSlot(slot: unknown): asserts slot is CredentialSlot {
 }
 
 function assertSecret(secret: unknown): asserts secret is string {
-  if (typeof secret !== "string" || secret.length === 0 || secret.length > MAX_SECRET_LENGTH || /[\u0000\r\n]/.test(secret)) {
+  if (typeof secret !== "string" || secret.length === 0 || Buffer.byteLength(secret, "utf8") > MAX_SECRET_BYTES || /[\u0000\r\n]/.test(secret)) {
     throw new CredentialStoreError("invalid-secret");
   }
 }
@@ -206,7 +208,10 @@ export class CredentialStore {
         }
         if (!Buffer.isBuffer(encrypted) || encrypted.length === 0) throw new CredentialStoreError("encrypt-failed");
         const file = this.readFile() ?? { format: FORMAT, version: FORMAT_VERSION, credentials: {} };
-        this.writeFile({ ...file, credentials: { ...file.credentials, [slot]: encrypted.toString("base64") } });
+        const encoded = encrypted.toString("base64");
+        // Refuse here rather than write a value the reader would reject (which would block every slot).
+        if (encoded.length > MAX_ENCRYPTED_BASE64_LENGTH) throw new CredentialStoreError("invalid-secret");
+        this.writeFile({ ...file, credentials: { ...file.credentials, [slot]: encoded } });
         this.session.delete(slot);
         return;
       }
@@ -298,6 +303,8 @@ export class CredentialStore {
   /** Writes a new file next to the old one (owner-only where supported), syncs it, then renames it over. */
   private writeFile(file: StoredFile): void {
     const bytes = Buffer.from(JSON.stringify(file), "utf8");
+    // Never write a file larger than the reader accepts; the existing file stays as it is.
+    if (bytes.length > MAX_FILE_BYTES) throw new CredentialStoreError("write-failed");
     const tmp = path.join(this.dir, `${CREDENTIAL_FILE}.${crypto.randomBytes(6).toString("hex")}.tmp`);
     let fd: number | null = null;
     try {

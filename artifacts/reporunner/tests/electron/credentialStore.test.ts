@@ -12,7 +12,8 @@ import {
   CredentialStore,
   CredentialStoreError,
   MAX_FILE_BYTES,
-  MAX_SECRET_LENGTH,
+  MAX_ENCRYPTED_BASE64_LENGTH,
+  MAX_SECRET_BYTES,
   type CredentialFs,
   type SafeStorageLike,
 } from "../../electron/credentialStore.js";
@@ -274,10 +275,49 @@ describe("input validation", () => {
   });
 
   it("empty, oversized, multi-line or non-string secrets are refused", async () => {
-    for (const secret of ["", "x".repeat(MAX_SECRET_LENGTH + 1), "line1\nline2", "a\u0000b", 42, null]) {
+    for (const secret of ["", "x".repeat(MAX_SECRET_BYTES + 1), "line1\nline2", "a\u0000b", 42, null]) {
       expect((await failure(make().setCredential("byok-slot-1", secret as never, { remember: true }))).code).toBe("invalid-secret");
     }
     expect(listDir()).toEqual([]);
+  });
+});
+
+describe("the writer never produces a file the reader refuses (Codex P2 on #98)", () => {
+  it("a key over the limit in UTF-8 bytes is refused even when it has few characters; other slots stay usable", async () => {
+    const store = make();
+    await store.setCredential("byok-slot-2", SECRET_2, { remember: true });
+    const before = fs.readFileSync(file());
+    // 3,000 characters but 9,000 UTF-8 bytes: within a character limit, over the byte limit,
+    // and small enough that the ciphertext check alone wouldn't catch it.
+    const multibyte = "€".repeat(3000);
+    expect(multibyte.length).toBeLessThanOrEqual(MAX_SECRET_BYTES);
+    expect(Buffer.byteLength(multibyte, "utf8")).toBeGreaterThan(MAX_SECRET_BYTES);
+    expect(Buffer.from(multibyte).toString("base64").length + 8).toBeLessThan(MAX_ENCRYPTED_BASE64_LENGTH);
+    expect((await failure(store.setCredential("byok-slot-1", multibyte, { remember: true }))).code).toBe("invalid-secret");
+    expect(fs.readFileSync(file()).equals(before)).toBe(true);
+    const fresh = make();
+    expect((await fresh.getCredential("byok-slot-2")) === SECRET_2).toBe(true);
+    await fresh.removeCredential("byok-slot-2");
+    expect(await make().getCredential("byok-slot-2")).toBeNull();
+  });
+
+  it("ciphertext that would exceed the stored-value limit is refused before writing; existing keys are untouched", async () => {
+    await make().setCredential("byok-slot-2", SECRET_2, { remember: true });
+    const before = fs.readFileSync(file());
+    const inflating = make(fakeSafeStorage({ encryptString: () => Buffer.alloc(Math.ceil((MAX_ENCRYPTED_BASE64_LENGTH * 3) / 4) + 3, 0x41) }).store);
+    expect((await failure(inflating.setCredential("byok-slot-1", SECRET_1, { remember: true }))).code).toBe("invalid-secret");
+    expect(fs.readFileSync(file()).equals(before)).toBe(true);
+    expect(listDir()).toEqual([CREDENTIAL_FILE]);
+    expect((await make().getCredential("byok-slot-2")) === SECRET_2).toBe(true);
+  });
+
+  it("the largest accepted key in every slot still produces a readable file", async () => {
+    const big = (n: number) => `${n}`.repeat(MAX_SECRET_BYTES);
+    const store = make();
+    for (const [i, slot] of CREDENTIAL_SLOTS.entries()) await store.setCredential(slot, big(i + 1).slice(0, MAX_SECRET_BYTES), { remember: true });
+    expect(fs.statSync(file()).size).toBeLessThanOrEqual(MAX_FILE_BYTES);
+    const fresh = make();
+    for (const [i, slot] of CREDENTIAL_SLOTS.entries()) expect((await fresh.getCredential(slot)) === big(i + 1).slice(0, MAX_SECRET_BYTES), slot).toBe(true);
   });
 });
 
