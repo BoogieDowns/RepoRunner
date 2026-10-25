@@ -30,13 +30,14 @@ If a feature request falls outside the core run-loop (pull → install → start
 
 ### Approved future directions (each needs separate authorization)
 
-RepoRunner is planned to become one app with three editions: **Free**, **BYOK** (bring your own AI provider key) and **Cloud**. See [Architecture notes](../../docs/ARCHITECTURE_NOTES.md#three-edition-direction). None of this is implemented yet. The following may be built **only when a task explicitly authorizes that stage**:
+RepoRunner is planned to become one app with three editions (planning names, not yet published branding): **RepoRunner Free**, **RepoRunner BYOK Pro** (one-time purchase; the user's own AI provider key or a compatible local AI) and **RepoRunner Cloud Pro** (subscription; managed AI with a RepoRunner account). There is no separate fourth "RepoRunner Pro" edition. See [Architecture notes](../../docs/ARCHITECTURE_NOTES.md#three-edition-direction) for the confirmed decisions and what is still open. None of this is implemented yet. The following may be built **only when a task explicitly authorizes that stage**:
 
-- Free, BYOK and Cloud edition capabilities, through one central capability and entitlement model
-- Optional AI-powered repository assistance that explains or suggests, and never acts by itself
-- BYOK credential configuration for a supported AI provider
-- Browser-based sign-in for Cloud accounts (system browser, OAuth/OIDC with PKCE)
-- Server-side managed AI operations for Cloud
+- Free, BYOK Pro and Cloud Pro edition capabilities, through one central capability and entitlement model
+- Optional AI-powered repository assistance that explains or suggests, and never acts by itself. Planned in this order: (1) AI-assisted setup recommendations, (2) explanations of failed runs from user-approved log excerpts
+- BYOK Pro AI configuration: a supported provider API key, or a compatible local AI endpoint
+- BYOK Pro license handling (the activation and verification design is not decided yet)
+- Browser-based sign-in for Cloud Pro accounts (system browser, OAuth/OIDC with PKCE)
+- Server-side managed AI operations for Cloud Pro
 - Entitlement, quota and usage enforcement
 
 ### Guardrails for edition, account and AI work
@@ -47,13 +48,14 @@ These always apply, whatever a task authorizes, unless the product owner explici
 - **Opt-in only.** Accounts, provider keys and AI features are additions the user turns on. Nothing is enabled or sent by default.
 - **No automatic upload.** Repository content (files, scripts, logs, paths) is never sent anywhere automatically. Each AI request shows what will be sent and needs the user's consent.
 - **No automatic execution.** AI output is shown as plain text. It never runs repository scripts or commands, and never applies or saves setup changes by itself.
-- **Secrets stay in the main process.** Provider keys and account tokens are never returned to the renderer over IPC, never written to `reporunner-project.json` or other ordinary setup/settings files, never logged, and never put in the environment of processes RepoRunner starts.
+- **A license is not readiness.** A valid BYOK Pro license only permits AI features; they are usable only once a supported provider key or local AI endpoint is configured. Cloud Pro features need a signed-in account and an entitlement confirmed by the backend. Free local features never depend on AI, a license or an account.
+- **Secrets stay in the main process.** Provider keys, license secrets and account tokens are never returned to the renderer over IPC, never written to `reporunner-project.json` or other ordinary setup/settings files, never logged, and never put in the environment of processes RepoRunner starts.
 - **Enforcement at the right boundary.** The renderer only displays capabilities. Desktop-sensitive operations are enforced in the main process; managed Cloud services are enforced by the backend. A disabled button is not security.
 - **Hardening stays.** Keep the Electron sandbox, context isolation, the production Content Security Policy (including `connect-src 'none'` for the renderer), navigation and new-window blocking, permission denial, and the read-only scanner and its limits. Don't loosen them to add accounts or AI.
-- **Narrow network access.** Each new network integration must be explicitly authorized and limited to named endpoints for a named purpose. No general-purpose proxy, no arbitrary URLs, no unrestricted AI network access.
+- **Narrow network access.** Each new network integration must be explicitly authorized and limited to named endpoints for a named purpose. No general-purpose proxy, no arbitrary URLs, no unrestricted AI network access. A local AI endpoint is also a named endpoint the user configures, and it gets the same consent and data-disclosure rules.
 - **Out of scope unless separately approved:** cloud sync of repositories or setups, remote command execution, broader scanner access, and GitHub OAuth.
 
-Don't remove the 5-saved-setup limit (`MAX_FREE_REPO_PROFILES`) or change edition wording in the UI unless a task authorizes it.
+Don't remove the 5-saved-setup limit (`MAX_FREE_REPO_PROFILES`) or change edition wording in the UI unless a task authorizes it. The Setup screen's current "RepoRunner Pro" text is a pending terminology migration, not a fourth edition and not permission to change the copy.
 
 ---
 
