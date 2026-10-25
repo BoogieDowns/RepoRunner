@@ -21,6 +21,7 @@ import {
 import { parsePortFromUrl } from "./portManager.js";
 import {
   prepareCommandForExecution,
+  projectLocalToolHint,
   sanitizeCommandInput,
   spawnPreparedCommand,
 } from "./commandUtils.js";
@@ -169,6 +170,8 @@ function runStreamingInstall(
           : `Install failed with code ${code ?? "unknown"}.`;
 
       emitLog("install", failureMessage);
+      const hint = projectLocalToolHint(preparedCommand, cwd, code);
+      if (hint) emitLog("system", hint);
       reject(new Error(failureMessage));
     });
   });

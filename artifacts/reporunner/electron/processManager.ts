@@ -1,6 +1,6 @@
 import { execFile, ChildProcess } from "child_process";
 import { promisify } from "util";
-import { prepareCommandForExecution, spawnPreparedCommand } from "./commandUtils.js";
+import { prepareCommandForExecution, projectLocalToolHint, spawnPreparedCommand } from "./commandUtils.js";
 import { emitLog } from "./logSink.js";
 import treeKill from "tree-kill";
 import { BrowserWindow } from "electron";
@@ -405,6 +405,8 @@ export async function startService(
       service as LogSource,
       `Process exited with code ${code}${signal ? ` (signal ${signal})` : ""}`,
     );
+    const hint = projectLocalToolHint(preparedCommand, cwd, code);
+    if (hint) emitLog("system", hint);
 
     const exitedBeforeReady = statuses[service] === "starting";
     const exitStatus: ServiceStatus =
