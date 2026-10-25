@@ -27,6 +27,7 @@ vi.mock("electron", () => ({
 
 import { setupIpc } from "../../electron/ipc.js";
 import { BACKUP_FILE, RECOVERY_FILE_PREFIX, STORE_FILE } from "../../electron/projectStore.js";
+import { trustedRenderer } from "./fakeSender.js";
 
 const file = (name = STORE_FILE) => path.join(h.userData, name);
 const read = (name = STORE_FILE) => fs.readFileSync(file(name), "utf-8");
@@ -34,10 +35,13 @@ const write = (content: string, name = STORE_FILE) => fs.writeFileSync(file(name
 const sha = (content: string) => createHash("sha256").update(content).digest("hex");
 const listDir = () => fs.readdirSync(h.userData).sort();
 
+/** RepoRunner's own window and page: the only caller the handlers accept. */
+const app = trustedRenderer();
+
 function invoke(channel: string, ...args: unknown[]): Promise<unknown> {
   const fn = h.handlers.get(channel);
   if (!fn) throw new Error(`No handler registered for ${channel}`);
-  return (fn as Handler)({}, ...args);
+  return (fn as Handler)(app.event(), ...args);
 }
 
 function profile(id: string, extra: Record<string, unknown> = {}) {
@@ -61,7 +65,7 @@ beforeEach(() => {
   h.showItemInFolder.mockReset();
   h.openPath.mockReset().mockResolvedValue("");
   vi.spyOn(console, "error").mockImplementation(() => {});
-  setupIpc();
+  setupIpc(app.trust);
 });
 
 afterEach(() => {

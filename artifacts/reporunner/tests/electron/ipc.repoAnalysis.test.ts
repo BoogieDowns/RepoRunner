@@ -635,13 +635,18 @@ describe("no execution, no persistence", () => {
     expect(h.executed).toEqual([]);
   });
 
-  it("the IPC module imports only Electron, the scanner, window security and shared types", () => {
+  it("the IPC module imports only Electron, the scanner, the shared sender check and shared types", () => {
     const source = fs.readFileSync(path.resolve(import.meta.dirname, "../../electron/repoAnalysisIpc.ts"), "utf8");
     const imports = [...source.matchAll(/from\s+"([^"]+)"/g)].map((m) => m[1]).sort();
     expect([...new Set(imports)]).toEqual(
-      ["../src/types.js", "./repoScanner/scanRepository.js", "./repoScanner/scanSession.js", "./repoScanner/types.js", "./windowSecurity.js", "electron"],
+      ["../src/types.js", "./ipcTrust.js", "./repoScanner/scanRepository.js", "./repoScanner/scanSession.js", "./repoScanner/types.js", "electron"],
     );
     expect(source).not.toMatch(/child_process|projectStore|processManager|\bfetch\(|import\(|require\(/);
+    // The shared sender check itself uses only Electron types and window security.
+    const trustSource = fs.readFileSync(path.resolve(import.meta.dirname, "../../electron/ipcTrust.ts"), "utf8");
+    expect([...trustSource.matchAll(/from\s+"([^"]+)"/g)].map((m) => m[1]).sort()).toEqual(["./windowSecurity.js", "electron"]);
+    expect(trustSource).toMatch(/^import type \{[^}]*\} from "electron";$/m);
+    expect(trustSource).not.toMatch(/child_process|projectStore|processManager|\bfetch\(|import\(|require\(/);
   });
 
   it("the renderer's shared types import the scanner contract as types only", () => {

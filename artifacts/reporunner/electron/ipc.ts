@@ -36,7 +36,8 @@ import {
   validateRepoPathDirectoryForSave,
 } from "./projectProfileValidation.js";
 import { clearLogs, emitLog, formatLogsForClipboard } from "./logSink.js";
-import { registerRepoAnalysisIpc, type TrustedRenderer } from "./repoAnalysisIpc.js";
+import { registerRepoAnalysisIpc } from "./repoAnalysisIpc.js";
+import { isTrustedSender, untrustedSenderError, type TrustedRenderer } from "./ipcTrust.js";
 
 function createLineBufferedLogEmitter(source: LogSource) {
   let pending = "";
@@ -203,13 +204,25 @@ function readRecoveryAction(value: unknown): ProjectStoreRecoveryAction {
   throw new Error("Unknown recovery action.");
 }
 /**
- * `trustedRenderer` identifies RepoRunner's own window and page; handlers
- * that check their caller (repository analysis) refuse every call without it.
+ * `trustedRenderer` identifies RepoRunner's own window and page. Every
+ * handler checks its caller against it before doing anything else, and
+ * refuses every call without it.
  */
 export function setupIpc(trustedRenderer?: TrustedRenderer) {
   registerRepoAnalysisIpc(trustedRenderer);
 
-  ipcMain.handle("select-folder", async (event) => {
+  /** Registers a handler that runs only for RepoRunner's own page; any other caller is refused first. */
+  const handle = (
+    channel: string,
+    listener: (event: Electron.IpcMainInvokeEvent, ...args: unknown[]) => unknown,
+  ) => {
+    ipcMain.handle(channel, async (event, ...args: unknown[]) => {
+      if (!isTrustedSender(event, trustedRenderer)) throw untrustedSenderError();
+      return listener(event, ...args);
+    });
+  };
+
+  handle("select-folder", async (event) => {
     const parentWindow =
       BrowserWindow.fromWebContents(event.sender) ??
       BrowserWindow.getFocusedWindow() ??
@@ -233,22 +246,22 @@ export function setupIpc(trustedRenderer?: TrustedRenderer) {
     }
   });
 
-  ipcMain.handle("load-project", async () => {
+  handle("load-project", async () => {
     return loadProject();
   });
 
-  ipcMain.handle("load-project-state", async () => {
+  handle("load-project-state", async () => {
     return loadProjectState();
   });
 
-  ipcMain.handle("save-project", async (_event, profile: unknown, expectedRevision?: unknown) => {
+  handle("save-project", async (_event, profile: unknown, expectedRevision?: unknown) => {
     const options = readExpectedRevision(expectedRevision);
     const validatedProfile = validateProjectProfileForSave(profile);
     await validateRepoPathDirectoryForSave(validatedProfile.repoPath);
     return saveProject(validatedProfile, options);
   });
 
-  ipcMain.handle("set-active-project", async (_event, profileId: unknown, expectedRevision?: unknown) => {
+  handle("set-active-project", async (_event, profileId: unknown, expectedRevision?: unknown) => {
     const options = readExpectedRevision(expectedRevision);
     if (typeof profileId !== "string" || !profileId.trim()) {
       throw new Error("Saved repo setup not found.");
@@ -256,7 +269,7 @@ export function setupIpc(trustedRenderer?: TrustedRenderer) {
     return setActiveProject(profileId, options);
   });
 
-  ipcMain.handle("delete-project", async (_event, profileId: unknown, expectedRevision?: unknown) => {
+  handle("delete-project", async (_event, profileId: unknown, expectedRevision?: unknown) => {
     const options = readExpectedRevision(expectedRevision);
     if (typeof profileId !== "string" || !profileId.trim()) {
       throw new Error("Saved repo setup not found.");
@@ -264,13 +277,13 @@ export function setupIpc(trustedRenderer?: TrustedRenderer) {
     return deleteProject(profileId, options);
   });
 
-  ipcMain.handle("get-project-store-status", async () => {
+  handle("get-project-store-status", async () => {
     return inspectProjectStore();
   });
 
   // Recovery actions only ever run from this explicit call. Every action
   // except "retry" must carry the revision of the status the user confirmed.
-  ipcMain.handle("resolve-project-store-issue", async (_event, action: unknown, expectedRevision?: unknown) => {
+  handle("resolve-project-store-issue", async (_event, action: unknown, expectedRevision?: unknown) => {
     const recoveryAction = readRecoveryAction(action);
     const options = readExpectedRevision(expectedRevision);
     if (recoveryAction !== "retry" && !options) {
@@ -280,7 +293,7 @@ export function setupIpc(trustedRenderer?: TrustedRenderer) {
   });
 
   // Reveals RepoRunner's own store location; takes no path from the renderer.
-  ipcMain.handle("reveal-project-store-file", async (_event, ...args: unknown[]) => {
+  handle("reveal-project-store-file", async (_event, ...args: unknown[]) => {
     if (args.length > 0) throw new Error("Unexpected arguments.");
     const target = getProjectStoreRevealTarget();
     if (target.kind === "file") {
@@ -291,14 +304,14 @@ export function setupIpc(trustedRenderer?: TrustedRenderer) {
     if (failure) throw new Error("RepoRunner couldn't open the saved repo setups folder.");
   });
 
-  ipcMain.handle("pull-latest", async () => {
+  handle("pull-latest", async () => {
     const project = loadProject();
     if (!project) throw new Error("No project configured");
     emitLog("git", "Pulling latest code...");
     await runStreamingPull(project.repoPath);
   });
 
-  ipcMain.handle("run-install", async () => {
+  handle("run-install", async () => {
     const project = loadProject();
     if (!project) throw new Error("No project configured");
     const installCommand = sanitizeCommandInput(project.installCommand);
@@ -307,7 +320,7 @@ export function setupIpc(trustedRenderer?: TrustedRenderer) {
     await runStreamingInstall(preparedCommand, project.repoPath);
   });
 
-  ipcMain.handle("start-frontend", async () => {
+  handle("start-frontend", async () => {
     const project = loadProject();
     if (!project) throw new Error("No project configured");
     await startService(
@@ -318,7 +331,7 @@ export function setupIpc(trustedRenderer?: TrustedRenderer) {
     );
   });
 
-  ipcMain.handle("start-backend", async () => {
+  handle("start-backend", async () => {
     const project = loadProject();
     if (!project) throw new Error("No project configured");
 
@@ -335,7 +348,7 @@ export function setupIpc(trustedRenderer?: TrustedRenderer) {
     );
   });
 
-  ipcMain.handle("stop-services", async () => {
+  handle("stop-services", async () => {
     // Stop only ever terminates processes RepoRunner tracks (ports are used for
     // diagnostics), so it must keep working when the saved setups can't be
     // read or no setup is active.
@@ -350,7 +363,7 @@ export function setupIpc(trustedRenderer?: TrustedRenderer) {
     emitLog("system", "Services stopped.");
   });
 
-  ipcMain.handle("restart-all", async () => {
+  handle("restart-all", async () => {
     const project = loadProject();
     if (!project) throw new Error("No project configured");
 
@@ -406,21 +419,21 @@ export function setupIpc(trustedRenderer?: TrustedRenderer) {
     emitLog("system", "Restart complete.");
   });
 
-  ipcMain.handle("open-preview", async () => {
+  handle("open-preview", async () => {
     const project = loadProject();
     if (!project) throw new Error("No project configured");
     const { shell } = await import("electron");
     await shell.openExternal(project.previewUrl);
   });
-  ipcMain.handle("copy-logs", async () => {
+  handle("copy-logs", async () => {
     clipboard.writeText(formatLogsForClipboard());
   });
 
-  ipcMain.handle("clear-logs", async () => {
+  handle("clear-logs", async () => {
     clearLogs();
   });
 
-  ipcMain.handle("get-statuses", async () => {
+  handle("get-statuses", async () => {
     return getStatuses();
   });
 }
