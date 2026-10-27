@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { CredentialSettingsDialog } from "@/components/CredentialSettingsDialog";
 import { getCredentialApi } from "@/lib/credentialSettings";
+import { getAiConfigStatusApi } from "@/lib/aiConfigStatus";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { installMock } from "@/mock/repoRunnerMock";
@@ -48,6 +49,8 @@ function App() {
   // Internal credential Settings (Stage 4C): null unless this launch's preload
   // provides the credential methods, so packaged builds never show it.
   const credentialApi = useMemo(() => getCredentialApi(window.repoRunner), []);
+  // Read only when the Settings dialog opens; never at startup.
+  const aiStatusApi = useMemo(() => getAiConfigStatusApi(window.repoRunner), []);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const settingsTrigger = useRef<HTMLElement | null>(null);
   const openSettings = useCallback(() => {
@@ -59,7 +62,7 @@ function App() {
     // Back to the Settings button once the dialog is gone.
     setTimeout(() => settingsTrigger.current?.focus(), 0);
   }, []);
-  const settingsDialog = credentialApi && settingsOpen ? <CredentialSettingsDialog api={credentialApi} onClose={closeSettings} /> : null;
+  const settingsDialog = credentialApi && settingsOpen ? <CredentialSettingsDialog api={credentialApi} aiStatusApi={aiStatusApi} onClose={closeSettings} /> : null;
 
   /**
    * Re-reads the saved-setups status and, when the file is usable, the saved

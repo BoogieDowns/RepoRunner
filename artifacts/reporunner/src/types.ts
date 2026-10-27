@@ -214,6 +214,24 @@ export type CredentialIpcErrorCode =
 
 export type CredentialIpcResult = { ok: true; status: CredentialMetadata } | { ok: false; error: CredentialIpcErrorCode };
 
+// AI configuration status contract (Stage 4H IPC, Stage 4I internal Settings).
+// Metadata only: never an endpoint, model, settings document, revision,
+// credential or path. A status here says nothing about connectivity, and
+// "providerReadiness" stays "none" while no AI adapter exists.
+
+export type AiConfigStorageState = "missing" | "valid" | "damaged" | "unsupported-version" | "unreadable";
+
+export interface AiConfigStatusView {
+  storage: AiConfigStorageState;
+  /** A fixed reason code when storage is "damaged"; null otherwise. */
+  damage: string | null;
+  configurationCount: number;
+  active: { id: string; kind: "local-endpoint"; apiStyle: "openai-compatible" | "ollama-native" } | null;
+  providerReadiness: "none" | "api-key" | "local-endpoint";
+}
+
+export type AiConfigStatusIpcResult = { ok: true; status: AiConfigStatusView } | { ok: false; error: "invalid-request" | "failed" };
+
 /** Fixed, value-free messages for credential errors: no key, path or system detail. */
 export const CREDENTIAL_ERROR_MESSAGES: Record<CredentialIpcErrorCode, string> = {
   "invalid-request": "RepoRunner couldn't process that request.",
@@ -283,6 +301,11 @@ export interface RepoRunnerAPI {
   /** The key travels to the main process once and never comes back. */
   setCredential?(slot: CredentialSlotId, secret: string, options: { remember: boolean }): Promise<CredentialIpcResult>;
   removeCredential?(slot: CredentialSlotId): Promise<CredentialIpcResult>;
+  /**
+   * AI configuration status (Stage 4I): present only in the same internal
+   * development launches as the credential methods. Read-only metadata.
+   */
+  aiConfigStatus?(): Promise<AiConfigStatusIpcResult>;
 }
 
 declare global {

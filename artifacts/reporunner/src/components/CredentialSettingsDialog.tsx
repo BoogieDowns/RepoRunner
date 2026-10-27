@@ -7,6 +7,11 @@
 // never shown again, and the field is also cleared on close and unmount.
 // While it is typed it is in this page's memory like any text input;
 // clearing the field can't guarantee the browser has erased every copy.
+//
+// Stage 4I: when the preload provides aiConfigStatus (the same internal
+// launches), a read-only "Local AI configuration" section shows the AI
+// settings' state, loaded once per opening (src/lib/aiConfigStatus.ts). It
+// edits nothing and connects to nothing.
 // Relative imports keep it renderable in tests.
 import * as React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -18,8 +23,17 @@ import {
   type CredentialApi,
   type CredentialSettingsState,
 } from "../lib/credentialSettings";
+import {
+  AI_STATUS_INITIAL,
+  AI_UNAVAILABLE_TEXT,
+  AiConfigStatusLoader,
+  describeAiStatus,
+  type AiConfigStatusApi,
+  type AiStatusState,
+} from "../lib/aiConfigStatus";
 
 export const CREDENTIAL_DIALOG_TITLE_ID = "credential-settings-title";
+export const AI_STATUS_TITLE_ID = "ai-config-status-title";
 
 const FOCUSABLE = "button:not([disabled]), input:not([disabled])";
 const text = { color: "#b8b4af" } as const;
@@ -27,12 +41,35 @@ const subtle = { color: "#858280" } as const;
 
 export interface CredentialSettingsDialogProps {
   api: CredentialApi;
+  /** Present only when the preload provides it; otherwise the AI section isn't shown. */
+  aiStatusApi?: AiConfigStatusApi | null;
   onClose: () => void;
+}
+
+/** The read-only AI configuration section. Fixed wording only. */
+function AiStatusSection({ state }: { state: AiStatusState }) {
+  const lines = describeAiStatus(state);
+  return (
+    <section className="mt-5 pt-4" style={{ borderTop: "1px solid #242020" }} aria-labelledby={AI_STATUS_TITLE_ID} data-testid="ai-config-status">
+      <h3 id={AI_STATUS_TITLE_ID} className="text-[13px] font-semibold" style={{ color: "#dedad5" }}>
+        Local AI configuration
+      </h3>
+      <div className="mt-1 space-y-1 text-sm" style={text} aria-live="polite">
+        <p data-testid="ai-config-summary">{lines.summary}</p>
+        {lines.selection && <p data-testid="ai-config-selection">{lines.selection}</p>}
+      </div>
+      <p className="mt-1 text-[12px]" style={subtle} data-testid="ai-config-availability">
+        {AI_UNAVAILABLE_TEXT}
+      </p>
+    </section>
+  );
 }
 
 /** The dialog's markup for a given state (hook-free, so it can be rendered in tests). */
 export function CredentialSettingsView(props: {
   state: CredentialSettingsState;
+  /** The AI section's state; when absent, the section isn't shown. */
+  aiStatus?: AiStatusState | null;
   remember: boolean;
   keyRef?: React.Ref<HTMLInputElement>;
   dialogRef?: React.Ref<HTMLDivElement>;
@@ -186,18 +223,21 @@ export function CredentialSettingsView(props: {
             {state.notice}
           </p>
         )}
+
+        {props.aiStatus && <AiStatusSection state={props.aiStatus} />}
       </div>
     </div>
   );
 }
 
-export function CredentialSettingsDialog({ api, onClose }: CredentialSettingsDialogProps) {
+export function CredentialSettingsDialog({ api, aiStatusApi, onClose }: CredentialSettingsDialogProps) {
   const keyRef = useRef<HTMLInputElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const controllerRef = useRef<CredentialSettingsController | null>(null);
   const [state, setState] = useState<CredentialSettingsState>(INITIAL_STATE);
   // Session-only is the default; remembering is chosen each time.
   const [remember, setRemember] = useState(false);
+  const [aiStatus, setAiStatus] = useState<AiStatusState | null>(aiStatusApi ? AI_STATUS_INITIAL : null);
 
   const clearKey = useCallback(() => {
     if (keyRef.current) keyRef.current.value = "";
@@ -215,6 +255,14 @@ export function CredentialSettingsDialog({ api, onClose }: CredentialSettingsDia
       clearKey();
     };
   }, [api, clearKey]);
+
+  // AI status: read once per opening, only when the preload provides it.
+  useEffect(() => {
+    if (!aiStatusApi) return;
+    const loader = new AiConfigStatusLoader(aiStatusApi, setAiStatus);
+    void loader.load();
+    return () => loader.close();
+  }, [aiStatusApi]);
 
   const requestClose = useCallback(() => {
     const controller = controllerRef.current;
@@ -271,6 +319,7 @@ export function CredentialSettingsDialog({ api, onClose }: CredentialSettingsDia
   return (
     <CredentialSettingsView
       state={state}
+      aiStatus={aiStatus}
       remember={remember}
       keyRef={keyRef}
       dialogRef={dialogRef}

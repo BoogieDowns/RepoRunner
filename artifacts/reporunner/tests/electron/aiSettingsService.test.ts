@@ -249,7 +249,7 @@ describe("module boundaries", () => {
     expect(offenders).toEqual([]);
     // aiConfigIpc.ts uses only the status function; ipc.ts reaches the service only through it.
     const ipcModule = fs.readFileSync(path.join(ROOT, "electron/aiConfigIpc.ts"), "utf8");
-    expect([...ipcModule.matchAll(/import \{([^}]*)\} from "\.\/aiSettingsService\.js"/g)].map((m) => m[1].trim())).toEqual(["getAiConfigurationStatus, type AiConfigurationStatus"]);
+    expect([...ipcModule.matchAll(/import \{([^}]*)\} from "\.\/aiSettingsService\.js"/g)].map((m) => m[1].trim())).toEqual(["getAiConfigurationStatus"]);
     expect(ipcModule).not.toMatch(/loadAiSettings|saveAiSettings/);
   });
 });
