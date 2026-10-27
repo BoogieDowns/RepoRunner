@@ -10,7 +10,7 @@
 // - Anything unexpected is refused, never repaired, coerced or dropped.
 //   A newer version is reported separately from damage, so a future store
 //   can leave such a file alone instead of treating it as broken.
-import { validateLocalEndpoint } from "./localEndpoint";
+import { validateLocalEndpoint } from "./localEndpoint.js";
 
 export const AI_SETTINGS_FORMAT = "reporunner-ai-settings";
 export const AI_SETTINGS_VERSION = 1;
