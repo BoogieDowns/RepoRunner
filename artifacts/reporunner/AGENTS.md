@@ -176,7 +176,8 @@ Every IPC handler checks its sender first with `isTrustedSender` (`electron/ipcT
 
 - `electron/aiSettingsService.ts` owns **the one** `AiSettingsStore` (`reporunner-ai-settings.json`, non-secret, validated by the Stage 4E schema in `src/lib/ai/`), created lazily on first use. Never construct another store; use the service's functions. Nothing calls it yet: wiring it to startup, IPC or UI needs its own authorization.
 - Provider readiness stays `none` while `PRODUCTION_AI_ADAPTERS` is empty. A saved configuration is not connectivity, a license or consent, and never makes an AI feature usable.
-- `ai-config-status` (`electron/aiConfigIpc.ts`, registered in `ipc.ts` through the guard) is read-only and returns that metadata only. No preload method exposes it; adding one, or any AI settings write channel, needs its own authorization.
+- `ai-config-status` (`electron/aiConfigIpc.ts`, registered in `ipc.ts` through the guard) is read-only and returns that metadata only: storage state, damage reason, configuration count, the active configuration's id, kind and API style, and readiness. No endpoint, model, revision, credential or path; the revision stays in the store and service for a future editing contract.
+- **Internal-only status (Stage 4I).** The preload adds `aiConfigStatus()` (no arguments, optional in `RepoRunnerAPI`, absent from the mock) under the same internal switch as the credential methods, and the internal Settings dialog shows a read-only "Local AI configuration" section, loaded once per opening. Any AI settings write channel, editing UI or endpoint entry needs its own authorization.
 
 ---
 

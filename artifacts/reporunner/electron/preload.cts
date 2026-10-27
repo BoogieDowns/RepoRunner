@@ -14,6 +14,9 @@ import type {
  * electron/internalFeatures.ts; packaged builds never pass it). Each forwards
  * exactly its fixed arguments to its one channel. None returns a stored key,
  * and there is no generic invoke.
+ *
+ * aiConfigStatus (Stage 4I) rides on the same switch: read-only AI
+ * configuration metadata, no arguments, no write method.
  */
 const INTERNAL_CREDENTIAL_SETTINGS_SWITCH = "--reporunner-internal-credential-settings";
 const credentialMethods = process.argv.includes(INTERNAL_CREDENTIAL_SETTINGS_SWITCH)
@@ -22,6 +25,7 @@ const credentialMethods = process.argv.includes(INTERNAL_CREDENTIAL_SETTINGS_SWI
       setCredential: (slot: CredentialSlotId, secret: string, options: { remember: boolean }) =>
         ipcRenderer.invoke("credential-set", slot, secret, options),
       removeCredential: (slot: CredentialSlotId) => ipcRenderer.invoke("credential-remove", slot),
+      aiConfigStatus: () => ipcRenderer.invoke("ai-config-status"),
     }
   : {};
 

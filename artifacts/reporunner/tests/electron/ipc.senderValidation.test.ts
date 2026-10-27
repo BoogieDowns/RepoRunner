@@ -275,14 +275,14 @@ describe("trusted callers keep their behavior", () => {
     });
     await expect(call("ai-config-status")).resolves.toEqual({
       ok: true,
-      status: { storage: "valid", damage: null, revision: "b".repeat(64), configurationCount: 1, active: { id: "cfg-a1", kind: "local-endpoint", apiStyle: "ollama-native" }, providerReadiness: "none" },
+      status: { storage: "valid", damage: null, configurationCount: 1, active: { id: "cfg-a1", kind: "local-endpoint", apiStyle: "ollama-native" }, providerReadiness: "none" },
     });
   });
 
   it("the AI configuration handler runs for the trusted page, after the sender check, and touches nothing else", async () => {
     await expect(call("ai-config-status")).resolves.toEqual({
       ok: true,
-      status: { storage: "missing", damage: null, revision: null, configurationCount: 0, active: null, providerReadiness: "none" },
+      status: { storage: "missing", damage: null, configurationCount: 0, active: null, providerReadiness: "none" },
     });
     expect(sideEffects()).toEqual(["aiSettingsService.getAiConfigurationStatus"]);
   });

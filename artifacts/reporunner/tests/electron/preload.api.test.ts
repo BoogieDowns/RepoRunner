@@ -112,9 +112,13 @@ describe("preload API", () => {
     expect(h.send).not.toHaveBeenCalled();
   });
 
-  it("an ordinary launch exposes no credential method, whatever similar switches appear", () => {
-    expect(Object.keys(api).filter((k) => /cred|key|secret/i.test(k))).toEqual([]);
-    expect(Object.keys(loadPreload([...PRODUCTION_ARGV, "--reporunner-internal-credential-settings=0", "--REPORUNNER-INTERNAL-CREDENTIAL-SETTINGS"])).filter((k) => /cred/i.test(k))).toEqual([]);
+  it("an ordinary launch exposes no credential or AI method, whatever similar switches appear", () => {
+    expect(Object.keys(api).filter((k) => /cred|key|secret|ai|config/i.test(k))).toEqual([]);
+    const lookalike = loadPreload([...PRODUCTION_ARGV, "--reporunner-internal-credential-settings=0", "--REPORUNNER-INTERNAL-CREDENTIAL-SETTINGS"]);
+    expect(Object.keys(lookalike).filter((k) => /cred|ai|config/i.test(k))).toEqual([]);
+    // A packaged build's renderer gets the same argv as any ordinary launch: the main process never passes the switch there.
+    const packaged = loadPreload(["C:\\Program Files\\RepoRunner\\RepoRunner.exe", "--type=renderer", "--enable-sandbox"]);
+    expect(Object.keys(packaged).sort()).toEqual(Object.keys(api).sort());
   });
 });
 
@@ -125,8 +129,10 @@ describe("internal credential methods (Stage 4C, only with the main process's sw
   });
   const call = (name: string, ...args: unknown[]) => (internal[name] as (...a: unknown[]) => Promise<unknown>)(...args);
 
-  it("adds exactly three methods to the same API, and no way to read a key", () => {
-    expect(Object.keys(internal).filter((k) => !Object.keys(api).includes(k)).sort()).toEqual(["credentialStatus", "removeCredential", "setCredential"]);
+  it("adds exactly four methods to the same API (three credential, one read-only AI status), and no way to read a key", () => {
+    expect(Object.keys(internal).filter((k) => !Object.keys(api).includes(k)).sort()).toEqual(["aiConfigStatus", "credentialStatus", "removeCredential", "setCredential"]);
+    // No AI write, save, delete or test method.
+    expect(Object.keys(internal).filter((k) => /ai|config/i.test(k))).toEqual(["aiConfigStatus"]);
     expect(Object.keys(internal)).not.toEqual(expect.arrayContaining(["getCredential"]));
     expect(Object.keys(internal).filter((k) => /get.*(cred|key|secret)/i.test(k))).toEqual([]);
     for (const name of ["credentialStatus", "setCredential", "removeCredential"]) expect(internal[name]).not.toBe(h.invoke);
@@ -149,6 +155,15 @@ describe("internal credential methods (Stage 4C, only with the main process's sw
     await call("credentialStatus", "credential-get");
     await call("setCredential", "credential-get", "x", { remember: false });
     expect(h.invoke.mock.calls.map((c) => (c as unknown[])[0])).toEqual(["credential-status", "credential-set"]);
+  });
+
+  it("aiConfigStatus (Stage 4I) forwards only its one channel, with no arguments", async () => {
+    h.invoke.mockClear();
+    await call("aiConfigStatus");
+    await call("aiConfigStatus", "credential-get", { write: true }, undefined);
+    expect(h.invoke.mock.calls).toEqual([["ai-config-status"], ["ai-config-status"]]);
+    expect(internal.aiConfigStatus).not.toBe(h.invoke);
+    expect(h.send).not.toHaveBeenCalled();
   });
 
   it("main.ts and preload.cts use the same switch", () => {

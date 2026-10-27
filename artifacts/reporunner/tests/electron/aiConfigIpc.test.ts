@@ -116,11 +116,13 @@ const writeValid = (active: string | null = "cfg-b2") => {
 };
 const status = (over: Record<string, unknown> = {}) => ({
   ok: true,
-  status: { storage: "missing", damage: null, revision: null, configurationCount: 0, active: null, providerReadiness: "none", ...over },
+  status: { storage: "missing", damage: null, configurationCount: 0, active: null, providerReadiness: "none", ...over },
 });
-/** Nothing in a result may reveal configuration values, credentials, paths or system errors. */
+/** Nothing in a result may reveal configuration values, revisions, credentials, paths or system errors. */
 const assertNoLeak = (value: unknown) => {
   const text = JSON.stringify(value);
+  // Stage 4I: no revision crosses IPC, under any name.
+  expect(text).not.toMatch(/"revision"|[0-9a-f]{64}/);
   for (const leak of ["127.0.0.1", "11434", "::1", "8080", "/v1", MODEL, "\"endpoint\"", "\"model\"", "\"settings\"", "\"configs\"", "SYNTHETIC", "EACCES", "EIO", h.userData, path.basename(h.userData), "rr-4h-ipc", os.tmpdir(), FILE, "remembered", "configured"]) {
     expect(text, leak).not.toContain(leak);
   }
@@ -189,7 +191,6 @@ describe("the trusted page", () => {
     const result = await call();
     expect(result).toEqual(status({
       storage: "valid",
-      revision: expect.stringMatching(/^[0-9a-f]{64}$/),
       configurationCount: 2,
       active: { id: "cfg-b2", kind: "local-endpoint", apiStyle: "openai-compatible" },
     }));
@@ -325,10 +326,14 @@ describe("renderer isolation and module boundaries", () => {
   const ROOT = path.resolve(import.meta.dirname, "../..");
   const read = (f: string) => fs.readFileSync(path.join(ROOT, f), "utf8");
 
-  it("no preload, renderer API, mock or UI reaches the channel", () => {
-    for (const f of ["electron/preload.cts", "src/types.ts", "src/mock/repoRunnerMock.ts"]) {
-      expect(read(f), f).not.toMatch(/ai-config-status|aiConfigStatus|getAiConfigurationStatus/);
-    }
+  it("only the internal preload method reaches the channel; the mock never does", () => {
+    // Stage 4I: one method, inside the same switch-gated block as the credential methods.
+    const preload = read("electron/preload.cts");
+    expect(preload.match(/ai-config-status/g)).toHaveLength(1);
+    const gated = preload.slice(preload.indexOf("process.argv.includes(INTERNAL_CREDENTIAL_SETTINGS_SWITCH)"), preload.indexOf("  : {};"));
+    expect(gated).toContain('aiConfigStatus: () => ipcRenderer.invoke("ai-config-status"),');
+    expect(read("src/mock/repoRunnerMock.ts")).not.toMatch(/ai-config-status|aiConfigStatus|getAiConfigurationStatus/);
+    expect(read("src/types.ts")).toMatch(/^ {2}aiConfigStatus\?\(\): Promise<AiConfigStatusIpcResult>;$/m);
     const offenders: string[] = [];
     const walk = (d: string) => {
       for (const entry of fs.readdirSync(d, { withFileTypes: true })) {
@@ -339,15 +344,16 @@ describe("renderer isolation and module boundaries", () => {
     };
     walk(path.join(ROOT, "src"));
     walk(path.join(ROOT, "electron"));
-    expect(offenders.sort()).toEqual(["electron/aiConfigIpc.ts", "electron/ipc.ts"]);
+    expect(offenders.sort()).toEqual(["electron/aiConfigIpc.ts", "electron/ipc.ts", "electron/preload.cts", "src/App.tsx", "src/components/CredentialSettingsDialog.tsx", "src/lib/aiConfigStatus.ts", "src/types.ts"]);
   });
 
   it("the handler module imports only the status function, and has no credential, network, file, environment or logging access", () => {
     const source = read("electron/aiConfigIpc.ts");
     const code = source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
-    expect([...source.matchAll(/from\s+"([^"]+)"/g)].map((m) => m[1])).toEqual(["./aiSettingsService.js"]);
+    expect([...source.matchAll(/from\s+"([^"]+)"/g)].map((m) => m[1])).toEqual(["./aiSettingsService.js", "../src/types.js"]);
+    expect(source).toMatch(/^import type \{ AiConfigStatusIpcResult \} from "\.\.\/src\/types\.js";$/m);
     expect(code).not.toMatch(
-      /saveAiSettings|loadAiSettings|credential|getCredential|safeStorage|\bfetch\(|XMLHttpRequest|WebSocket|["'](net|dns|http|https|tls|fs|child_process)["']|process\.env|console\.|\brequire\(|\bimport\(|\beval\(|aiReady|endpoint|model/,
+      /saveAiSettings|loadAiSettings|credential|getCredential|safeStorage|\bfetch\(|XMLHttpRequest|WebSocket|["'](net|dns|http|https|tls|fs|child_process)["']|process\.env|console\.|\brequire\(|\bimport\(|\beval\(|aiReady|endpoint|model|revision/,
     );
   });
 
