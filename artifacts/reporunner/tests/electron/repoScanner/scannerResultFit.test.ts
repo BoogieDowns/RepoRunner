@@ -389,14 +389,48 @@ describe("the cap includes the final metadata", () => {
     expect([trimmed.status, trimmed.partial, trimmed.limitsHit]).toEqual(["truncated", true, ["result-size"]]);
   });
 
-  it("limitsHit that is already long before trimming is counted too", async () => {
+  it("limitsHit that is already long before trimming is counted too", async ({ signal }) => {
     // depth > maxDepth adds "depth" before fitting, so limitsHit ends as ["depth", "result-size"].
     const root = space.repo("fit final depth", workspaceRepo({ "a/b/c/d/package.json": pkg({ name: "deep" }) }));
-    for (let cap = 1_800; cap <= 2_400; cap += 7) {
-      const result = await scanRepository(root, { limits: { maxResultBytes: cap, maxDepth: 2 } });
-      expect(bytes(result), `cap ${cap}`).toBeLessThanOrEqual(cap);
-      expect(result.limitsHit, `cap ${cap}`).toEqual(expect.arrayContaining(["depth", "result-size"]));
+    const caps: number[] = [];
+    for (let cap = 1_800; cap <= 2_400; cap += 7) caps.push(cap);
+    expect(caps).toHaveLength(86);
+    // Issue #93: 86 real scans one after another took about 5 s on Windows
+    // (each scan awaits ~450 filesystem calls in turn), over the default test
+    // timeout. The scans only read the same fixture and share no state, so
+    // they run at most four at a time. Each batch settles completely before
+    // its results are checked or the next batch starts, so no scan outlives
+    // the test; after a timeout no further batch is started.
+    const BATCH = 4;
+    const checked: number[] = [];
+    let inFlight = 0;
+    let maxInFlight = 0;
+    const scan = async (cap: number) => {
+      maxInFlight = Math.max(maxInFlight, ++inFlight);
+      try {
+        return await scanRepository(root, { limits: { maxResultBytes: cap, maxDepth: 2 } });
+      } finally {
+        inFlight--;
+      }
+    };
+    for (let i = 0; i < caps.length; i += BATCH) {
+      signal.throwIfAborted();
+      const batch = caps.slice(i, i + BATCH);
+      const outcomes = await Promise.allSettled(batch.map(scan));
+      outcomes.forEach((outcome, j) => {
+        const cap = batch[j];
+        // A failed scan fails the test with its own error.
+        if (outcome.status === "rejected") throw outcome.reason;
+        const result = outcome.value;
+        expect(bytes(result), `cap ${cap}`).toBeLessThanOrEqual(cap);
+        expect(result.limitsHit, `cap ${cap}`).toEqual(expect.arrayContaining(["depth", "result-size"]));
+        checked.push(cap);
+      });
     }
+    // Every cap was scanned and checked, in order, never more than four at a time.
+    expect(checked).toEqual(caps);
+    expect(maxInFlight).toBeLessThanOrEqual(BATCH);
+    expect(inFlight).toBe(0);
   });
 
   /** A scan stopped (cancelled or timed out) while a late folder's listing is held, after all packages were read. */
