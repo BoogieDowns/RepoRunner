@@ -137,7 +137,15 @@ Verified in code at `0ebf03a`; none of the edition features exist yet.
 - Analyze Repo, Suggested Setup, Use in Setup and the Repo Safety Check: local and read-only, with no network access.
 - Electron hardening: sandbox, context isolation, no Node integration, navigation and new-window blocking, permission denial, and a production Content Security Policy with `connect-src 'none'`, so the renderer can't make network requests.
 - Saved setups in `reporunner-project.json` under Electron's user-data folder, written atomically with backups and recovery copies. A newer schema version is opened read-only.
-- No accounts, sign-in, licensing, AI integration, credential storage, settings screen, auto-update or network calls (apart from opening the preview URL in the browser).
+- No accounts, sign-in, licensing, AI integration, settings screen, auto-update or network calls (apart from opening the preview URL in the browser).
+
+Security groundwork added since then (none of it is visible in the app):
+
+- **Stage 2, IPC sender validation:** every IPC handler checks its caller first with `isTrustedSender` (`electron/ipcTrust.ts`): only RepoRunner's own page, in the main window's top-level frame. Anything else is refused with one fixed message, before any side effect.
+- **Stage 3B, child environment:** commands RepoRunner starts (Install, Start, Pull) get the main process's environment through `buildChildEnvironment` (`electron/childEnvironment.ts`), which removes the names reserved for RepoRunner secrets (`REPORUNNER_BYOK_API_KEY`, `REPORUNNER_CLOUD_ACCESS_TOKEN`, `REPORUNNER_CLOUD_REFRESH_TOKEN`, `REPORUNNER_LICENSE_KEY`). It is not a full allowlist: everything else is still inherited.
+- **Stage 3C, Windows command lookup:** saved commands run on Windows with `NoDefaultCurrentDirectoryInExePath` set, so `cmd.exe` doesn't run a same-named program from the repository folder instead of the intended tool.
+- **Stage 3D, credential store:** `electron/credentialStore.ts` stores BYOK credentials in their own file, `reporunner-credentials.json` in user data, encrypted with Electron `safeStorage` (DPAPI on Windows). There is no plaintext fallback: remembering a key is refused when encryption is unavailable, or on Linux when the backend is `basic_text` or unknown. A key can instead be kept for the session only, in memory. Damaged or newer files are refused and never rewritten.
+- **Stage 4B, credential service and IPC:** `electron/credentialService.ts` creates the one store lazily, on the first credential call, never at startup; Free workflows never read the credentials file. `electron/credentialIpc.ts` handles three channels, registered in `ipc.ts` through the same sender guard: `credential-status`, `credential-set` and `credential-remove`, for one slot (`byok-slot-1`). They return metadata and fixed error codes only. **They aren't exposed through preload, so the renderer can't reach them yet.**
 
 ### Approved architectural direction
 
@@ -153,9 +161,9 @@ Verified in code at `0ebf03a`; none of the edition features exist yet.
 
 These must be addressed before the related stage ships:
 
-1. **Consistent IPC sender validation.** Today only `analyze-repo` and `cancel-repo-analysis` check the sender (`isTrustedSender`); the other handlers in `electron/ipc.ts` don't. Every handler should, before any license, credential, account or AI IPC is added.
-2. **Secret storage and the same-user risk.** Commands RepoRunner starts run as the same Windows user, so a malicious repository script could ask Windows to decrypt secrets stored with OS-backed storage. This needs a prototype and an explicit, documented risk decision (for example a "don't remember this key" option and provider-side spending limits).
-3. **Environment inheritance.** Every command RepoRunner starts gets a copy of the main process's environment (`electron/commandUtils.ts`, and `git pull` in `electron/ipc.ts`). Secrets must never be placed there; moving to an explicit environment allowlist needs compatibility testing with users' toolchains (PATH, nvm, Volta, corepack).
+1. **Consistent IPC sender validation.** Done in Stage 2: every handler, including the Stage 4B credential handlers, checks its caller with `isTrustedSender` (`electron/ipcTrust.ts`) before doing anything.
+2. **Secret storage and the same-user risk.** Partly addressed. Stage 3D stores keys encrypted with `safeStorage` and offers session-only keys that are never written. **The underlying risk remains:** DPAPI ties the data to the Windows user, not to RepoRunner, so any program running as that user, including a repository script RepoRunner starts, can ask Windows to decrypt it, and a session-only key is still in memory while the app runs. Encryption protects against reading the file elsewhere, not against code running as the same user. Provider-side spending limits stay the real mitigation; how the UI explains this is still to be decided.
+3. **Environment inheritance.** Partly addressed in Stage 3B: the reserved secret names are removed from every started command's environment, and RepoRunner never puts a credential into `process.env`. Moving to an explicit environment allowlist still needs compatibility testing with users' toolchains (PATH, nvm, Volta, corepack).
 4. **Consent and disclosure for AI requests.** Before anything is sent, show exactly what will be sent and to whom; logs can contain secrets and need redaction.
 5. **Secure browser sign-in and backend enforcement.** A single-use loopback callback with `state` and PKCE, short-lived tokens with refresh rotation, and entitlements and quotas checked by the backend, never trusted from the client.
 

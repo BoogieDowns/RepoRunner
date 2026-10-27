@@ -161,7 +161,15 @@ Current API methods:
 
 The `RepoRunnerAPI` interface in `src/types.ts` is the authoritative contract; the list above is not complete (it predates saved-setup management, store recovery and Analyze Repo).
 
-Any new IPC handler that touches credentials, accounts, entitlements or AI must check its sender (as `isTrustedSender` in `electron/repoAnalysisIpc.ts` does) and must never return a secret.
+Every IPC handler checks its sender first with `isTrustedSender` (`electron/ipcTrust.ts`). Handlers in `ipc.ts` are registered only through its `handle()` guard; any new handler must go through that guard (or the same check), before any side effect.
+
+### Credentials (main process only)
+
+- `electron/credentialStore.ts` encrypts remembered keys with `safeStorage` into `reporunner-credentials.json`, or keeps them for the session only. No plaintext fallback.
+- `electron/credentialService.ts` owns **the one** store, created lazily on first use. Never construct another `CredentialStore`; future main-process consumers (such as a provider adapter) use `getCredentialStore()`.
+- `credential-status`, `credential-set` and `credential-remove` (`electron/credentialIpc.ts`, registered in `ipc.ts`) return metadata and fixed error codes only. They aren't in `preload.cts` or `RepoRunnerAPI` yet; exposing them needs its own authorization.
+- **One-way rule:** a newly entered key may travel renderer → main once, as the secret argument of `credential-set`. A stored key is **never** returned to the renderer: no "get" channel, and no key in any result, error or log.
+- The same-user limitation stays: any program running as the same Windows user, including repository scripts RepoRunner starts, can ask Windows to decrypt the stored key. Don't describe this storage as fully secure.
 
 ---
 
