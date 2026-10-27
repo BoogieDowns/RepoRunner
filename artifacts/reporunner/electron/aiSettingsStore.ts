@@ -247,11 +247,16 @@ export class AiSettingsStore {
 
   /** Writes a verified temp file and renames it over the target. True on success; on failure the target is unchanged. */
   private replaceFile(bytes: Buffer): boolean {
-    // A fixed name plus random hex: nothing user-controlled reaches the path.
-    const tmp = path.join(this.dir, `${AI_SETTINGS_FILE}.${crypto.randomBytes(8).toString("hex")}.tmp`);
+    let tmp: string | null = null;
     let fd: number | null = null;
     let created = false;
     try {
+      // A fixed name plus random hex: nothing user-controlled reaches the path.
+      // Generated inside the try, so a failure is a "write-failed" result,
+      // and never replaced by a predictable name.
+      const suffix = crypto.randomBytes(8).toString("hex");
+      if (!/^[0-9a-f]{16}$/.test(suffix)) throw new Error("bad temp name");
+      tmp = path.join(this.dir, `${AI_SETTINGS_FILE}.${suffix}.tmp`);
       // Exclusive create, read-write (for the read-back), owner-only where supported.
       fd = this.fs.openSync(tmp, "wx+", 0o600);
       created = true;
@@ -289,7 +294,7 @@ export class AiSettingsStore {
           // already failing; the temp file is removed below
         }
       }
-      if (created) {
+      if (created && tmp !== null) {
         try {
           this.fs.unlinkSync(tmp);
         } catch {

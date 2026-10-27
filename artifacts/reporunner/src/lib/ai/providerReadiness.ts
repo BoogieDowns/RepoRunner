@@ -17,9 +17,9 @@
 //
 // The production registry is empty in this version, so every real
 // configuration gives "none".
-import type { ProviderReadiness } from "../editions/types";
-import type { CredentialIpcResult } from "../../types";
-import { validateAiSettings, LOCAL_API_STYLES, type AiConfigKind, type LocalApiStyle } from "./settingsSchema";
+import type { ProviderReadiness } from "../editions/types.js";
+import type { CredentialIpcResult } from "../../types.js";
+import { validateAiSettings, LOCAL_API_STYLES, type AiConfigKind, type LocalApiStyle } from "./settingsSchema.js";
 
 /** What an adapter in this build can serve. Describes code that exists; it is not configuration. */
 export interface AiAdapterDescriptor {

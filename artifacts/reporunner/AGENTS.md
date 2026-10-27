@@ -172,6 +172,11 @@ Every IPC handler checks its sender first with `isTrustedSender` (`electron/ipcT
 - **One-way rule:** a newly entered key may travel renderer → main once, as the secret argument of `credential-set`. A stored key is **never** returned to the renderer: no "get" channel, and no key in any result, error or log.
 - The same-user limitation stays: any program running as the same Windows user, including repository scripts RepoRunner starts, can ask Windows to decrypt the stored key. Don't describe this storage as fully secure.
 
+### AI settings (main process only)
+
+- `electron/aiSettingsService.ts` owns **the one** `AiSettingsStore` (`reporunner-ai-settings.json`, non-secret, validated by the Stage 4E schema in `src/lib/ai/`), created lazily on first use. Never construct another store; use the service's functions. Nothing calls it yet: wiring it to startup, IPC or UI needs its own authorization.
+- Provider readiness stays `none` while `PRODUCTION_AI_ADAPTERS` is empty. A saved configuration is not connectivity, a license or consent, and never makes an AI feature usable.
+
 ---
 
 ## Testing and validation

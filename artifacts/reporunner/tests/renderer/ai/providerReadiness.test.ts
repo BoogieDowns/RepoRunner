@@ -234,21 +234,21 @@ describe("module boundaries", () => {
         /["']node:|["']electron["']|ipcRenderer|ipcMain|window\.|globalThis|\bfetch\(|XMLHttpRequest|WebSocket|EventSource|sendBeacon|Date\.now|new Date\(|performance\.|process\.|require\(|import\(|localStorage|sessionStorage|indexedDB|credentialStore|credentialService|getCredential|safeStorage|console\.|\beval\(|new Function/,
       );
       const imports = [...source.matchAll(/from\s+"([^"]+)"/g)].map((m) => m[1]);
-      expect(imports.every((i) => ["./localEndpoint", "./localEndpoint.js", "./settingsSchema", "../editions/types", "../../types"].includes(i)), `${file}: ${imports.join(", ")}`).toBe(true);
+      expect(imports.every((i) => ["./localEndpoint", "./localEndpoint.js", "./settingsSchema", "./settingsSchema.js", "../editions/types", "../editions/types.js", "../../types", "../../types.js"].includes(i)), `${file}: ${imports.join(", ")}`).toBe(true);
     }
   });
 
   it("the type-only imports stay type-only", () => {
     const source = fs.readFileSync(path.join(AI_DIR, "providerReadiness.ts"), "utf-8");
-    expect(source).toMatch(/import type \{ ProviderReadiness \} from "\.\.\/editions\/types"/);
-    expect(source).toMatch(/import type \{ CredentialIpcResult \} from "\.\.\/\.\.\/types"/);
+    expect(source).toMatch(/import type \{ ProviderReadiness \} from "\.\.\/editions\/types\.js"/);
+    expect(source).toMatch(/import type \{ CredentialIpcResult \} from "\.\.\/\.\.\/types\.js"/);
   });
 
-  // Stage 4F: electron/aiSettingsStore.ts reuses the schema; nothing in the
-  // running app imports that store (tests/electron/aiSettingsStore.test.ts).
-  const SCHEMA_CONSUMERS = [path.resolve(import.meta.dirname, "../../../electron/aiSettingsStore.ts")];
+  // Stage 4F/4G: the AI settings store and service reuse these modules; nothing
+  // in the running app imports either (tests/electron/aiSettings*.test.ts).
+  const SCHEMA_CONSUMERS = ["aiSettingsStore.ts", "aiSettingsService.ts"].map((f) => path.resolve(import.meta.dirname, "../../../electron", f));
 
-  it("nothing in the app imports them yet, apart from the unused settings store", () => {
+  it("nothing in the app imports them yet, apart from the unused settings store and service", () => {
     const roots = ["src", "electron"].map((d) => path.resolve(import.meta.dirname, "../../..", d));
     const offenders: string[] = [];
     const walk = (dir: string) => {
