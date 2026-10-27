@@ -234,7 +234,7 @@ describe("module boundaries", () => {
         /["']node:|["']electron["']|ipcRenderer|ipcMain|window\.|globalThis|\bfetch\(|XMLHttpRequest|WebSocket|EventSource|sendBeacon|Date\.now|new Date\(|performance\.|process\.|require\(|import\(|localStorage|sessionStorage|indexedDB|credentialStore|credentialService|getCredential|safeStorage|console\.|\beval\(|new Function/,
       );
       const imports = [...source.matchAll(/from\s+"([^"]+)"/g)].map((m) => m[1]);
-      expect(imports.every((i) => ["./localEndpoint", "./settingsSchema", "../editions/types", "../../types"].includes(i)), `${file}: ${imports.join(", ")}`).toBe(true);
+      expect(imports.every((i) => ["./localEndpoint", "./localEndpoint.js", "./settingsSchema", "../editions/types", "../../types"].includes(i)), `${file}: ${imports.join(", ")}`).toBe(true);
     }
   });
 
@@ -244,7 +244,11 @@ describe("module boundaries", () => {
     expect(source).toMatch(/import type \{ CredentialIpcResult \} from "\.\.\/\.\.\/types"/);
   });
 
-  it("nothing in the app imports them yet", () => {
+  // Stage 4F: electron/aiSettingsStore.ts reuses the schema; nothing in the
+  // running app imports that store (tests/electron/aiSettingsStore.test.ts).
+  const SCHEMA_CONSUMERS = [path.resolve(import.meta.dirname, "../../../electron/aiSettingsStore.ts")];
+
+  it("nothing in the app imports them yet, apart from the unused settings store", () => {
     const roots = ["src", "electron"].map((d) => path.resolve(import.meta.dirname, "../../..", d));
     const offenders: string[] = [];
     const walk = (dir: string) => {
@@ -253,7 +257,7 @@ describe("module boundaries", () => {
         if (entry.isDirectory()) {
           if (full !== AI_DIR) walk(full);
         } else if (/\.(ts|tsx|cts|mts)$/.test(entry.name) && /lib\/ai\/|["']\.\/ai\/|["']\.\.\/ai\//.test(fs.readFileSync(full, "utf-8"))) {
-          offenders.push(full);
+          if (!SCHEMA_CONSUMERS.includes(full)) offenders.push(full);
         }
       }
     };
