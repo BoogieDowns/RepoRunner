@@ -60,6 +60,14 @@ vi.mock("../../electron/credentialService.js", () => ({
     removeCredential: async () => {},
   })),
 }));
+// Stage 4H: the AI configuration handler reaches settings only through this; a call here is a side effect.
+vi.mock("../../electron/aiSettingsService.js", () => ({
+  getAiConfigurationStatus: h.spy("aiSettingsService.getAiConfigurationStatus", async () => ({
+    storage: "missing", damage: null, revision: null, configurationCount: 0, active: null, providerReadiness: "none",
+  })),
+  loadAiSettings: h.spy("aiSettingsService.loadAiSettings"),
+  saveAiSettings: h.spy("aiSettingsService.saveAiSettings"),
+}));
 vi.mock("../../electron/projectProfileValidation.js", async (original) => {
   const real = await original<typeof import("../../electron/projectProfileValidation.js")>();
   return {
@@ -81,6 +89,8 @@ const GENERAL_CHANNELS = [
 const ANALYSIS_CHANNELS = ["analyze-repo", "cancel-repo-analysis"];
 /** Stage 4B: registered in ipc.ts through the same guard as the general channels. */
 const CREDENTIAL_CHANNELS = ["credential-status", "credential-set", "credential-remove"];
+/** Stage 4H: read-only, registered through the same guard; no arguments. */
+const AI_CONFIG_CHANNELS = ["ai-config-status"];
 const REV = "a".repeat(64);
 /** Arguments each handler would accept from a trusted caller, so a refusal can only come from the sender check. */
 const VALID_ARGS: Record<string, unknown[]> = {
@@ -185,7 +195,8 @@ describe("the shared sender check", () => {
 
 describe("every handler", () => {
   it("exactly the expected handlers are registered", () => {
-    expect([...h.handlers.keys()].sort()).toEqual([...GENERAL_CHANNELS, ...ANALYSIS_CHANNELS, ...CREDENTIAL_CHANNELS].sort());
+    expect([...h.handlers.keys()].sort()).toEqual([...GENERAL_CHANNELS, ...ANALYSIS_CHANNELS, ...CREDENTIAL_CHANNELS, ...AI_CONFIG_CHANNELS].sort());
+    expect(h.handlers.size).toBe(25);
   });
 
   it("refuses every untrusted caller before anything happens, with a message that reveals nothing", async () => {
@@ -243,8 +254,9 @@ describe("trusted callers keep their behavior", () => {
     await expect(call("get-statuses")).resolves.toEqual({ frontend: "stopped", backend: "stopped" });
     await call("clear-logs");
     expect(h.spies["logSink.clearLogs"]).toHaveBeenCalled();
-    // None of the general handlers touches credentials.
+    // None of the general handlers touches credentials or AI settings.
     expect(h.spies["credentialService.getCredentialStore"]).not.toHaveBeenCalled();
+    expect(h.spies["aiSettingsService.getAiConfigurationStatus"]).not.toHaveBeenCalled();
   });
 
   it("the credential handlers run for the trusted page, after the sender check", async () => {
@@ -252,6 +264,27 @@ describe("trusted callers keep their behavior", () => {
       await expect(call(channel, ...VALID_ARGS[channel]), channel).resolves.toMatchObject({ ok: true });
     }
     expect(h.spies["credentialService.getCredentialStore"]).toHaveBeenCalled();
+    expect(h.spies["aiSettingsService.getAiConfigurationStatus"]).not.toHaveBeenCalled();
+  });
+
+  it("only the status fields cross IPC, even if the service returned more", async () => {
+    h.spies["aiSettingsService.getAiConfigurationStatus"].mockResolvedValueOnce({
+      storage: "valid", damage: null, revision: "b".repeat(64), configurationCount: 1,
+      active: { id: "cfg-a1", kind: "local-endpoint", apiStyle: "ollama-native", endpoint: "http://127.0.0.1:11434", model: "synthetic-model" },
+      providerReadiness: "none", endpoint: "http://127.0.0.1:11434", settings: { configs: [] }, path: "C:\secret\file.json",
+    });
+    await expect(call("ai-config-status")).resolves.toEqual({
+      ok: true,
+      status: { storage: "valid", damage: null, revision: "b".repeat(64), configurationCount: 1, active: { id: "cfg-a1", kind: "local-endpoint", apiStyle: "ollama-native" }, providerReadiness: "none" },
+    });
+  });
+
+  it("the AI configuration handler runs for the trusted page, after the sender check, and touches nothing else", async () => {
+    await expect(call("ai-config-status")).resolves.toEqual({
+      ok: true,
+      status: { storage: "missing", damage: null, revision: null, configurationCount: 0, active: null, providerReadiness: "none" },
+    });
+    expect(sideEffects()).toEqual(["aiSettingsService.getAiConfigurationStatus"]);
   });
 });
 
@@ -261,7 +294,7 @@ describe("source structure", () => {
     expect(source.match(/ipcMain\.(handle|handleOnce|on|once)\(/g)).toEqual(["ipcMain.handle("]);
     const guard = /ipcMain\.handle\(channel, async \(event, \.\.\.args: unknown\[\]\) => \{\s*if \(!isTrustedSender\(event, trustedRenderer\)\) throw untrustedSenderError\(\);\s*return listener\(event, \.\.\.args\);\s*\}\);/;
     expect(source).toMatch(guard);
-    expect(source.match(/^ {2}handle\("/gm)).toHaveLength(GENERAL_CHANNELS.length + CREDENTIAL_CHANNELS.length);
+    expect(source.match(/^ {2}handle\("/gm)).toHaveLength(GENERAL_CHANNELS.length + CREDENTIAL_CHANNELS.length + AI_CONFIG_CHANNELS.length);
   });
 
   it("no other main-process file registers IPC handlers", () => {
