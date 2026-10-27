@@ -514,17 +514,21 @@ describe("module boundaries", () => {
     );
   });
 
-  it("nothing in the app imports or creates it", () => {
+  it("nothing in the app imports or creates it, apart from the (unused) Stage 4G service", () => {
     const offenders: string[] = [];
     const walk = (d: string) => {
       for (const entry of fs.readdirSync(d, { withFileTypes: true })) {
         const full = path.join(d, entry.name);
         if (entry.isDirectory()) walk(full);
-        else if (/\.(ts|tsx|cts|mts)$/.test(entry.name) && full !== path.join(ROOT, "electron/aiSettingsStore.ts") && /aiSettingsStore|AiSettingsStore|reporunner-ai-settings\.json/.test(fs.readFileSync(full, "utf8"))) offenders.push(full);
+        else if (/\.(ts|tsx|cts|mts)$/.test(entry.name) && ![path.join(ROOT, "electron/aiSettingsStore.ts"), path.join(ROOT, "electron/aiSettingsService.ts")].includes(full) && /aiSettingsStore|AiSettingsStore|reporunner-ai-settings\.json/.test(fs.readFileSync(full, "utf8"))) offenders.push(full);
       }
     };
     walk(path.join(ROOT, "src"));
     walk(path.join(ROOT, "electron"));
     expect(offenders).toEqual([]);
+    // Only the service constructs a store.
+    const electronDir = path.join(ROOT, "electron");
+    const constructing = fs.readdirSync(electronDir).filter((f) => f.endsWith(".ts") && /new AiSettingsStore\(/.test(fs.readFileSync(path.join(electronDir, f), "utf8")));
+    expect(constructing).toEqual(["aiSettingsService.ts"]);
   });
 });
