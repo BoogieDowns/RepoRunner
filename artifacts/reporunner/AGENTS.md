@@ -176,6 +176,7 @@ Every IPC handler checks its sender first with `isTrustedSender` (`electron/ipcT
 
 - `electron/aiSettingsService.ts` owns **the one** `AiSettingsStore` (`reporunner-ai-settings.json`, non-secret, validated by the Stage 4E schema in `src/lib/ai/`), created lazily on first use. Never construct another store; use the service's functions. Nothing calls it yet: wiring it to startup, IPC or UI needs its own authorization.
 - Provider readiness stays `none` while `PRODUCTION_AI_ADAPTERS` is empty. A saved configuration is not connectivity, a license or consent, and never makes an AI feature usable.
+- `ai-config-status` (`electron/aiConfigIpc.ts`, registered in `ipc.ts` through the guard) is read-only and returns that metadata only. No preload method exposes it; adding one, or any AI settings write channel, needs its own authorization.
 
 ---
 

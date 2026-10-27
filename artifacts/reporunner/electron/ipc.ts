@@ -40,6 +40,7 @@ import { clearLogs, emitLog, formatLogsForClipboard } from "./logSink.js";
 import { buildChildEnvironment } from "./childEnvironment.js";
 import { registerRepoAnalysisIpc } from "./repoAnalysisIpc.js";
 import { credentialRemove, credentialSet, credentialStatus } from "./credentialIpc.js";
+import { aiConfigStatus } from "./aiConfigIpc.js";
 import { isTrustedSender, untrustedSenderError, type TrustedRenderer } from "./ipcTrust.js";
 
 function createLineBufferedLogEmitter(source: LogSource) {
@@ -449,6 +450,10 @@ export function setupIpc(trustedRenderer?: TrustedRenderer) {
   handle("credential-set", async (_event, ...args: unknown[]) => credentialSet(args));
 
   handle("credential-remove", async (_event, ...args: unknown[]) => credentialRemove(args));
+
+  // AI configuration (Stage 4H): read-only metadata; no preload method exposes
+  // it yet. See aiConfigIpc.ts.
+  handle("ai-config-status", async (_event, ...args: unknown[]) => aiConfigStatus(args));
 }
 
 

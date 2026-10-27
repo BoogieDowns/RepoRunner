@@ -235,17 +235,21 @@ describe("module boundaries", () => {
     );
   });
 
-  it("nothing in the app imports it: Free startup is unchanged", () => {
+  it("only the Stage 4H status handler imports it, and nothing calls it at startup", () => {
     const offenders: string[] = [];
     const walk = (d: string) => {
       for (const entry of fs.readdirSync(d, { withFileTypes: true })) {
         const full = path.join(d, entry.name);
         if (entry.isDirectory()) walk(full);
-        else if (/\.(ts|tsx|cts|mts)$/.test(entry.name) && full !== path.join(ROOT, "electron/aiSettingsService.ts") && /aiSettingsService|getAiConfigurationStatus|loadAiSettings|saveAiSettings/.test(fs.readFileSync(full, "utf8"))) offenders.push(full);
+        else if (/\.(ts|tsx|cts|mts)$/.test(entry.name) && ![path.join(ROOT, "electron/aiSettingsService.ts"), path.join(ROOT, "electron/aiConfigIpc.ts")].includes(full) && /aiSettingsService|getAiConfigurationStatus|loadAiSettings|saveAiSettings/.test(fs.readFileSync(full, "utf8"))) offenders.push(full);
       }
     };
     walk(path.join(ROOT, "src"));
     walk(path.join(ROOT, "electron"));
     expect(offenders).toEqual([]);
+    // aiConfigIpc.ts uses only the status function; ipc.ts reaches the service only through it.
+    const ipcModule = fs.readFileSync(path.join(ROOT, "electron/aiConfigIpc.ts"), "utf8");
+    expect([...ipcModule.matchAll(/import \{([^}]*)\} from "\.\/aiSettingsService\.js"/g)].map((m) => m[1].trim())).toEqual(["getAiConfigurationStatus, type AiConfigurationStatus"]);
+    expect(ipcModule).not.toMatch(/loadAiSettings|saveAiSettings/);
   });
 });
