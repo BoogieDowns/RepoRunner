@@ -51,6 +51,15 @@ vi.mock("../../electron/logSink.js", () => ({
   clearLogs: h.spy("logSink.clearLogs"),
   formatLogsForClipboard: h.spy("logSink.formatLogsForClipboard", () => "logs"),
 }));
+// Stage 4B: the credential handlers reach the store only through this; a call here is a side effect.
+vi.mock("../../electron/credentialService.js", () => ({
+  getCredentialStore: h.spy("credentialService.getCredentialStore", () => ({
+    status: async () => ({ configured: false, mode: null }),
+    persistenceAvailability: () => ({ available: true }),
+    setCredential: async () => {},
+    removeCredential: async () => {},
+  })),
+}));
 vi.mock("../../electron/projectProfileValidation.js", async (original) => {
   const real = await original<typeof import("../../electron/projectProfileValidation.js")>();
   return {
@@ -70,6 +79,8 @@ const GENERAL_CHANNELS = [
   "start-frontend", "start-backend", "stop-services", "restart-all", "open-preview", "copy-logs", "clear-logs", "get-statuses",
 ];
 const ANALYSIS_CHANNELS = ["analyze-repo", "cancel-repo-analysis"];
+/** Stage 4B: registered in ipc.ts through the same guard as the general channels. */
+const CREDENTIAL_CHANNELS = ["credential-status", "credential-set", "credential-remove"];
 const REV = "a".repeat(64);
 /** Arguments each handler would accept from a trusted caller, so a refusal can only come from the sender check. */
 const VALID_ARGS: Record<string, unknown[]> = {
@@ -78,6 +89,9 @@ const VALID_ARGS: Record<string, unknown[]> = {
   "delete-project": ["a", REV],
   "resolve-project-store-issue": ["start-fresh", REV],
   "analyze-repo": ["C:\\secret\\repo"],
+  "credential-status": ["byok-slot-1"],
+  "credential-set": ["byok-slot-1", "rr-synthetic-sender-test-key", { remember: false }],
+  "credential-remove": ["byok-slot-1"],
 };
 
 let app: ReturnType<typeof trustedRenderer>;
@@ -171,7 +185,7 @@ describe("the shared sender check", () => {
 
 describe("every handler", () => {
   it("exactly the expected handlers are registered", () => {
-    expect([...h.handlers.keys()].sort()).toEqual([...GENERAL_CHANNELS, ...ANALYSIS_CHANNELS].sort());
+    expect([...h.handlers.keys()].sort()).toEqual([...GENERAL_CHANNELS, ...ANALYSIS_CHANNELS, ...CREDENTIAL_CHANNELS].sort());
   });
 
   it("refuses every untrusted caller before anything happens, with a message that reveals nothing", async () => {
@@ -229,6 +243,15 @@ describe("trusted callers keep their behavior", () => {
     await expect(call("get-statuses")).resolves.toEqual({ frontend: "stopped", backend: "stopped" });
     await call("clear-logs");
     expect(h.spies["logSink.clearLogs"]).toHaveBeenCalled();
+    // None of the general handlers touches credentials.
+    expect(h.spies["credentialService.getCredentialStore"]).not.toHaveBeenCalled();
+  });
+
+  it("the credential handlers run for the trusted page, after the sender check", async () => {
+    for (const channel of CREDENTIAL_CHANNELS) {
+      await expect(call(channel, ...VALID_ARGS[channel]), channel).resolves.toMatchObject({ ok: true });
+    }
+    expect(h.spies["credentialService.getCredentialStore"]).toHaveBeenCalled();
   });
 });
 
@@ -238,7 +261,7 @@ describe("source structure", () => {
     expect(source.match(/ipcMain\.(handle|handleOnce|on|once)\(/g)).toEqual(["ipcMain.handle("]);
     const guard = /ipcMain\.handle\(channel, async \(event, \.\.\.args: unknown\[\]\) => \{\s*if \(!isTrustedSender\(event, trustedRenderer\)\) throw untrustedSenderError\(\);\s*return listener\(event, \.\.\.args\);\s*\}\);/;
     expect(source).toMatch(guard);
-    expect(source.match(/^ {2}handle\("/gm)).toHaveLength(GENERAL_CHANNELS.length);
+    expect(source.match(/^ {2}handle\("/gm)).toHaveLength(GENERAL_CHANNELS.length + CREDENTIAL_CHANNELS.length);
   });
 
   it("no other main-process file registers IPC handlers", () => {
