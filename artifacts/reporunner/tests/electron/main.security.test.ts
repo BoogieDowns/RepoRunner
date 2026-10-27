@@ -29,6 +29,7 @@ const h = vi.hoisted(() => {
     session: { setPermissionRequestHandler: vi.fn(), setPermissionCheckHandler: vi.fn() },
     setupIpc: vi.fn(),
     shutdownRepoAnalysis: vi.fn(),
+    isPackaged: true,
   };
 });
 
@@ -40,6 +41,9 @@ vi.mock("electron", () => ({
     whenReady: () => Promise.resolve(),
     isReady: () => true,
     getAppPath: () => "C:\\Apps\\RepoRunner\\resources\\app.asar",
+    get isPackaged() {
+      return h.isPackaged;
+    },
   },
   BrowserWindow: h.FakeWindow,
   Menu: { buildFromTemplate: () => ({ popup: () => {} }) },
@@ -78,10 +82,60 @@ describe("main window configuration", () => {
     expect(prefs.webviewTag).toBe(false);
   });
 
+  it("a packaged build never passes the internal credential switch to the renderer", () => {
+    const prefs = h.FakeWindow.instances[0].options.webPreferences;
+    expect(prefs).not.toHaveProperty("additionalArguments");
+  });
+
   it("loads the packaged page", () => {
     expect(h.FakeWindow.instances[0].loadFile).toHaveBeenCalledWith(
       path.join("C:\\Apps\\RepoRunner\\resources\\app.asar", "dist/public/index.html"),
     );
+  });
+});
+
+describe("internal credential Settings gate (Stage 4C)", () => {
+  const ENV = "REPORUNNER_INTERNAL_CREDENTIAL_SETTINGS";
+  /** Starts main.ts again with the given packaging state and opt-in value; returns the window's webPreferences. */
+  async function launch(isPackaged: boolean, optIn: string | undefined) {
+    const saved = process.env[ENV];
+    if (optIn === undefined) delete process.env[ENV];
+    else process.env[ENV] = optIn;
+    try {
+      h.isPackaged = isPackaged;
+      h.FakeWindow.instances = [];
+      vi.resetModules();
+      await import("../../electron/main.js");
+      await flush();
+      return h.FakeWindow.instances[0].options.webPreferences;
+    } finally {
+      if (saved === undefined) delete process.env[ENV];
+      else process.env[ENV] = saved;
+      h.isPackaged = true;
+    }
+  }
+
+  it("is on only for an unpackaged launch with the explicit opt-in, and adds only the one switch", async () => {
+    expect((await launch(false, "1")).additionalArguments).toEqual(["--reporunner-internal-credential-settings"]);
+  });
+
+  it.each([
+    ["packaged, opted in", true, "1"],
+    ["packaged, no opt-in", true, undefined],
+    ["unpackaged, no opt-in (the default)", false, undefined],
+    ["unpackaged, opt-in 'true'", false, "true"],
+    ["unpackaged, opt-in '0'", false, "0"],
+    ["unpackaged, opt-in ' 1'", false, " 1"],
+  ])("is off when %s", async (_name, isPackaged, optIn) => {
+    const prefs = await launch(isPackaged, optIn);
+    expect(prefs).not.toHaveProperty("additionalArguments");
+    // Hardening is the same either way.
+    expect([prefs.contextIsolation, prefs.nodeIntegration, prefs.sandbox, prefs.webviewTag]).toEqual([true, false, true, false]);
+  });
+
+  it("an enabled launch keeps the same hardening", async () => {
+    const prefs = await launch(false, "1");
+    expect([prefs.contextIsolation, prefs.nodeIntegration, prefs.sandbox, prefs.webviewTag]).toEqual([true, false, true, false]);
   });
 });
 

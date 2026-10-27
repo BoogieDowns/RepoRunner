@@ -6,6 +6,7 @@ import {
   Copy,
   Trash2,
   Settings2,
+  KeyRound,
   Loader2,
   GitPullRequest,
   Square,
@@ -543,6 +544,8 @@ interface DashboardProps {
   controlsDisabled?: boolean;
   showNoRepoPulse?: boolean;
   showPlaceholderProjectName?: boolean;
+  /** Internal development launches only (Stage 4C): shows the Settings button. */
+  onOpenSettings?: () => void;
 }
 
 const MONO: React.CSSProperties = { fontFamily: "'JetBrains Mono', monospace" };
@@ -554,7 +557,7 @@ const LABEL: React.CSSProperties = {
   textTransform: "uppercase",
 };
 
-export function Dashboard({ project, onEdit, controlsDisabled = false, showNoRepoPulse = false, showPlaceholderProjectName = false }: DashboardProps) {
+export function Dashboard({ project, onEdit, controlsDisabled = false, showNoRepoPulse = false, showPlaceholderProjectName = false, onOpenSettings }: DashboardProps) {
   // showNoRepoPulse is applied via the `rr-no-repo-pulse` class below.
   const { toast } = useToast();
   const [statuses, setStatuses] = useState<ServiceStatuses>({
@@ -965,6 +968,22 @@ export function Dashboard({ project, onEdit, controlsDisabled = false, showNoRep
           );
         })()}
         </>
+        {/* Internal development launches only (Stage 4C): absent unless the preload provides the credential methods. */}
+        {onOpenSettings && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onOpenSettings}
+            className="flex-none h-8 px-3 gap-1.5 text-[12px] font-medium"
+            style={{ color: "#4a4845", background: "transparent", borderColor: "rgba(185,14,28,0.06)" }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = "#9a9896"; e.currentTarget.style.background = "#111"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = "#4a4845"; e.currentTarget.style.background = "transparent"; }}
+            data-testid="open-credential-settings"
+          >
+            <KeyRound className="w-3.5 h-3.5" />
+            Settings
+          </Button>
+        )}
       </header>
 
       {/* ── Main content ── */}

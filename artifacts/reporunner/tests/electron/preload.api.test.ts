@@ -18,11 +18,13 @@ const fakeElectron = {
   ipcRenderer: { invoke: h.invoke, send: h.send, sendSync: vi.fn(), on: h.on, removeListener: h.removeListener },
 };
 
-let api: Record<string, unknown>;
-beforeAll(() => {
-  // Vitest doesn't load .cts files, so the real preload source is compiled
-  // to CommonJS (as the build does) and run with a require that only knows
-  // "electron".
+/**
+ * Vitest doesn't load .cts files, so the real preload source is compiled to
+ * CommonJS (as the build does) and run with a require that only knows
+ * "electron" and a `process` whose argv is the renderer's command line.
+ */
+function loadPreload(argv: string[]): Record<string, unknown> {
+  h.exposed.clear();
   const source = fs.readFileSync(path.resolve(import.meta.dirname, "../../electron/preload.cts"), "utf8");
   const { outputText } = ts.transpileModule(source, {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
@@ -32,8 +34,17 @@ beforeAll(() => {
     throw new Error(`preload must not require ${id}`);
   };
   const module = { exports: {} };
-  new Function("require", "module", "exports", outputText)(fakeRequire, module, module.exports);
-  api = h.exposed.get("repoRunner")!;
+  new Function("require", "module", "exports", "process", outputText)(fakeRequire, module, module.exports, { argv });
+  return h.exposed.get("repoRunner")!;
+}
+
+/** A packaged or ordinary launch: the renderer's argv never carries the internal switch. */
+const PRODUCTION_ARGV = ["C:\\Program Files\\RepoRunner\\RepoRunner.exe", "--type=renderer", "--enable-sandbox", "--reporunner-internal-credential-settings-x"];
+const INTERNAL_SWITCH = "--reporunner-internal-credential-settings";
+
+let api: Record<string, unknown>;
+beforeAll(() => {
+  api = loadPreload(PRODUCTION_ARGV);
 });
 
 describe("preload API", () => {
@@ -99,5 +110,49 @@ describe("preload API", () => {
     expect(channels).not.toContain("execute-command");
     expect(channels.every((c) => typeof c === "string" && /^[a-z-]+$/.test(c as string))).toBe(true);
     expect(h.send).not.toHaveBeenCalled();
+  });
+
+  it("an ordinary launch exposes no credential method, whatever similar switches appear", () => {
+    expect(Object.keys(api).filter((k) => /cred|key|secret/i.test(k))).toEqual([]);
+    expect(Object.keys(loadPreload([...PRODUCTION_ARGV, "--reporunner-internal-credential-settings=0", "--REPORUNNER-INTERNAL-CREDENTIAL-SETTINGS"])).filter((k) => /cred/i.test(k))).toEqual([]);
+  });
+});
+
+describe("internal credential methods (Stage 4C, only with the main process's switch)", () => {
+  let internal: Record<string, unknown>;
+  beforeAll(() => {
+    internal = loadPreload([...PRODUCTION_ARGV, INTERNAL_SWITCH]);
+  });
+  const call = (name: string, ...args: unknown[]) => (internal[name] as (...a: unknown[]) => Promise<unknown>)(...args);
+
+  it("adds exactly three methods to the same API, and no way to read a key", () => {
+    expect(Object.keys(internal).filter((k) => !Object.keys(api).includes(k)).sort()).toEqual(["credentialStatus", "removeCredential", "setCredential"]);
+    expect(Object.keys(internal)).not.toEqual(expect.arrayContaining(["getCredential"]));
+    expect(Object.keys(internal).filter((k) => /get.*(cred|key|secret)/i.test(k))).toEqual([]);
+    for (const name of ["credentialStatus", "setCredential", "removeCredential"]) expect(internal[name]).not.toBe(h.invoke);
+  });
+
+  it("each forwards exactly its fixed arguments to its one channel", async () => {
+    h.invoke.mockClear();
+    await call("credentialStatus", "byok-slot-1", "extra");
+    await call("setCredential", "byok-slot-1", "rr-synthetic-preload-key", { remember: true }, "extra");
+    await call("removeCredential", "byok-slot-1", { anything: true });
+    expect(h.invoke.mock.calls).toEqual([
+      ["credential-status", "byok-slot-1"],
+      ["credential-set", "byok-slot-1", "rr-synthetic-preload-key", { remember: true }],
+      ["credential-remove", "byok-slot-1"],
+    ]);
+  });
+
+  it("can't be turned into a generic channel or a get", async () => {
+    h.invoke.mockClear();
+    await call("credentialStatus", "credential-get");
+    await call("setCredential", "credential-get", "x", { remember: false });
+    expect(h.invoke.mock.calls.map((c) => (c as unknown[])[0])).toEqual(["credential-status", "credential-set"]);
+  });
+
+  it("main.ts and preload.cts use the same switch", () => {
+    const features = fs.readFileSync(path.resolve(import.meta.dirname, "../../electron/internalFeatures.ts"), "utf8");
+    expect(features).toContain(`INTERNAL_CREDENTIAL_SETTINGS_SWITCH = "${INTERNAL_SWITCH}"`);
   });
 });
