@@ -374,8 +374,10 @@ describe("nothing is disclosed", () => {
     const dir = path.resolve(import.meta.dirname, "../../electron");
     const constructing = fs.readdirSync(dir).filter((f) => f.endsWith(".ts") && /new CredentialStore\(/.test(fs.readFileSync(path.join(dir, f), "utf8")));
     expect(constructing).toEqual(["credentialService.ts"]);
-    // Not reachable from the renderer in this stage.
-    expect(fs.readFileSync(path.resolve(import.meta.dirname, "../../electron/preload.cts"), "utf8")).not.toMatch(/credential/i);
+    // Stage 4C: the preload reaches exactly the three channels (behind the internal switch; see preload.api.test.ts), never a get.
+    const preload = fs.readFileSync(path.resolve(import.meta.dirname, "../../electron/preload.cts"), "utf8");
+    expect([...preload.matchAll(/invoke\("(credential-[a-z]+)"/g)].map((m) => m[1]).sort()).toEqual([...CHANNELS].sort());
+    expect(preload).not.toMatch(/credential-get|getCredential/);
   });
 });
 

@@ -1,4 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { CredentialSettingsDialog } from "@/components/CredentialSettingsDialog";
+import { getCredentialApi } from "@/lib/credentialSettings";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { installMock } from "@/mock/repoRunnerMock";
@@ -42,6 +44,22 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [storeStatus, setStoreStatus] = useState<ProjectStoreStatus | null>(null);
   const [storeActionError, setStoreActionError] = useState<string | null>(null);
+
+  // Internal credential Settings (Stage 4C): null unless this launch's preload
+  // provides the credential methods, so packaged builds never show it.
+  const credentialApi = useMemo(() => getCredentialApi(window.repoRunner), []);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const settingsTrigger = useRef<HTMLElement | null>(null);
+  const openSettings = useCallback(() => {
+    settingsTrigger.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    setSettingsOpen(true);
+  }, []);
+  const closeSettings = useCallback(() => {
+    setSettingsOpen(false);
+    // Back to the Settings button once the dialog is gone.
+    setTimeout(() => settingsTrigger.current?.focus(), 0);
+  }, []);
+  const settingsDialog = credentialApi && settingsOpen ? <CredentialSettingsDialog api={credentialApi} onClose={closeSettings} /> : null;
 
   /**
    * Re-reads the saved-setups status and, when the file is usable, the saved
@@ -226,7 +244,9 @@ function App() {
             controlsDisabled={true}
             showNoRepoPulse={projectState.profiles.length === 0 && !isStoreBlocked(storeStatus)}
             showPlaceholderProjectName={true}
+            onOpenSettings={credentialApi ? openSettings : undefined}
           />
+          {settingsDialog}
 
           {showSetup && (
             <>
@@ -270,7 +290,8 @@ function App() {
   return (
     <TooltipProvider>
       <div className="min-h-screen w-full bg-background text-foreground font-sans relative">
-        <Dashboard project={activeProject} onEdit={handleEditOpen} />
+        <Dashboard project={activeProject} onEdit={handleEditOpen} onOpenSettings={credentialApi ? openSettings : undefined} />
+        {settingsDialog}
 
         {isEditing && (
           <>

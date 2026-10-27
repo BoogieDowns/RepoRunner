@@ -1,5 +1,6 @@
 import { getCredentialStore } from "./credentialService.js";
-import { CredentialStoreError, MAX_SECRET_BYTES, type CredentialStoreErrorCode } from "./credentialStore.js";
+import { CredentialStoreError, MAX_SECRET_BYTES } from "./credentialStore.js";
+import type { CredentialIpcErrorCode, CredentialIpcResult, CredentialMetadata } from "../src/types.js";
 
 /*
  * Credential IPC (Stage 4B): "credential-status", "credential-set" and
@@ -17,7 +18,11 @@ import { CredentialStoreError, MAX_SECRET_BYTES, type CredentialStoreErrorCode }
  *   is touched; nothing is coerced.
  * - Results are fixed shapes with fixed codes. Nothing here throws, so
  *   Electron never logs a handler error, and nothing here logs at all.
- * - Not exposed through preload yet: the renderer can't reach these channels.
+ * - Exposed through preload only in internal development launches (Stage 4C,
+ *   see internalFeatures.ts); every packaged build leaves them unreachable.
+ *   The checks here apply either way.
+ * - Result types are shared with the renderer in src/types.ts. The return in
+ *   toErrorCode() makes TypeScript check that every store code is listed there.
  */
 
 export const CREDENTIAL_CHANNELS = Object.freeze(["credential-status", "credential-set", "credential-remove"] as const);
@@ -25,17 +30,7 @@ export const CREDENTIAL_CHANNELS = Object.freeze(["credential-status", "credenti
 /** The one slot the IPC accepts in this stage. */
 const IPC_SLOT = "byok-slot-1";
 
-export interface CredentialMetadata {
-  configured: boolean;
-  mode: "remembered" | "session" | null;
-  /** Whether "remember" can be used on this computer. */
-  persistence: "available" | "unavailable" | "insecure";
-}
-
-/** Store codes pass through, except invalid-slot (reported as invalid-request). */
-export type CredentialIpcErrorCode = "invalid-request" | "busy" | "failed" | Exclude<CredentialStoreErrorCode, "invalid-slot">;
-
-export type CredentialIpcResult = { ok: true; status: CredentialMetadata } | { ok: false; error: CredentialIpcErrorCode };
+export type { CredentialIpcErrorCode, CredentialIpcResult, CredentialMetadata };
 
 const fail = (error: CredentialIpcErrorCode): CredentialIpcResult => ({ ok: false, error });
 

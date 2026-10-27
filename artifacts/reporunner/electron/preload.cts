@@ -1,11 +1,29 @@
 import { contextBridge, ipcRenderer } from "electron";
 import type { IpcRendererEvent } from "electron";
 import type {
+  CredentialSlotId,
   ProjectProfile,
   ProjectStoreRecoveryAction,
   LogEntry,
   ServiceStatuses,
 } from "../src/types.js";
+
+/*
+ * Credential methods (Stage 4C) are added only when the main process passed
+ * this switch, which it does only in internal development launches (see
+ * electron/internalFeatures.ts; packaged builds never pass it). Each forwards
+ * exactly its fixed arguments to its one channel. None returns a stored key,
+ * and there is no generic invoke.
+ */
+const INTERNAL_CREDENTIAL_SETTINGS_SWITCH = "--reporunner-internal-credential-settings";
+const credentialMethods = process.argv.includes(INTERNAL_CREDENTIAL_SETTINGS_SWITCH)
+  ? {
+      credentialStatus: (slot: CredentialSlotId) => ipcRenderer.invoke("credential-status", slot),
+      setCredential: (slot: CredentialSlotId, secret: string, options: { remember: boolean }) =>
+        ipcRenderer.invoke("credential-set", slot, secret, options),
+      removeCredential: (slot: CredentialSlotId) => ipcRenderer.invoke("credential-remove", slot),
+    }
+  : {};
 
 // Revisions are only forwarded when given, so existing calls are unchanged.
 const withRevision = (args: unknown[], expectedRevision?: string | null) =>
@@ -77,5 +95,7 @@ contextBridge.exposeInMainWorld("repoRunner", {
     ipcRenderer.on("status", listener);
     return () => ipcRenderer.removeListener("status", listener);
   },
+
+  ...credentialMethods,
 });
 

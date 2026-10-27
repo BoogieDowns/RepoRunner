@@ -4,6 +4,7 @@ import { fileURLToPath, pathToFileURL } from "url";
 import { setupIpc } from "./ipc.js";
 import { hardenSession, hardenWebContents } from "./windowSecurity.js";
 import { shutdownRepoAnalysis } from "./repoAnalysisIpc.js";
+import { INTERNAL_CREDENTIAL_SETTINGS_SWITCH, isInternalCredentialSettingsEnabled } from "./internalFeatures.js";
 import {
   beginShutdown,
   hasTrackedServiceWork,
@@ -47,6 +48,11 @@ function createWindow() {
       nodeIntegration: false,
       sandbox: true,
       webviewTag: false,
+      // Internal development launches only (never packaged builds): lets the
+      // preload add the credential Settings methods. See internalFeatures.ts.
+      ...(isInternalCredentialSettingsEnabled(app.isPackaged, process.env)
+        ? { additionalArguments: [INTERNAL_CREDENTIAL_SETTINGS_SWITCH] }
+        : {}),
     },
     icon: path.join(__dirname, "../assets/icon.png"),
   });

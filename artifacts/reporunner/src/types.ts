@@ -181,6 +181,57 @@ export const REPO_ANALYSIS_ERROR_MESSAGES: Record<RepoAnalysisErrorCode, string>
   failed: "RepoRunner couldn't analyze that folder.",
 };
 
+// Credential contract (Stage 4B IPC, Stage 4C internal Settings). Metadata
+// only: no type here ever carries a stored key.
+
+/** The one credential slot the IPC accepts. */
+export const CREDENTIAL_SLOT = "byok-slot-1";
+export type CredentialSlotId = typeof CREDENTIAL_SLOT;
+
+/** Same limit as the main-process store (UTF-8 bytes, not characters). */
+export const CREDENTIAL_MAX_KEY_BYTES = 8192;
+
+export interface CredentialMetadata {
+  configured: boolean;
+  mode: "remembered" | "session" | null;
+  /** Whether "remember" can be used on this computer. */
+  persistence: "available" | "unavailable" | "insecure";
+}
+
+export type CredentialIpcErrorCode =
+  | "invalid-request"
+  | "invalid-secret"
+  | "busy"
+  | "failed"
+  | "encryption-unavailable"
+  | "encryption-insecure"
+  | "encrypt-failed"
+  | "decrypt-failed"
+  | "store-corrupt"
+  | "unsupported-version"
+  | "read-failed"
+  | "write-failed";
+
+export type CredentialIpcResult = { ok: true; status: CredentialMetadata } | { ok: false; error: CredentialIpcErrorCode };
+
+/** Fixed, value-free messages for credential errors: no key, path or system detail. */
+export const CREDENTIAL_ERROR_MESSAGES: Record<CredentialIpcErrorCode, string> = {
+  "invalid-request": "RepoRunner couldn't process that request.",
+  "invalid-secret": "That key can't be used. It must not be empty, must fit in 8,192 bytes and can't contain line breaks.",
+  busy: "Another key change is still in progress. Try again in a moment.",
+  failed: "Something went wrong, so nothing was changed.",
+  "encryption-unavailable":
+    "This computer can't encrypt keys right now, so RepoRunner can't remember one. You can still keep a key for this session only.",
+  "encryption-insecure":
+    "No secure keyring is available on this computer, so RepoRunner won't remember keys. You can still keep a key for this session only.",
+  "encrypt-failed": "The key couldn't be encrypted, so it wasn't saved.",
+  "decrypt-failed": "A saved key couldn't be read.",
+  "store-corrupt": "The saved keys file is damaged, so RepoRunner can't read or change it. It hasn't been changed or deleted.",
+  "unsupported-version": "The saved keys file comes from a newer version of RepoRunner, so this version won't read or change it.",
+  "read-failed": "RepoRunner couldn't read the saved keys file.",
+  "write-failed": "RepoRunner couldn't save the change. Your previous key setting is unchanged.",
+};
+
 export interface ServiceStatuses {
   frontend: ServiceStatus;
   backend: ServiceStatus;
@@ -222,6 +273,16 @@ export interface RepoRunnerAPI {
   analyzeRepo(repoPath: string): Promise<RepoScanResult>;
   /** Stops the running analysis, if any (its call then resolves "cancelled"). */
   cancelRepoAnalysis(): Promise<void>;
+  /*
+   * Credential methods (Stage 4C): present only in internal development
+   * launches (unpackaged, with an explicit opt-in), absent in every packaged
+   * build and in the browser mock. They return metadata only; there is no
+   * method that returns a stored key.
+   */
+  credentialStatus?(slot: CredentialSlotId): Promise<CredentialIpcResult>;
+  /** The key travels to the main process once and never comes back. */
+  setCredential?(slot: CredentialSlotId, secret: string, options: { remember: boolean }): Promise<CredentialIpcResult>;
+  removeCredential?(slot: CredentialSlotId): Promise<CredentialIpcResult>;
 }
 
 declare global {
