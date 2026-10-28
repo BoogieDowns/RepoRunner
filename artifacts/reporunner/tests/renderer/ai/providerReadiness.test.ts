@@ -220,9 +220,10 @@ describe("with the capability model", () => {
 
 describe("module boundaries", () => {
   const AI_DIR = path.resolve(import.meta.dirname, "../../../src/lib/ai");
-  const FILES = ["localEndpoint.ts", "settingsSchema.ts", "providerReadiness.ts"];
+  // Stage 4N adds probeSpec.ts, held to the same purity rules.
+  const FILES = ["localEndpoint.ts", "settingsSchema.ts", "providerReadiness.ts", "probeSpec.ts"];
 
-  it("contains exactly the three modules", () => {
+  it("contains exactly the four modules", () => {
     expect(fs.readdirSync(AI_DIR).sort()).toEqual([...FILES].sort());
   });
 
@@ -252,6 +253,8 @@ describe("module boundaries", () => {
     // Stage 4L: the internal editor checks addresses and documents with the same pure modules.
     path.resolve(import.meta.dirname, "../../../src/lib/aiConfigEditor.ts"),
     path.resolve(import.meta.dirname, "../../../src/components/AiConfigEditor.tsx"),
+    // Stage 4N: the probe transport builds its request with probeSpec.ts; nothing in the app calls it.
+    path.resolve(import.meta.dirname, "../../../electron/localProbe.ts"),
   ];
 
   it("nothing in the app imports them yet, apart from the unused settings store and service", () => {
