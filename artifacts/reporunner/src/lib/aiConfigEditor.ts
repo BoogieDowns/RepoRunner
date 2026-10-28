@@ -136,6 +136,8 @@ export interface EntryForm {
   error: string | null;
   /** When the address is valid but written differently: the exact form that would be saved. */
   canonical: string | null;
+  /** The values the form opened with, to tell whether anything was typed. */
+  initial: { endpoint: string; apiStyle: AiConfigEditEntry["apiStyle"]; model: string };
 }
 
 export type BlockedReason = "damaged" | "unsupported-version" | "unreadable";
@@ -195,9 +197,15 @@ export class AiConfigEditorController {
     return this.state;
   }
 
-  /** Unsaved changes exist (the dialog asks before closing). */
+  /**
+   * Unsaved changes exist (the dialog asks before closing): a draft that
+   * differs from what was saved, or an open form whose fields were changed
+   * but not yet applied to the draft.
+   */
   get hasUnsavedChanges(): boolean {
-    return this.state.dirty;
+    const form = this.state.form;
+    const formChanged = form !== null && (form.endpoint !== form.initial.endpoint || form.apiStyle !== form.initial.apiStyle || form.model !== form.initial.model);
+    return this.state.dirty || formChanged;
   }
 
   private set(patch: Partial<AiEditorState>) {
@@ -263,14 +271,20 @@ export class AiConfigEditorController {
       this.set({ error: AI_EDITOR_TEXT.limit });
       return;
     }
-    this.set({ form: { editingId: null, endpoint: "", apiStyle: "openai-compatible", model: "", error: null, canonical: null }, confirmingRemove: null, notice: null, error: null });
+    this.set({
+      form: { editingId: null, endpoint: "", apiStyle: "openai-compatible", model: "", error: null, canonical: null, initial: { endpoint: "", apiStyle: "openai-compatible", model: "" } },
+      confirmingRemove: null,
+      notice: null,
+      error: null,
+    });
   }
 
   startEdit(id: string): void {
     const draft = this.editable();
     const entry = draft?.configs.find((c) => c.id === id);
     if (!entry) return;
-    this.set({ form: { editingId: id, endpoint: entry.endpoint, apiStyle: entry.apiStyle, model: entry.model ?? "", error: null, canonical: null }, confirmingRemove: null, notice: null, error: null });
+    const initial = { endpoint: entry.endpoint, apiStyle: entry.apiStyle, model: entry.model ?? "" };
+    this.set({ form: { editingId: id, ...initial, error: null, canonical: null, initial }, confirmingRemove: null, notice: null, error: null });
   }
 
   updateForm(patch: Partial<Pick<EntryForm, "endpoint" | "apiStyle" | "model">>): void {

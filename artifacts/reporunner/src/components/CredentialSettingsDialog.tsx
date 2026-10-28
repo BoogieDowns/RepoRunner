@@ -87,6 +87,8 @@ export function CredentialSettingsView(props: {
   endpointRef?: React.Ref<HTMLInputElement>;
   /** Asking before closing discards unsaved AI configuration changes. */
   confirmingClose?: boolean;
+  /** A save or remove is in flight: closing (even after confirming) waits for it. */
+  closeBlocked?: boolean;
   keepEditingRef?: React.Ref<HTMLButtonElement>;
   onConfirmClose?: () => void;
   onCancelClose?: () => void;
@@ -254,7 +256,7 @@ export function CredentialSettingsView(props: {
               You have unsaved AI configuration changes. Close and discard them?
             </p>
             <div className="mt-2 flex gap-2">
-              <button type="button" className="btn-glass btn-glass-danger h-8 px-3 text-[13px]" onClick={props.onConfirmClose}>
+              <button type="button" className="btn-glass btn-glass-danger h-8 px-3 text-[13px]" disabled={props.closeBlocked} onClick={props.onConfirmClose}>
                 Discard changes and close
               </button>
               <button type="button" ref={props.keepEditingRef} className="btn-glass btn-glass-secondary h-8 px-3 text-[13px]" onClick={props.onCancelClose}>
@@ -329,24 +331,43 @@ export function CredentialSettingsDialog({ api, aiStatusApi, aiEditApi, onClose 
   useEffect(() => {
     if (confirmingClose) keepEditingRef.current?.focus();
   }, [confirmingClose]);
+  // A save that finished while the question was showing leaves nothing to
+  // discard: withdraw the question, keeping focus inside the dialog.
+  const nothingToDiscard = !!aiEditor && !aiEditor.saving && editorRef.current?.hasUnsavedChanges === false;
+  useEffect(() => {
+    if (!confirmingClose || !nothingToDiscard) return;
+    setConfirmingClose(false);
+    dialogRef.current?.querySelector<HTMLElement>(FOCUSABLE)?.focus();
+  }, [confirmingClose, nothingToDiscard]);
 
   const closeNow = useCallback(() => {
     clearKey();
     onClose();
   }, [clearKey, onClose]);
 
-  const requestClose = useCallback(() => {
+  /** Neither a key change nor an AI save is in flight. */
+  const closable = useCallback(() => {
     const controller = controllerRef.current;
-    if (controller && !controller.canClose()) return;
     const editor = editorRef.current;
-    if (editor && !editor.canClose()) return;
+    return !(controller && !controller.canClose()) && !(editor && !editor.canClose());
+  }, []);
+
+  /** "Discard changes and close": checked again, since a save may have started after the question was asked. */
+  const confirmClose = useCallback(() => {
+    if (!closable()) return;
+    closeNow();
+  }, [closable, closeNow]);
+
+  const requestClose = useCallback(() => {
+    if (!closable()) return;
+    const editor = editorRef.current;
     // Unsaved AI changes are never dropped silently.
     if (editor?.hasUnsavedChanges) {
       setConfirmingClose(true);
       return;
     }
     closeNow();
-  }, [closeNow]);
+  }, [closable, closeNow]);
 
   const onSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -420,8 +441,9 @@ export function CredentialSettingsDialog({ api, aiStatusApi, aiEditApi, onClose 
       aiEditorHandlers={aiEditorHandlers}
       endpointRef={endpointRef}
       confirmingClose={confirmingClose}
+      closeBlocked={state.activity === "saving" || state.activity === "removing" || aiEditor?.saving === true}
       keepEditingRef={keepEditingRef}
-      onConfirmClose={closeNow}
+      onConfirmClose={confirmClose}
       onCancelClose={() => setConfirmingClose(false)}
       remember={remember}
       keyRef={keyRef}

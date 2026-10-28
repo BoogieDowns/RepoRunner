@@ -461,6 +461,25 @@ describe("saving", () => {
     c.select("cfg-a1");
     expect(c.hasUnsavedChanges).toBe(true);
   });
+
+  it("text typed into the form counts as unsaved before it's applied (Codex review)", async () => {
+    const { c } = await ready(doc([entry("cfg-a1")]), REV1);
+    c.startAdd();
+    expect(c.hasUnsavedChanges).toBe(false); // an untouched form isn't a change
+    c.updateForm({ endpoint: "http://127.0.0.1:5" });
+    expect(c.hasUnsavedChanges).toBe(true);
+    expect(c.current.dirty).toBe(false);
+    c.cancelForm();
+    expect(c.hasUnsavedChanges).toBe(false);
+    c.startEdit("cfg-a1");
+    expect(c.hasUnsavedChanges).toBe(false);
+    c.updateForm({ apiStyle: "openai-compatible" });
+    expect(c.hasUnsavedChanges).toBe(true);
+    c.updateForm({ apiStyle: "ollama-native" });
+    expect(c.hasUnsavedChanges).toBe(false); // back to the original value
+    c.updateForm({ model: "other-model" });
+    expect(c.hasUnsavedChanges).toBe(true);
+  });
 });
 
 describe("markup", () => {
@@ -572,6 +591,14 @@ describe("source boundaries", () => {
     const dialog = read("src/components/CredentialSettingsDialog.tsx");
     expect(dialog).toContain('const FOCUSABLE = "button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled])";');
     expect(dialog).toMatch(/if \(editor\?\.hasUnsavedChanges\) \{\s*setConfirmingClose\(true\);\s*return;\s*\}/);
+    // Codex review: the confirmed close checks again for a save started after the question, and the button waits.
+    expect(dialog).toMatch(/const confirmClose = useCallback\(\(\) => \{\s*if \(!closable\(\)\) return;\s*closeNow\(\);/);
+    expect(dialog).toContain("onConfirmClose={confirmClose}");
+    expect(dialog).toContain('closeBlocked={state.activity === "saving" || state.activity === "removing" || aiEditor?.saving === true}');
+    expect(dialog).toMatch(/disabled=\{props\.closeBlocked\} onClick=\{props\.onConfirmClose\}/);
+    // A save that finished while the question was showing withdraws it (nothing left to discard).
+    expect(dialog).toContain("const nothingToDiscard = !!aiEditor && !aiEditor.saving && editorRef.current?.hasUnsavedChanges === false;");
+    expect(dialog).toMatch(/if \(!confirmingClose \|\| !nothingToDiscard\) return;\s*setConfirmingClose\(false\);/);
   });
 
   it("the browser mock has no editing methods", () => {
