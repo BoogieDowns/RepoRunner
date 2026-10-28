@@ -147,6 +147,70 @@ describe("getTrackedServicePorts", () => {
     expect(pm.getTrackedServicePorts()).toEqual([]);
   });
 
+  it("Codex review: an orphaned port survives a refused restart and a Stop with nothing tracked, until it's seen free", async () => {
+    const c = child(1001);
+    await run(pm.startService("frontend", "npm run dev", "C:\repo", 3000));
+    h.isPortInUse.mockResolvedValue(true);
+    c.exit(0);
+    await vi.runAllTimersAsync();
+    expect(pm.getStatuses().frontend).toBe("unknown");
+    // Start again on the same port: refused (the port is still held), status failed; the port stays reported.
+    await run(pm.startService("frontend", "npm run dev", "C:\repo", 3000));
+    expect(pm.getStatuses().frontend).toBe("failed");
+    expect(pm.getTrackedServicePorts()).toEqual([3000]);
+    // Stop Engine: nothing tracked, port still in use, status stopped; still reported.
+    await run(pm.stopAllServices(3000));
+    expect(pm.getStatuses().frontend).toBe("stopped");
+    expect(pm.getTrackedServicePorts()).toEqual([3000]);
+    // A later check finds it free: no longer reported.
+    h.isPortInUse.mockResolvedValue(false);
+    await run(pm.stopAllServices(3000));
+    expect(pm.getTrackedServicePorts()).toEqual([]);
+  });
+
+  it("an orphaned port is also cleared by the next start's own check finding it free", async () => {
+    const c = child(1001);
+    await run(pm.startService("frontend", "npm run dev", "C:\repo", 3000));
+    h.isPortInUse.mockResolvedValue(true);
+    c.exit(0);
+    await vi.runAllTimersAsync();
+    h.isPortInUse.mockResolvedValue(false);
+    const next = child(1002);
+    await run(pm.startService("frontend", "npm run dev", "C:\repo", 3000));
+    expect(pm.getTrackedServicePorts()).toEqual([3000]); // the new run's port
+    next.exit(1);
+    await vi.runAllTimersAsync();
+    expect(pm.getTrackedServicePorts()).toEqual([]);
+  });
+
+  it("only the next start's own check (finding the port free) clears it, even if nothing checks the port again", async () => {
+    const c = child(1001);
+    await run(pm.startService("frontend", "npm run dev", "C:\repo", 3000));
+    h.isPortInUse.mockResolvedValue(true);
+    c.exit(0);
+    await vi.runAllTimersAsync();
+    h.isPortInUse.mockResolvedValue(false);
+    child(1002);
+    await run(pm.startService("frontend", "npm run dev", "C:\repo", 3000));
+    // Stop without a configured port: no port check after stopping.
+    await run(pm.stopAllServices());
+    expect(pm.getStatuses().frontend).toBe("stopped");
+    expect(pm.getTrackedServicePorts()).toEqual([]);
+  });
+
+  it("a tracked stop that leaves the port held keeps it reported, even after the status settles", async () => {
+    child(1001);
+    await run(pm.startService("frontend", "npm run dev", "C:\repo", 3000));
+    h.waitUntilPortIsFree.mockResolvedValue(false);
+    await run(pm.stopAllServices(3000));
+    expect(pm.getStatuses().frontend).toBe("unknown");
+    expect(pm.getTrackedServicePorts()).toEqual([3000]);
+    h.isPortInUse.mockResolvedValue(true);
+    await run(pm.stopAllServices(3000));
+    expect(pm.getStatuses().frontend).toBe("stopped");
+    expect(pm.getTrackedServicePorts()).toEqual([3000]);
+  });
+
   it("is read-only: it never checks or scans a port", async () => {
     child(1001);
     await run(pm.startService("frontend", "npm run dev", "C:\\repo", 3000));

@@ -231,6 +231,20 @@ const servicePorts: Record<ServiceName, number | null> = {
   backend: null,
 };
 
+// A port a RepoRunner-started process tree may still hold after its root
+// exited or a stop couldn't confirm it was released (Stage 4O). Kept whatever
+// the status says (a refused restart, or a Stop that finds no tracked
+// process, changes the status but not who may be listening) and cleared only
+// when a check finds that port free.
+const uncertainPorts: Record<ServiceName, number | null> = {
+  frontend: null,
+  backend: null,
+};
+
+function portConfirmedFree(service: ServiceName, port: number): void {
+  if (uncertainPorts[service] === port) uncertainPorts[service] = null;
+}
+
 // Main-process lifecycle locks, set synchronously before any await so that
 // Start and Stop for the same service can never interleave, regardless of
 // renderer button state.
@@ -367,6 +381,7 @@ export async function startService(
     if (port) {
       const inUse = await isPortInUse(port);
       if (runIds[service] !== runId) return;
+      if (!inUse) portConfirmedFree(service, port);
       if (inUse) {
         emitLog(
           "system",
@@ -429,6 +444,7 @@ export async function startService(
     // held, report uncertainty instead of claiming the service stopped.
     void isPortInUse(port).then((inUse) => {
       if (runIds[service] !== runId) return;
+      if (inUse) uncertainPorts[service] = port;
       if (inUse) {
         emitLog(
           "system",
@@ -557,6 +573,8 @@ async function performStop(service: ServiceName, port?: number): Promise<void> {
     if (runIds[service] !== stopRunId) return;
 
     if (!portFree) {
+      // Still held after stopping what RepoRunner started: it may be that tree's.
+      if (tracked) uncertainPorts[service] = port;
       const listeners = await findListeningPids(port);
       if (runIds[service] !== stopRunId) return;
       const holder = listeners.length > 0 ? ` by PID ${listeners.join(", ")}` : "";
@@ -569,6 +587,7 @@ async function performStop(service: ServiceName, port?: number): Promise<void> {
       setStatus(service, tracked ? "unknown" : "stopped");
       return;
     }
+    portConfirmedFree(service, port);
   }
 
   if (!treeVerified) {
@@ -597,13 +616,17 @@ export function getStatuses(): ServiceStatuses {
 /**
  * Ports RepoRunner's own services may be using (Stage 4O): the port a
  * service was started with, while that service is starting, running,
- * stopping, still tracked, or in an uncertain state ("unknown": its process
- * exited but the port was still held). A stopped service, or one that failed
- * with nothing tracked, has none. Read-only; no port is checked or scanned.
+ * stopping, still tracked, or in an uncertain state ("unknown"); plus any
+ * port a RepoRunner-started tree may still hold after its root exited or a
+ * stop left it held, until a check finds it free (whatever the status says
+ * by then). A stopped service, or one that failed with nothing tracked and
+ * nothing left behind, has none. Read-only; no port is checked or scanned.
  */
 export function getTrackedServicePorts(): number[] {
-  const ports: number[] = [];
+  const ports = new Set<number>();
   for (const service of ["frontend", "backend"] as const) {
+    const uncertain = uncertainPorts[service];
+    if (uncertain) ports.add(uncertain);
     const port = servicePorts[service];
     if (!port) continue;
     const status = statuses[service];
@@ -612,9 +635,9 @@ export function getTrackedServicePorts(): number[] {
       processes[service] !== null ||
       startInProgress[service] ||
       stopInProgress[service] !== null;
-    if (owned) ports.push(port);
+    if (owned) ports.add(port);
   }
-  return ports;
+  return [...ports];
 }
 
 // ---------------------------------------------------------------------------
