@@ -129,7 +129,8 @@ beforeEach(() => {
   h.handlers.clear();
   for (const f of Object.values(h.spies)) f.mockClear();
   app = trustedRenderer();
-  setupIpc(app.trust);
+  // An internal launch: the credential handlers run for the trusted page (the gate is tested below).
+  setupIpc(app.trust, { internalCredentialSettings: true });
 });
 
 describe("the shared sender check", () => {
@@ -265,6 +266,24 @@ describe("trusted callers keep their behavior", () => {
     }
     expect(h.spies["credentialService.getCredentialStore"]).toHaveBeenCalled();
     expect(h.spies["aiSettingsService.getAiConfigurationStatus"]).not.toHaveBeenCalled();
+  });
+
+  it("with the internal gate closed, the credential handlers answer 'not-available' without touching credentials; nothing else changes", async () => {
+    for (const options of [undefined, { internalCredentialSettings: false }]) {
+      h.handlers.clear();
+      for (const f of Object.values(h.spies)) f.mockClear();
+      setupIpc(app.trust, options);
+      expect(h.handlers.size).toBe(25);
+      for (const channel of CREDENTIAL_CHANNELS) {
+        await expect(call(channel, ...VALID_ARGS[channel]), channel).resolves.toEqual({ ok: false, error: "not-available" });
+      }
+      expect(sideEffects()).toEqual([]);
+      // Free handlers and the AI status behave exactly as with the gate open.
+      await expect(call("load-project-state")).resolves.toMatchObject({ activeProfileId: "a" });
+      await expect(call("get-statuses")).resolves.toEqual({ frontend: "stopped", backend: "stopped" });
+      await expect(call("ai-config-status")).resolves.toMatchObject({ ok: true });
+      expect(h.spies["credentialService.getCredentialStore"]).not.toHaveBeenCalled();
+    }
   });
 
   it("only the status fields cross IPC, even if the service returned more", async () => {

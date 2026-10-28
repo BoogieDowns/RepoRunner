@@ -12,8 +12,10 @@
  * INTERNAL_CREDENTIAL_SETTINGS_SWITCH to the main window's renderer only, and
  * preload.cts adds the methods only when it sees that switch (Chromium doesn't
  * forward unknown launch switches to renderers). Hiding is not the security
- * boundary: the credential handlers check the sender and every argument
- * whether or not the UI exists.
+ * boundary: main.ts makes this decision once at startup and also passes it to
+ * setupIpc, so when it's off the credential handlers answer "not-available"
+ * (after the sender check, before touching anything). When it's on they still
+ * check the sender and every argument.
  */
 
 export const INTERNAL_CREDENTIAL_SETTINGS_ENV = "REPORUNNER_INTERNAL_CREDENTIAL_SETTINGS";
