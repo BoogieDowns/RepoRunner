@@ -15,6 +15,11 @@ import {
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const isDev = process.env.NODE_ENV === "development";
+
+// Internal credential Settings (Stage 4C): decided once, at startup, and never
+// re-read. The same decision adds the preload switch and lets the credential
+// IPC handlers run; packaged builds are always off. See internalFeatures.ts.
+const internalCredentialSettings = isInternalCredentialSettingsEnabled(app.isPackaged, process.env);
 const DEV_SERVER_URL = "http://localhost:5173/";
 
 /** The only page RepoRunner windows may show (navigation elsewhere is blocked). */
@@ -50,9 +55,7 @@ function createWindow() {
       webviewTag: false,
       // Internal development launches only (never packaged builds): lets the
       // preload add the credential Settings methods. See internalFeatures.ts.
-      ...(isInternalCredentialSettingsEnabled(app.isPackaged, process.env)
-        ? { additionalArguments: [INTERNAL_CREDENTIAL_SETTINGS_SWITCH] }
-        : {}),
+      ...(internalCredentialSettings ? { additionalArguments: [INTERNAL_CREDENTIAL_SETTINGS_SWITCH] } : {}),
     },
     icon: path.join(__dirname, "../assets/icon.png"),
   });
@@ -131,7 +134,7 @@ if (!hasSingleInstanceLock) {
 
   app.whenReady().then(() => {
     hardenSession(session.defaultSession);
-    setupIpc({ getMainWindow: () => mainWindow, appPageUrl });
+    setupIpc({ getMainWindow: () => mainWindow, appPageUrl }, { internalCredentialSettings });
     createWindow();
 
     app.on("activate", () => {

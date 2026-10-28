@@ -95,14 +95,21 @@ const leaks = (value: unknown, keys = [KEY_1, KEY_2]) => {
 let consoleSpies: ReturnType<typeof vi.spyOn>[] = [];
 let envBefore = "";
 
-/** A fresh main process: module state (the store singleton, the busy flag) starts over; userData stays. */
-async function startApp(trustUrl = PACKAGED_URL) {
+/**
+ * A fresh main process: module state (the store singleton, the busy flag)
+ * starts over; userData stays. By default an internal launch (the gate open),
+ * as the credential channels require since the main-process gate.
+ */
+async function startApp(trustUrl = PACKAGED_URL, options: unknown = { internalCredentialSettings: true }) {
   vi.resetModules();
   h.handlers.clear();
   const { setupIpc } = await import("../../electron/ipc.js");
   app = trustedRenderer(trustUrl);
-  setupIpc(app.trust);
+  // NO_OPTIONS: call setupIpc exactly as a caller that forgot the options would.
+  if (options === NO_OPTIONS) setupIpc(app.trust);
+  else (setupIpc as (trust: unknown, options?: unknown) => void)(app.trust, options);
 }
+const NO_OPTIONS = Symbol("no options");
 
 beforeEach(async () => {
   h.userData = fs.mkdtempSync(path.join(os.tmpdir(), "rr-4b-ipc-"));
@@ -378,6 +385,109 @@ describe("nothing is disclosed", () => {
     const preload = fs.readFileSync(path.resolve(import.meta.dirname, "../../electron/preload.cts"), "utf8");
     expect([...preload.matchAll(/invoke\("(credential-[a-z]+)"/g)].map((m) => m[1]).sort()).toEqual([...CHANNELS].sort());
     expect(preload).not.toMatch(/credential-get|getCredential/);
+  });
+});
+
+describe("the internal gate is enforced in the main process", () => {
+  /** Every argument shape for each channel: valid ones, and ones that would otherwise be refused as invalid. */
+  const CALLS: Array<[string, unknown[]]> = [
+    ["credential-status", ["byok-slot-1"]],
+    ["credential-status", []],
+    ["credential-status", ["byok-slot-2", "extra"]],
+    ["credential-set", ["byok-slot-1", KEY_1, { remember: false }]],
+    ["credential-set", ["byok-slot-1", KEY_1, { remember: true }]],
+    ["credential-set", ["byok-slot-1", "", { remember: false }]],
+    ["credential-set", []],
+    ["credential-remove", ["byok-slot-1"]],
+    ["credential-remove", ["nope"]],
+  ];
+  const nothingTouched = () => {
+    expect(h.constructed).toHaveLength(0);
+    expect(h.calls).toEqual({ isEncryptionAvailable: 0, encryptString: 0, decryptString: 0 });
+    expect(fs.readdirSync(h.userData)).toEqual([]);
+  };
+
+  it.each([
+    ["no options (a caller that forgot)", NO_OPTIONS],
+    ["options undefined", undefined as unknown],
+    ["an empty options object", {}],
+    ["false", { internalCredentialSettings: false }],
+    ["the string 'true'", { internalCredentialSettings: "true" }],
+    ["the number 1", { internalCredentialSettings: 1 }],
+    ["an object", { internalCredentialSettings: {} }],
+  ])("closed (%s): every call gets a fixed 'not-available', and nothing is touched", async (_name, options) => {
+    // An explicit undefined would pick up startApp's default, so pass it through setupIpc directly.
+    if (options === undefined) {
+      vi.resetModules();
+      h.handlers.clear();
+      const { setupIpc } = await import("../../electron/ipc.js");
+      app = trustedRenderer(PACKAGED_URL);
+      setupIpc(app.trust, undefined);
+    } else {
+      await startApp(PACKAGED_URL, options);
+    }
+    h.getPathThrows = true; // any userData lookup would show up as a failure
+    for (const [channel, args] of CALLS) {
+      const result = await call(channel, ...args);
+      expect(result, `${channel} ${args.length}`).toEqual({ ok: false, error: "not-available" });
+      expect(leaks(result)).toBe(false);
+    }
+    nothingTouched();
+  });
+
+  it("closed: the trusted page still gets everything else as before", async () => {
+    await startApp(PACKAGED_URL, { internalCredentialSettings: false });
+    for (const [channel, args] of GENERAL_CALLS) await h.handlers.get(channel)!(app.event(), ...args);
+    await expect(h.handlers.get("ai-config-status")!(app.event())).resolves.toMatchObject({ ok: true });
+    expect(h.constructed).toHaveLength(0);
+  });
+
+  it("the sender check comes first: an untrusted caller is refused the same way whether the gate is open or closed", async () => {
+    for (const options of [{ internalCredentialSettings: true }, { internalCredentialSettings: false }, NO_OPTIONS]) {
+      await startApp(PACKAGED_URL, options);
+      const other = new FakeContents(PACKAGED_URL, 9, 1);
+      for (const [channel, args] of CALLS) {
+        await expect(h.handlers.get(channel)!({ sender: other, senderFrame: other.mainFrame }, ...args), channel).rejects.toThrow(UNTRUSTED_SENDER_MESSAGE);
+      }
+    }
+    nothingTouched();
+  });
+
+  it("decided once: changing the options object or the environment afterwards changes nothing", async () => {
+    const options = { internalCredentialSettings: false };
+    await startApp(PACKAGED_URL, options);
+    options.internalCredentialSettings = true;
+    const saved = process.env.REPORUNNER_INTERNAL_CREDENTIAL_SETTINGS;
+    process.env.REPORUNNER_INTERNAL_CREDENTIAL_SETTINGS = "1";
+    try {
+      expect(await call("credential-status", "byok-slot-1")).toEqual({ ok: false, error: "not-available" });
+    } finally {
+      if (saved === undefined) delete process.env.REPORUNNER_INTERNAL_CREDENTIAL_SETTINGS;
+      else process.env.REPORUNNER_INTERNAL_CREDENTIAL_SETTINGS = saved;
+    }
+    nothingTouched();
+  });
+
+  it("open: the same calls reach the store as before", async () => {
+    expect(await call("credential-status", "byok-slot-1")).toMatchObject({ ok: true, status: { configured: false } });
+    expect(await call("credential-set", "byok-slot-1", KEY_1, { remember: false })).toMatchObject({ ok: true, status: { configured: true, mode: "session" } });
+    expect(await call("credential-status", "extra", "x")).toEqual({ ok: false, error: "invalid-request" });
+    expect(await call("credential-remove", "byok-slot-1")).toMatchObject({ ok: true, status: { configured: false } });
+    expect(h.constructed).toHaveLength(1);
+  });
+
+  it("the gate lives in ipc.ts, between the sender check and the handlers, and reads no environment", () => {
+    const ipc = fs.readFileSync(path.resolve(import.meta.dirname, "../../electron/ipc.ts"), "utf8");
+    expect(ipc).toMatch(/const credentialsAllowed = options\.internalCredentialSettings === true;/);
+    for (const [channel, fn] of [["credential-status", "credentialStatus"], ["credential-set", "credentialSet"], ["credential-remove", "credentialRemove"]]) {
+      expect(ipc).toContain(`handle("${channel}", async (_event, ...args: unknown[]) => (credentialsAllowed ? ${fn}(args) : credentialNotAvailable()));`);
+    }
+    // ipc.ts uses process.env only to build child environments; the gate's own inputs never appear.
+    const code = ipc.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+    expect(code).not.toMatch(/isPackaged|isInternalCredentialSettingsEnabled|REPORUNNER_INTERNAL_CREDENTIAL_SETTINGS|internalFeatures/);
+    const notAvailable = fs.readFileSync(path.resolve(import.meta.dirname, "../../electron/credentialIpc.ts"), "utf8").match(/export function credentialNotAvailable\(\)[^}]*\}/)?.[0] ?? "";
+    expect(notAvailable).toMatch(/return fail\("not-available"\);/);
+    expect(notAvailable).not.toMatch(/getCredentialStore|metadata|safeStorage/);
   });
 });
 

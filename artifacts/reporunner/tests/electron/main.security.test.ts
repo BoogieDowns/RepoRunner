@@ -1,5 +1,6 @@
 // Window configuration and where main.ts applies the hardening. Electron and
 // IPC are mocked; windowSecurity is real.
+import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -98,16 +99,21 @@ describe("internal credential Settings gate (Stage 4C)", () => {
   const ENV = "REPORUNNER_INTERNAL_CREDENTIAL_SETTINGS";
   /** Starts main.ts again with the given packaging state and opt-in value; returns the window's webPreferences. */
   async function launch(isPackaged: boolean, optIn: string | undefined) {
+    return (await launchWithIpc(isPackaged, optIn)).prefs;
+  }
+  /** As launch(), also returning the options main.ts gave setupIpc. */
+  async function launchWithIpc(isPackaged: boolean, optIn: string | undefined) {
     const saved = process.env[ENV];
     if (optIn === undefined) delete process.env[ENV];
     else process.env[ENV] = optIn;
     try {
       h.isPackaged = isPackaged;
       h.FakeWindow.instances = [];
+      h.setupIpc.mockClear();
       vi.resetModules();
       await import("../../electron/main.js");
       await flush();
-      return h.FakeWindow.instances[0].options.webPreferences;
+      return { prefs: h.FakeWindow.instances[0].options.webPreferences, ipcOptions: h.setupIpc.mock.calls[0]?.[1] };
     } finally {
       if (saved === undefined) delete process.env[ENV];
       else process.env[ENV] = saved;
@@ -131,6 +137,51 @@ describe("internal credential Settings gate (Stage 4C)", () => {
     expect(prefs).not.toHaveProperty("additionalArguments");
     // Hardening is the same either way.
     expect([prefs.contextIsolation, prefs.nodeIntegration, prefs.sandbox, prefs.webviewTag]).toEqual([true, false, true, false]);
+  });
+
+  it.each([
+    ["unpackaged, opted in", false, "1", true],
+    ["packaged, opted in", true, "1", false],
+    ["packaged, no opt-in", true, undefined, false],
+    ["unpackaged, no opt-in", false, undefined, false],
+    ["unpackaged, opt-in 'true'", false, "true", false],
+    ["unpackaged, opt-in '1 '", false, "1 ", false],
+  ])("the credential IPC handlers get the same decision as the preload switch: %s", async (_name, isPackaged, optIn, on) => {
+    const { prefs, ipcOptions } = await launchWithIpc(isPackaged, optIn);
+    expect(ipcOptions).toEqual({ internalCredentialSettings: on });
+    expect("additionalArguments" in prefs).toBe(on);
+  });
+
+  it("the decision is made once at startup: changing the environment later changes nothing", async () => {
+    const ENV_NAME = "REPORUNNER_INTERNAL_CREDENTIAL_SETTINGS";
+    const saved = process.env[ENV_NAME];
+    delete process.env[ENV_NAME];
+    try {
+      h.isPackaged = false;
+      h.FakeWindow.instances = [];
+      h.setupIpc.mockClear();
+      vi.resetModules();
+      await import("../../electron/main.js");
+      await flush();
+      process.env[ENV_NAME] = "1";
+      // A later window (macOS "activate") still gets no switch.
+      h.FakeWindow.instances = [];
+      for (const listener of h.appListeners.get("activate") ?? []) listener();
+      await flush();
+      for (const w of h.FakeWindow.instances) expect(w.options.webPreferences).not.toHaveProperty("additionalArguments");
+      expect(h.setupIpc.mock.calls.map((c: unknown[]) => c[1])).toEqual([{ internalCredentialSettings: false }]);
+    } finally {
+      if (saved === undefined) delete process.env[ENV_NAME];
+      else process.env[ENV_NAME] = saved;
+      h.isPackaged = true;
+    }
+  });
+
+  it("main.ts computes the gate once, with the shared policy", () => {
+    const main = fs.readFileSync(path.resolve(import.meta.dirname, "../../electron/main.ts"), "utf8");
+    expect(main.match(/isInternalCredentialSettingsEnabled\(/g)).toHaveLength(1);
+    expect(main).toMatch(/^const internalCredentialSettings = isInternalCredentialSettingsEnabled\(app\.isPackaged, process\.env\);$/m);
+    expect(main).toMatch(/setupIpc\(\{ getMainWindow: \(\) => mainWindow, appPageUrl \}, \{ internalCredentialSettings \}\);/);
   });
 
   it("an enabled launch keeps the same hardening", async () => {

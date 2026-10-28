@@ -39,7 +39,7 @@ import {
 import { clearLogs, emitLog, formatLogsForClipboard } from "./logSink.js";
 import { buildChildEnvironment } from "./childEnvironment.js";
 import { registerRepoAnalysisIpc } from "./repoAnalysisIpc.js";
-import { credentialRemove, credentialSet, credentialStatus } from "./credentialIpc.js";
+import { credentialNotAvailable, credentialRemove, credentialSet, credentialStatus } from "./credentialIpc.js";
 import { aiConfigStatus } from "./aiConfigIpc.js";
 import { isTrustedSender, untrustedSenderError, type TrustedRenderer } from "./ipcTrust.js";
 
@@ -209,13 +209,26 @@ function readRecoveryAction(value: unknown): ProjectStoreRecoveryAction {
   }
   throw new Error("Unknown recovery action.");
 }
+/** Decisions main.ts makes once at startup. */
+export interface IpcOptions {
+  /**
+   * Whether the internal credential Settings are on for this launch
+   * (unpackaged with REPORUNNER_INTERNAL_CREDENTIAL_SETTINGS=1; see
+   * internalFeatures.ts). Anything other than `true`, including leaving it
+   * out, means off.
+   */
+  internalCredentialSettings?: boolean;
+}
+
 /**
  * `trustedRenderer` identifies RepoRunner's own window and page. Every
  * handler checks its caller against it before doing anything else, and
  * refuses every call without it.
  */
-export function setupIpc(trustedRenderer?: TrustedRenderer) {
+export function setupIpc(trustedRenderer?: TrustedRenderer, options: IpcOptions = {}) {
   registerRepoAnalysisIpc(trustedRenderer);
+  // Read once: nothing later (and nothing from the renderer) can change it.
+  const credentialsAllowed = options.internalCredentialSettings === true;
 
   /** Registers a handler that runs only for RepoRunner's own page; any other caller is refused first. */
   const handle = (
@@ -445,11 +458,14 @@ export function setupIpc(trustedRenderer?: TrustedRenderer) {
 
   // Credentials (Stage 4B): metadata in, metadata out; no channel returns a
   // key. Not exposed through preload yet. See credentialIpc.ts.
-  handle("credential-status", async (_event, ...args: unknown[]) => credentialStatus(args));
+  // Order: the sender check (in handle()), then the internal gate, then the
+  // arguments and the store. When the gate is off nothing is touched: no
+  // store, safeStorage, userData or file, only a fixed "not-available".
+  handle("credential-status", async (_event, ...args: unknown[]) => (credentialsAllowed ? credentialStatus(args) : credentialNotAvailable()));
 
-  handle("credential-set", async (_event, ...args: unknown[]) => credentialSet(args));
+  handle("credential-set", async (_event, ...args: unknown[]) => (credentialsAllowed ? credentialSet(args) : credentialNotAvailable()));
 
-  handle("credential-remove", async (_event, ...args: unknown[]) => credentialRemove(args));
+  handle("credential-remove", async (_event, ...args: unknown[]) => (credentialsAllowed ? credentialRemove(args) : credentialNotAvailable()));
 
   // AI configuration (Stage 4H): read-only metadata; no preload method exposes
   // it yet. See aiConfigIpc.ts.

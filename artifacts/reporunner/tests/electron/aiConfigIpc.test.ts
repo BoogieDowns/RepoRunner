@@ -134,7 +134,8 @@ async function startApp(trustUrl = PACKAGED_URL) {
   h.handlers.clear();
   const { setupIpc } = await import("../../electron/ipc.js");
   app = trustedRenderer(trustUrl);
-  setupIpc(app.trust);
+  // An internal launch, so the credential handler used below runs.
+  setupIpc(app.trust, { internalCredentialSettings: true });
 }
 
 beforeEach(async () => {

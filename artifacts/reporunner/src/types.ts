@@ -199,6 +199,8 @@ export interface CredentialMetadata {
 }
 
 export type CredentialIpcErrorCode =
+  /** The credential channels are off in this launch (the internal gate is closed). */
+  | "not-available"
   | "invalid-request"
   | "invalid-secret"
   | "busy"
@@ -234,6 +236,7 @@ export type AiConfigStatusIpcResult = { ok: true; status: AiConfigStatusView } |
 
 /** Fixed, value-free messages for credential errors: no key, path or system detail. */
 export const CREDENTIAL_ERROR_MESSAGES: Record<CredentialIpcErrorCode, string> = {
+  "not-available": "Saving AI provider keys isn't available in this version of RepoRunner.",
   "invalid-request": "RepoRunner couldn't process that request.",
   "invalid-secret": "That key can't be used. It must not be empty, must fit in 8,192 bytes and can't contain line breaks.",
   busy: "Another key change is still in progress. Try again in a moment.",

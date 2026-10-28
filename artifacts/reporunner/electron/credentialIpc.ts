@@ -19,8 +19,10 @@ import type { CredentialIpcErrorCode, CredentialIpcResult, CredentialMetadata } 
  * - Results are fixed shapes with fixed codes. Nothing here throws, so
  *   Electron never logs a handler error, and nothing here logs at all.
  * - Exposed through preload only in internal development launches (Stage 4C,
- *   see internalFeatures.ts); every packaged build leaves them unreachable.
- *   The checks here apply either way.
+ *   see internalFeatures.ts). The main process enforces the same gate: in
+ *   any other launch (every packaged build) ipc.ts answers each of them with
+ *   credentialNotAvailable() before any of this runs. The checks here apply
+ *   either way.
  * - Result types are shared with the renderer in src/types.ts. The return in
  *   toErrorCode() makes TypeScript check that every store code is listed there.
  */
@@ -33,6 +35,11 @@ const IPC_SLOT = "byok-slot-1";
 export type { CredentialIpcErrorCode, CredentialIpcResult, CredentialMetadata };
 
 const fail = (error: CredentialIpcErrorCode): CredentialIpcResult => ({ ok: false, error });
+
+/** The answer when the internal gate is off. Touches nothing: no store, safeStorage, userData or file. */
+export function credentialNotAvailable(): CredentialIpcResult {
+  return fail("not-available");
+}
 
 function toErrorCode(error: unknown): CredentialIpcErrorCode {
   if (error instanceof CredentialStoreError) return error.code === "invalid-slot" ? "invalid-request" : error.code;
