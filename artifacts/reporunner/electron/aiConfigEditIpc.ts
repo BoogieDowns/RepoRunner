@@ -1,6 +1,6 @@
 import { loadAiSettings, saveAiSettings } from "./aiSettingsService.js";
-import type { AiSettingsDamage } from "./aiSettingsStore.js";
-import type { AiSettings, AiSettingsError } from "../src/lib/ai/settingsSchema.js";
+import type { AiSettings } from "../src/lib/ai/settingsSchema.js";
+import type { AiConfigEditLoadResult, AiConfigEditSaveResult } from "../src/types.js";
 
 /*
  * AI configuration editing IPC (Stage 4K): "ai-config-edit-load" and
@@ -30,15 +30,9 @@ import type { AiSettings, AiSettingsError } from "../src/lib/ai/settingsSchema.j
 
 export const AI_CONFIG_EDIT_CHANNELS = Object.freeze(["ai-config-edit-load", "ai-config-edit-save"] as const);
 
-export type AiConfigEditLoadResult =
-  | { ok: true; state: "missing" | "valid"; revision: string | null; settings: AiSettings }
-  | { ok: false; error: "damaged"; damage: AiSettingsDamage }
-  | { ok: false; error: "not-available" | "invalid-request" | "unsupported-version" | "unreadable" | "failed" };
-
-export type AiConfigEditSaveResult =
-  | { ok: true; revision: string; settings: AiSettings }
-  | { ok: false; error: "invalid-settings"; detail: AiSettingsError }
-  | { ok: false; error: "not-available" | "invalid-request" | "conflict" | "damaged" | "unsupported-version" | "unreadable" | "write-failed" | "failed" };
+// The contract is shared with the renderer (src/types.ts, Stage 4L), so a
+// change on either side fails to compile.
+export type { AiConfigEditLoadResult, AiConfigEditSaveResult };
 
 const REVISION = /^[0-9a-f]{64}$/;
 const SAVE_ERRORS = ["conflict", "damaged", "unsupported-version", "unreadable", "write-failed"] as const;

@@ -530,8 +530,8 @@ describe("module boundaries", () => {
     const electronDir = path.join(ROOT, "electron");
     const constructing = fs.readdirSync(electronDir).filter((f) => f.endsWith(".ts") && /new AiSettingsStore\(/.test(fs.readFileSync(path.join(electronDir, f), "utf8")));
     expect(constructing).toEqual(["aiSettingsService.ts"]);
-    // Stage 4K's edit handlers import only a type from the store.
+    // Stage 4K's edit handlers don't import the store at all (types come from src/types.ts since Stage 4L).
     const edit = fs.readFileSync(path.join(electronDir, "aiConfigEditIpc.ts"), "utf8");
-    expect([...edit.matchAll(/import (type )?\{[^}]*\} from "\.\/aiSettingsStore\.js"/g)].map((m) => m[1])).toEqual(["type "]);
+    expect(edit).not.toMatch(/from "\.\/aiSettingsStore\.js"/);
   });
 });

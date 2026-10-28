@@ -129,10 +129,10 @@ describe("internal credential methods (Stage 4C, only with the main process's sw
   });
   const call = (name: string, ...args: unknown[]) => (internal[name] as (...a: unknown[]) => Promise<unknown>)(...args);
 
-  it("adds exactly four methods to the same API (three credential, one read-only AI status), and no way to read a key", () => {
-    expect(Object.keys(internal).filter((k) => !Object.keys(api).includes(k)).sort()).toEqual(["aiConfigStatus", "credentialStatus", "removeCredential", "setCredential"]);
-    // No AI write, save, delete or test method.
-    expect(Object.keys(internal).filter((k) => /ai|config/i.test(k))).toEqual(["aiConfigStatus"]);
+  it("adds exactly six methods to the same API (three credential, AI status, AI edit load/save), and no way to read a key", () => {
+    expect(Object.keys(internal).filter((k) => !Object.keys(api).includes(k)).sort()).toEqual(["aiConfigEditLoad", "aiConfigEditSave", "aiConfigStatus", "credentialStatus", "removeCredential", "setCredential"]);
+    // No other AI write, delete, reset or test method.
+    expect(Object.keys(internal).filter((k) => /ai|config/i.test(k)).sort()).toEqual(["aiConfigEditLoad", "aiConfigEditSave", "aiConfigStatus"]);
     expect(Object.keys(internal)).not.toEqual(expect.arrayContaining(["getCredential"]));
     expect(Object.keys(internal).filter((k) => /get.*(cred|key|secret)/i.test(k))).toEqual([]);
     for (const name of ["credentialStatus", "setCredential", "removeCredential"]) expect(internal[name]).not.toBe(h.invoke);
@@ -163,6 +163,23 @@ describe("internal credential methods (Stage 4C, only with the main process's sw
     await call("aiConfigStatus", "credential-get", { write: true }, undefined);
     expect(h.invoke.mock.calls).toEqual([["ai-config-status"], ["ai-config-status"]]);
     expect(internal.aiConfigStatus).not.toBe(h.invoke);
+    expect(h.send).not.toHaveBeenCalled();
+  });
+
+  it("aiConfigEditLoad (Stage 4L) sends no arguments; aiConfigEditSave sends exactly the document and the revision", async () => {
+    h.invoke.mockClear();
+    const doc = { format: "reporunner-ai-settings", version: 1, active: null, configs: [] };
+    await call("aiConfigEditLoad");
+    await call("aiConfigEditLoad", "ai-config-edit-save", { anything: true });
+    await call("aiConfigEditSave", doc, null);
+    await call("aiConfigEditSave", doc, "a".repeat(64), "extra", { more: true });
+    expect(h.invoke.mock.calls).toEqual([
+      ["ai-config-edit-load"],
+      ["ai-config-edit-load"],
+      ["ai-config-edit-save", doc, null],
+      ["ai-config-edit-save", doc, "a".repeat(64)],
+    ]);
+    for (const name of ["aiConfigEditLoad", "aiConfigEditSave"]) expect(internal[name]).not.toBe(h.invoke);
     expect(h.send).not.toHaveBeenCalled();
   });
 
