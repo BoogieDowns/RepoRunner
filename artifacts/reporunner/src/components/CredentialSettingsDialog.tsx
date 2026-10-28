@@ -12,6 +12,12 @@
 // launches), a read-only "Local AI configuration" section shows the AI
 // settings' state, loaded once per opening (src/lib/aiConfigStatus.ts). It
 // edits nothing and connects to nothing.
+//
+// Stage 4L: when the preload also provides the editing methods, a "Local AI
+// configurations" section (AiConfigEditor.tsx, src/lib/aiConfigEditor.ts)
+// lets internal users add, edit, select and remove local endpoints and save
+// the whole document. Closing with unsaved changes asks first. Saving
+// connects to nothing.
 // Relative imports keep it renderable in tests.
 import * as React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -31,11 +37,14 @@ import {
   type AiConfigStatusApi,
   type AiStatusState,
 } from "../lib/aiConfigStatus";
+import { AI_EDITOR_INITIAL, AiConfigEditorController, type AiConfigEditApi, type AiEditorState } from "../lib/aiConfigEditor";
+import { AiConfigEditorSection, type AiEditorHandlers } from "./AiConfigEditor";
 
 export const CREDENTIAL_DIALOG_TITLE_ID = "credential-settings-title";
 export const AI_STATUS_TITLE_ID = "ai-config-status-title";
 
-const FOCUSABLE = "button:not([disabled]), input:not([disabled])";
+// Radio buttons are inputs; the editor adds a select.
+const FOCUSABLE = "button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled])";
 const text = { color: "#b8b4af" } as const;
 const subtle = { color: "#858280" } as const;
 
@@ -43,6 +52,8 @@ export interface CredentialSettingsDialogProps {
   api: CredentialApi;
   /** Present only when the preload provides it; otherwise the AI section isn't shown. */
   aiStatusApi?: AiConfigStatusApi | null;
+  /** Present only when the preload provides both editing methods; otherwise the editor isn't shown. */
+  aiEditApi?: AiConfigEditApi | null;
   onClose: () => void;
 }
 
@@ -70,6 +81,17 @@ export function CredentialSettingsView(props: {
   state: CredentialSettingsState;
   /** The AI section's state; when absent, the section isn't shown. */
   aiStatus?: AiStatusState | null;
+  /** The AI editor's state and actions; when absent, the editor isn't shown. */
+  aiEditor?: AiEditorState | null;
+  aiEditorHandlers?: AiEditorHandlers;
+  endpointRef?: React.Ref<HTMLInputElement>;
+  /** Asking before closing discards unsaved AI configuration changes. */
+  confirmingClose?: boolean;
+  /** A save or remove is in flight: closing (even after confirming) waits for it. */
+  closeBlocked?: boolean;
+  keepEditingRef?: React.Ref<HTMLButtonElement>;
+  onConfirmClose?: () => void;
+  onCancelClose?: () => void;
   remember: boolean;
   keyRef?: React.Ref<HTMLInputElement>;
   dialogRef?: React.Ref<HTMLDivElement>;
@@ -107,8 +129,8 @@ export function CredentialSettingsView(props: {
         aria-labelledby={CREDENTIAL_DIALOG_TITLE_ID}
         aria-describedby="credential-settings-description"
         onClick={(event) => event.stopPropagation()}
-        className="w-full rounded-xl p-5 shadow-2xl"
-        style={{ maxWidth: 520, background: "#0a0a0a", border: "1px solid #242020", boxShadow: "0 24px 80px rgba(0,0,0,0.9), 0 0 0 1px rgba(185,14,28,0.10)" }}
+        className="w-full overflow-y-auto rounded-xl p-5 shadow-2xl"
+        style={{ maxWidth: 520, maxHeight: "92vh", background: "#0a0a0a", border: "1px solid #242020", boxShadow: "0 24px 80px rgba(0,0,0,0.9), 0 0 0 1px rgba(185,14,28,0.10)" }}
       >
         <div className="mb-3 flex items-start justify-between gap-4">
           <div>
@@ -225,12 +247,30 @@ export function CredentialSettingsView(props: {
         )}
 
         {props.aiStatus && <AiStatusSection state={props.aiStatus} />}
+
+        {props.aiEditor && props.aiEditorHandlers && <AiConfigEditorSection state={props.aiEditor} handlers={props.aiEditorHandlers} endpointRef={props.endpointRef} />}
+
+        {props.confirmingClose && (
+          <div className="mt-4 rounded-md p-3" role="group" aria-label="Unsaved changes" style={{ border: "1px solid rgba(185,14,28,0.28)" }} data-testid="ai-config-close-confirm">
+            <p className="text-sm" style={text}>
+              You have unsaved AI configuration changes. Close and discard them?
+            </p>
+            <div className="mt-2 flex gap-2">
+              <button type="button" className="btn-glass btn-glass-danger h-8 px-3 text-[13px]" disabled={props.closeBlocked} onClick={props.onConfirmClose}>
+                Discard changes and close
+              </button>
+              <button type="button" ref={props.keepEditingRef} className="btn-glass btn-glass-secondary h-8 px-3 text-[13px]" onClick={props.onCancelClose}>
+                Keep editing
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-export function CredentialSettingsDialog({ api, aiStatusApi, onClose }: CredentialSettingsDialogProps) {
+export function CredentialSettingsDialog({ api, aiStatusApi, aiEditApi, onClose }: CredentialSettingsDialogProps) {
   const keyRef = useRef<HTMLInputElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const controllerRef = useRef<CredentialSettingsController | null>(null);
@@ -238,6 +278,13 @@ export function CredentialSettingsDialog({ api, aiStatusApi, onClose }: Credenti
   // Session-only is the default; remembering is chosen each time.
   const [remember, setRemember] = useState(false);
   const [aiStatus, setAiStatus] = useState<AiStatusState | null>(aiStatusApi ? AI_STATUS_INITIAL : null);
+  // Bumped after a successful AI save, so the read-only status reflects it.
+  const [statusVersion, setStatusVersion] = useState(0);
+  const [aiEditor, setAiEditor] = useState<AiEditorState | null>(aiEditApi ? AI_EDITOR_INITIAL : null);
+  const editorRef = useRef<AiConfigEditorController | null>(null);
+  const endpointRef = useRef<HTMLInputElement>(null);
+  const keepEditingRef = useRef<HTMLButtonElement>(null);
+  const [confirmingClose, setConfirmingClose] = useState(false);
 
   const clearKey = useCallback(() => {
     if (keyRef.current) keyRef.current.value = "";
@@ -262,14 +309,65 @@ export function CredentialSettingsDialog({ api, aiStatusApi, onClose }: Credenti
     const loader = new AiConfigStatusLoader(aiStatusApi, setAiStatus);
     void loader.load();
     return () => loader.close();
-  }, [aiStatusApi]);
+  }, [aiStatusApi, statusVersion]);
 
-  const requestClose = useCallback(() => {
-    const controller = controllerRef.current;
-    if (controller && !controller.canClose()) return;
+  // AI editor: loaded once per opening, only when the preload provides it.
+  useEffect(() => {
+    if (!aiEditApi) return;
+    const editor = new AiConfigEditorController(aiEditApi, setAiEditor, () => setStatusVersion((v) => v + 1));
+    editorRef.current = editor;
+    void editor.load();
+    return () => {
+      editor.close();
+      editorRef.current = null;
+    };
+  }, [aiEditApi]);
+
+  // Focus follows the editor: into the address field when the form opens.
+  const formKey = aiEditor?.form ? (aiEditor.form.editingId ?? "new") : null;
+  useEffect(() => {
+    if (formKey !== null) endpointRef.current?.focus();
+  }, [formKey]);
+  useEffect(() => {
+    if (confirmingClose) keepEditingRef.current?.focus();
+  }, [confirmingClose]);
+  // A save that finished while the question was showing leaves nothing to
+  // discard: withdraw the question, keeping focus inside the dialog.
+  const nothingToDiscard = !!aiEditor && !aiEditor.saving && editorRef.current?.hasUnsavedChanges === false;
+  useEffect(() => {
+    if (!confirmingClose || !nothingToDiscard) return;
+    setConfirmingClose(false);
+    dialogRef.current?.querySelector<HTMLElement>(FOCUSABLE)?.focus();
+  }, [confirmingClose, nothingToDiscard]);
+
+  const closeNow = useCallback(() => {
     clearKey();
     onClose();
   }, [clearKey, onClose]);
+
+  /** Neither a key change nor an AI save is in flight. */
+  const closable = useCallback(() => {
+    const controller = controllerRef.current;
+    const editor = editorRef.current;
+    return !(controller && !controller.canClose()) && !(editor && !editor.canClose());
+  }, []);
+
+  /** "Discard changes and close": checked again, since a save may have started after the question was asked. */
+  const confirmClose = useCallback(() => {
+    if (!closable()) return;
+    closeNow();
+  }, [closable, closeNow]);
+
+  const requestClose = useCallback(() => {
+    if (!closable()) return;
+    const editor = editorRef.current;
+    // Unsaved AI changes are never dropped silently.
+    if (editor?.hasUnsavedChanges) {
+      setConfirmingClose(true);
+      return;
+    }
+    closeNow();
+  }, [closable, closeNow]);
 
   const onSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -290,7 +388,9 @@ export function CredentialSettingsDialog({ api, aiStatusApi, onClose }: Credenti
     const onKeyDown = (event: globalThis.KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
-        requestClose();
+        // While asking about unsaved changes, Escape means "keep editing".
+        if (confirmingClose) setConfirmingClose(false);
+        else requestClose();
         return;
       }
       const dialog = dialogRef.current;
@@ -314,12 +414,37 @@ export function CredentialSettingsDialog({ api, aiStatusApi, onClose }: Credenti
     };
     document.addEventListener("keydown", onKeyDown, true);
     return () => document.removeEventListener("keydown", onKeyDown, true);
-  }, [requestClose]);
+  }, [requestClose, confirmingClose]);
+
+  const editor = () => editorRef.current;
+  const aiEditorHandlers: AiEditorHandlers = {
+    onAdd: () => editor()?.startAdd(),
+    onEdit: (id) => editor()?.startEdit(id),
+    onFormChange: (patch) => editor()?.updateForm(patch),
+    onApplyForm: () => editor()?.applyForm(),
+    onAcceptCanonical: () => editor()?.acceptCanonical(),
+    onCancelForm: () => editor()?.cancelForm(),
+    onSelect: (id) => editor()?.select(id),
+    onRequestRemove: (id) => editor()?.requestRemove(id),
+    onConfirmRemove: () => editor()?.confirmRemove(),
+    onCancelRemove: () => editor()?.cancelRemove(),
+    onSave: () => void editor()?.save(),
+    onReload: () => editor()?.requestReload(),
+    onCancelReload: () => editor()?.cancelReload(),
+  };
 
   return (
     <CredentialSettingsView
       state={state}
       aiStatus={aiStatus}
+      aiEditor={aiEditor}
+      aiEditorHandlers={aiEditorHandlers}
+      endpointRef={endpointRef}
+      confirmingClose={confirmingClose}
+      closeBlocked={state.activity === "saving" || state.activity === "removing" || aiEditor?.saving === true}
+      keepEditingRef={keepEditingRef}
+      onConfirmClose={confirmClose}
+      onCancelClose={() => setConfirmingClose(false)}
       remember={remember}
       keyRef={keyRef}
       dialogRef={dialogRef}

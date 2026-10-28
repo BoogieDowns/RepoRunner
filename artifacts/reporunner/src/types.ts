@@ -234,6 +234,64 @@ export interface AiConfigStatusView {
 
 export type AiConfigStatusIpcResult = { ok: true; status: AiConfigStatusView } | { ok: false; error: "invalid-request" | "failed" };
 
+// AI configuration editing contract (Stage 4K IPC, Stage 4L internal editor).
+// The document is the Stage 4E v1 settings schema (settingsSchema.ts, in the AI library folder);
+// electron/aiConfigEditIpc.ts uses these same types, so the two sides can't
+// drift. Non-secret by construction: the schema refuses keys, tokens, headers
+// and credential slots.
+
+export interface AiConfigEditEntry {
+  /** cfg-[a-z0-9]{1,24} */
+  id: string;
+  kind: "local-endpoint";
+  /** Canonical loopback URL, e.g. http://127.0.0.1:11434 */
+  endpoint: string;
+  apiStyle: "openai-compatible" | "ollama-native";
+  model: string | null;
+}
+
+export interface AiConfigEditDocument {
+  format: "reporunner-ai-settings";
+  version: 1;
+  /** The selected configuration's id, or null. */
+  active: string | null;
+  /** At most three. */
+  configs: AiConfigEditEntry[];
+}
+
+/** Why a settings file was judged damaged (fixed codes from the store and schema). */
+export type AiConfigDamage =
+  | "too-large"
+  | "invalid-json"
+  | "invalid-shape"
+  | "invalid-format"
+  | "invalid-version"
+  | "unknown-field"
+  | "invalid-config"
+  | "unsupported-kind"
+  | "invalid-config-id"
+  | "duplicate-config-id"
+  | "too-many-configs"
+  | "invalid-endpoint"
+  | "invalid-api-style"
+  | "invalid-model"
+  | "invalid-active"
+  | "not-a-regular-file"
+  | "invalid-encoding";
+
+/** Which schema rule a refused document broke. */
+export type AiConfigSettingsError = Exclude<AiConfigDamage, "not-a-regular-file" | "invalid-encoding"> | "unsupported-version";
+
+export type AiConfigEditLoadResult =
+  | { ok: true; state: "missing" | "valid"; revision: string | null; settings: AiConfigEditDocument }
+  | { ok: false; error: "damaged"; damage: AiConfigDamage }
+  | { ok: false; error: "not-available" | "invalid-request" | "unsupported-version" | "unreadable" | "failed" };
+
+export type AiConfigEditSaveResult =
+  | { ok: true; revision: string; settings: AiConfigEditDocument }
+  | { ok: false; error: "invalid-settings"; detail: AiConfigSettingsError }
+  | { ok: false; error: "not-available" | "invalid-request" | "conflict" | "damaged" | "unsupported-version" | "unreadable" | "write-failed" | "failed" };
+
 /** Fixed, value-free messages for credential errors: no key, path or system detail. */
 export const CREDENTIAL_ERROR_MESSAGES: Record<CredentialIpcErrorCode, string> = {
   "not-available": "Saving AI provider keys isn't available in this version of RepoRunner.",
@@ -309,6 +367,13 @@ export interface RepoRunnerAPI {
    * development launches as the credential methods. Read-only metadata.
    */
   aiConfigStatus?(): Promise<AiConfigStatusIpcResult>;
+  /**
+   * AI configuration editing (Stage 4L): present only in the same internal
+   * development launches. Load takes no arguments; save replaces the whole
+   * document and needs the revision from the last load or save.
+   */
+  aiConfigEditLoad?(): Promise<AiConfigEditLoadResult>;
+  aiConfigEditSave?(settings: AiConfigEditDocument, expectedRevision: string | null): Promise<AiConfigEditSaveResult>;
 }
 
 declare global {

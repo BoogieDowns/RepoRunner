@@ -282,7 +282,8 @@ describe("source boundaries", () => {
     expect(dialog.match(/new AiConfigStatusLoader\(/g)).toHaveLength(1);
     // Without the method there is no section at all (not even "Checking…").
     expect(dialog).toContain("useState<AiStatusState | null>(aiStatusApi ? AI_STATUS_INITIAL : null)");
-    expect(dialog).toMatch(/useEffect\(\(\) => \{\s*if \(!aiStatusApi\) return;\s*const loader = new AiConfigStatusLoader\(aiStatusApi, setAiStatus\);\s*void loader\.load\(\);\s*return \(\) => loader\.close\(\);\s*\}, \[aiStatusApi\]\);/);
+    // Stage 4L: statusVersion re-reads the status after a successful AI save (still only while the dialog is open).
+    expect(dialog).toMatch(/useEffect\(\(\) => \{\s*if \(!aiStatusApi\) return;\s*const loader = new AiConfigStatusLoader\(aiStatusApi, setAiStatus\);\s*void loader\.load\(\);\s*return \(\) => loader\.close\(\);\s*\}, \[aiStatusApi, statusVersion\]\);/);
     expect(dialog).not.toMatch(/localStorage|sessionStorage/);
   });
 

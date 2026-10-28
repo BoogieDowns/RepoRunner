@@ -401,9 +401,15 @@ describe("unchanged around it", () => {
     expect(JSON.stringify(status)).not.toMatch(/revision|[0-9a-f]{64}|127\.0\.0\.1|synthetic-model/);
   });
 
-  it("no preload method, renderer API or mock reaches the edit channels", () => {
+  it("only the two gated preload methods reach the edit channels; the mock never does", () => {
+    // Stage 4L: the preload adds aiConfigEditLoad/aiConfigEditSave inside the internal switch block only.
     const ROOT = path.resolve(import.meta.dirname, "../..");
-    for (const f of ["electron/preload.cts", "src/types.ts", "src/mock/repoRunnerMock.ts", "src/App.tsx", "src/components/CredentialSettingsDialog.tsx", "src/lib/aiConfigStatus.ts"]) {
+    const preload = fs.readFileSync(path.join(ROOT, "electron/preload.cts"), "utf8");
+    expect(preload.match(/ai-config-edit-[a-z]+/g)).toEqual(["ai-config-edit-load", "ai-config-edit-save"]);
+    const gated = preload.slice(preload.indexOf("process.argv.includes(INTERNAL_CREDENTIAL_SETTINGS_SWITCH)"), preload.indexOf("  : {};"));
+    expect(gated).toContain('aiConfigEditLoad: () => ipcRenderer.invoke("ai-config-edit-load"),');
+    expect(gated).toMatch(/aiConfigEditSave: \(settings: AiConfigEditDocument, expectedRevision: string \| null\) =>\s*ipcRenderer\.invoke\("ai-config-edit-save", settings, expectedRevision\),/);
+    for (const f of ["src/mock/repoRunnerMock.ts", "src/lib/aiConfigStatus.ts"]) {
       expect(fs.readFileSync(path.join(ROOT, f), "utf8"), f).not.toMatch(/ai-config-edit|aiConfigEdit/);
     }
   });
@@ -411,7 +417,8 @@ describe("unchanged around it", () => {
   it("the handler module has no credential, network, environment, logging or dynamic-code access", () => {
     const source = fs.readFileSync(path.resolve(import.meta.dirname, "../../electron/aiConfigEditIpc.ts"), "utf8");
     const code = source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
-    expect([...source.matchAll(/from\s+"([^"]+)"/g)].map((m) => m[1])).toEqual(["./aiSettingsService.js", "./aiSettingsStore.js", "../src/lib/ai/settingsSchema.js"]);
+    // Stage 4L: the result types come from src/types.ts, shared with the renderer.
+    expect([...source.matchAll(/from\s+"([^"]+)"/g)].map((m) => m[1])).toEqual(["./aiSettingsService.js", "../src/lib/ai/settingsSchema.js", "../src/types.js"]);
     expect(code).not.toMatch(/credential|safeStorage|\bfetch\(|XMLHttpRequest|WebSocket|["'](net|dns|http|https|tls|fs|child_process)["']|process\.|console\.|\brequire\(|\bimport\(|\beval\(|new Function/);
   });
 
