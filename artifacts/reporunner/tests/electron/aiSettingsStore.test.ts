@@ -520,7 +520,7 @@ describe("module boundaries", () => {
       for (const entry of fs.readdirSync(d, { withFileTypes: true })) {
         const full = path.join(d, entry.name);
         if (entry.isDirectory()) walk(full);
-        else if (/\.(ts|tsx|cts|mts)$/.test(entry.name) && ![path.join(ROOT, "electron/aiSettingsStore.ts"), path.join(ROOT, "electron/aiSettingsService.ts")].includes(full) && /aiSettingsStore|AiSettingsStore|reporunner-ai-settings\.json/.test(fs.readFileSync(full, "utf8"))) offenders.push(full);
+        else if (/\.(ts|tsx|cts|mts)$/.test(entry.name) && ![path.join(ROOT, "electron/aiSettingsStore.ts"), path.join(ROOT, "electron/aiSettingsService.ts"), path.join(ROOT, "electron/aiConfigEditIpc.ts")].includes(full) && /aiSettingsStore|AiSettingsStore|reporunner-ai-settings\.json/.test(fs.readFileSync(full, "utf8"))) offenders.push(full);
       }
     };
     walk(path.join(ROOT, "src"));
@@ -530,5 +530,8 @@ describe("module boundaries", () => {
     const electronDir = path.join(ROOT, "electron");
     const constructing = fs.readdirSync(electronDir).filter((f) => f.endsWith(".ts") && /new AiSettingsStore\(/.test(fs.readFileSync(path.join(electronDir, f), "utf8")));
     expect(constructing).toEqual(["aiSettingsService.ts"]);
+    // Stage 4K's edit handlers import only a type from the store.
+    const edit = fs.readFileSync(path.join(electronDir, "aiConfigEditIpc.ts"), "utf8");
+    expect([...edit.matchAll(/import (type )?\{[^}]*\} from "\.\/aiSettingsStore\.js"/g)].map((m) => m[1])).toEqual(["type "]);
   });
 });
