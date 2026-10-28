@@ -246,7 +246,8 @@ describe("module boundaries", () => {
 
   // Stage 4F/4G: the AI settings store and service reuse these modules; nothing
   // in the running app imports either (tests/electron/aiSettings*.test.ts).
-  const SCHEMA_CONSUMERS = ["aiSettingsStore.ts", "aiSettingsService.ts"].map((f) => path.resolve(import.meta.dirname, "../../../electron", f));
+  // Stage 4K: aiConfigEditIpc.ts imports the schema's types only.
+  const SCHEMA_CONSUMERS = ["aiSettingsStore.ts", "aiSettingsService.ts", "aiConfigEditIpc.ts"].map((f) => path.resolve(import.meta.dirname, "../../../electron", f));
 
   it("nothing in the app imports them yet, apart from the unused settings store and service", () => {
     const roots = ["src", "electron"].map((d) => path.resolve(import.meta.dirname, "../../..", d));

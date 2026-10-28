@@ -41,6 +41,7 @@ import { buildChildEnvironment } from "./childEnvironment.js";
 import { registerRepoAnalysisIpc } from "./repoAnalysisIpc.js";
 import { credentialNotAvailable, credentialRemove, credentialSet, credentialStatus } from "./credentialIpc.js";
 import { aiConfigStatus } from "./aiConfigIpc.js";
+import { aiConfigEditLoad, aiConfigEditNotAvailable, aiConfigEditSave } from "./aiConfigEditIpc.js";
 import { isTrustedSender, untrustedSenderError, type TrustedRenderer } from "./ipcTrust.js";
 
 function createLineBufferedLogEmitter(source: LogSource) {
@@ -470,6 +471,13 @@ export function setupIpc(trustedRenderer?: TrustedRenderer, options: IpcOptions 
   // AI configuration (Stage 4H): read-only metadata; no preload method exposes
   // it yet. See aiConfigIpc.ts.
   handle("ai-config-status", async (_event, ...args: unknown[]) => aiConfigStatus(args));
+
+  // AI configuration editing (Stage 4K): the same internal gate as the
+  // credential handlers, in the same order (sender check, gate, arguments,
+  // service). No preload method exposes them. See aiConfigEditIpc.ts.
+  handle("ai-config-edit-load", async (_event, ...args: unknown[]) => (credentialsAllowed ? aiConfigEditLoad(args) : aiConfigEditNotAvailable()));
+
+  handle("ai-config-edit-save", async (_event, ...args: unknown[]) => (credentialsAllowed ? aiConfigEditSave(args) : aiConfigEditNotAvailable()));
 }
 
 

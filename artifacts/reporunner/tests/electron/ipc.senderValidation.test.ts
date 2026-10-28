@@ -65,8 +65,12 @@ vi.mock("../../electron/aiSettingsService.js", () => ({
   getAiConfigurationStatus: h.spy("aiSettingsService.getAiConfigurationStatus", async () => ({
     storage: "missing", damage: null, revision: null, configurationCount: 0, active: null, providerReadiness: "none",
   })),
-  loadAiSettings: h.spy("aiSettingsService.loadAiSettings"),
-  saveAiSettings: h.spy("aiSettingsService.saveAiSettings"),
+  loadAiSettings: h.spy("aiSettingsService.loadAiSettings", async () => ({
+    status: "missing", revision: null, settings: { format: "reporunner-ai-settings", version: 1, active: null, configs: [] },
+  })),
+  saveAiSettings: h.spy("aiSettingsService.saveAiSettings", async () => ({
+    ok: true, revision: "c".repeat(64), settings: { format: "reporunner-ai-settings", version: 1, active: null, configs: [] },
+  })),
 }));
 vi.mock("../../electron/projectProfileValidation.js", async (original) => {
   const real = await original<typeof import("../../electron/projectProfileValidation.js")>();
@@ -91,6 +95,8 @@ const ANALYSIS_CHANNELS = ["analyze-repo", "cancel-repo-analysis"];
 const CREDENTIAL_CHANNELS = ["credential-status", "credential-set", "credential-remove"];
 /** Stage 4H: read-only, registered through the same guard; no arguments. */
 const AI_CONFIG_CHANNELS = ["ai-config-status"];
+/** Stage 4K: AI settings editing, behind the same internal gate as the credential handlers. */
+const AI_EDIT_CHANNELS = ["ai-config-edit-load", "ai-config-edit-save"];
 const REV = "a".repeat(64);
 /** Arguments each handler would accept from a trusted caller, so a refusal can only come from the sender check. */
 const VALID_ARGS: Record<string, unknown[]> = {
@@ -102,6 +108,7 @@ const VALID_ARGS: Record<string, unknown[]> = {
   "credential-status": ["byok-slot-1"],
   "credential-set": ["byok-slot-1", "rr-synthetic-sender-test-key", { remember: false }],
   "credential-remove": ["byok-slot-1"],
+  "ai-config-edit-save": [{ format: "reporunner-ai-settings", version: 1, active: null, configs: [] }, null],
 };
 
 let app: ReturnType<typeof trustedRenderer>;
@@ -196,8 +203,8 @@ describe("the shared sender check", () => {
 
 describe("every handler", () => {
   it("exactly the expected handlers are registered", () => {
-    expect([...h.handlers.keys()].sort()).toEqual([...GENERAL_CHANNELS, ...ANALYSIS_CHANNELS, ...CREDENTIAL_CHANNELS, ...AI_CONFIG_CHANNELS].sort());
-    expect(h.handlers.size).toBe(25);
+    expect([...h.handlers.keys()].sort()).toEqual([...GENERAL_CHANNELS, ...ANALYSIS_CHANNELS, ...CREDENTIAL_CHANNELS, ...AI_CONFIG_CHANNELS, ...AI_EDIT_CHANNELS].sort());
+    expect(h.handlers.size).toBe(27);
   });
 
   it("refuses every untrusted caller before anything happens, with a message that reveals nothing", async () => {
@@ -268,14 +275,31 @@ describe("trusted callers keep their behavior", () => {
     expect(h.spies["aiSettingsService.getAiConfigurationStatus"]).not.toHaveBeenCalled();
   });
 
-  it("with the internal gate closed, the credential handlers answer 'not-available' without touching credentials; nothing else changes", async () => {
+  it("the AI edit handlers run for the trusted page, after the sender check, and touch only the AI settings service", async () => {
+    await expect(call("ai-config-edit-load")).resolves.toMatchObject({ ok: true, state: "missing", revision: null });
+    await expect(call("ai-config-edit-save", ...VALID_ARGS["ai-config-edit-save"])).resolves.toMatchObject({ ok: true, revision: "c".repeat(64) });
+    expect(sideEffects().sort()).toEqual(["aiSettingsService.loadAiSettings", "aiSettingsService.saveAiSettings"]);
+  });
+
+  it("only the contract's fields cross IPC from the AI edit handlers, even if the service returned more", async () => {
+    const config = { id: "cfg-a1", kind: "local-endpoint", endpoint: "http://127.0.0.1:11434", apiStyle: "ollama-native", model: null };
+    const extraConfig = { ...config, token: "SYNTHETIC-token", raw: "{ SYNTHETIC }" };
+    const settings = { format: "reporunner-ai-settings", version: 1, active: "cfg-a1", configs: [extraConfig], path: "C:\secret\file.json" };
+    const projected = { format: "reporunner-ai-settings", version: 1, active: "cfg-a1", configs: [config] };
+    h.spies["aiSettingsService.loadAiSettings"].mockResolvedValueOnce({ status: "valid", revision: "d".repeat(64), settings, path: "C:\secret\file.json" });
+    h.spies["aiSettingsService.saveAiSettings"].mockResolvedValueOnce({ ok: true, revision: "d".repeat(64), settings, contents: "{ SYNTHETIC }" });
+    await expect(call("ai-config-edit-load")).resolves.toStrictEqual({ ok: true, state: "valid", revision: "d".repeat(64), settings: projected });
+    await expect(call("ai-config-edit-save", ...VALID_ARGS["ai-config-edit-save"])).resolves.toStrictEqual({ ok: true, revision: "d".repeat(64), settings: projected });
+  });
+
+  it("with the internal gate closed, the credential and AI edit handlers answer 'not-available' without touching anything; nothing else changes", async () => {
     for (const options of [undefined, { internalCredentialSettings: false }]) {
       h.handlers.clear();
       for (const f of Object.values(h.spies)) f.mockClear();
       setupIpc(app.trust, options);
-      expect(h.handlers.size).toBe(25);
-      for (const channel of CREDENTIAL_CHANNELS) {
-        await expect(call(channel, ...VALID_ARGS[channel]), channel).resolves.toEqual({ ok: false, error: "not-available" });
+      expect(h.handlers.size).toBe(27);
+      for (const channel of [...CREDENTIAL_CHANNELS, ...AI_EDIT_CHANNELS]) {
+        await expect(call(channel, ...(VALID_ARGS[channel] ?? [])), channel).resolves.toEqual({ ok: false, error: "not-available" });
       }
       expect(sideEffects()).toEqual([]);
       // Free handlers and the AI status behave exactly as with the gate open.
@@ -313,7 +337,7 @@ describe("source structure", () => {
     expect(source.match(/ipcMain\.(handle|handleOnce|on|once)\(/g)).toEqual(["ipcMain.handle("]);
     const guard = /ipcMain\.handle\(channel, async \(event, \.\.\.args: unknown\[\]\) => \{\s*if \(!isTrustedSender\(event, trustedRenderer\)\) throw untrustedSenderError\(\);\s*return listener\(event, \.\.\.args\);\s*\}\);/;
     expect(source).toMatch(guard);
-    expect(source.match(/^ {2}handle\("/gm)).toHaveLength(GENERAL_CHANNELS.length + CREDENTIAL_CHANNELS.length + AI_CONFIG_CHANNELS.length);
+    expect(source.match(/^ {2}handle\("/gm)).toHaveLength(GENERAL_CHANNELS.length + CREDENTIAL_CHANNELS.length + AI_CONFIG_CHANNELS.length + AI_EDIT_CHANNELS.length);
   });
 
   it("no other main-process file registers IPC handlers", () => {

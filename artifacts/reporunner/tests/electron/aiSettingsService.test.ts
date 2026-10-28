@@ -235,13 +235,13 @@ describe("module boundaries", () => {
     );
   });
 
-  it("only the Stage 4H status handler imports it, and nothing calls it at startup", () => {
+  it("only the Stage 4H status handler and the Stage 4K edit handlers import it, and nothing calls it at startup", () => {
     const offenders: string[] = [];
     const walk = (d: string) => {
       for (const entry of fs.readdirSync(d, { withFileTypes: true })) {
         const full = path.join(d, entry.name);
         if (entry.isDirectory()) walk(full);
-        else if (/\.(ts|tsx|cts|mts)$/.test(entry.name) && ![path.join(ROOT, "electron/aiSettingsService.ts"), path.join(ROOT, "electron/aiConfigIpc.ts")].includes(full) && /aiSettingsService|getAiConfigurationStatus|loadAiSettings|saveAiSettings/.test(fs.readFileSync(full, "utf8"))) offenders.push(full);
+        else if (/\.(ts|tsx|cts|mts)$/.test(entry.name) && ![path.join(ROOT, "electron/aiSettingsService.ts"), path.join(ROOT, "electron/aiConfigIpc.ts"), path.join(ROOT, "electron/aiConfigEditIpc.ts")].includes(full) && /aiSettingsService|getAiConfigurationStatus|loadAiSettings|saveAiSettings/.test(fs.readFileSync(full, "utf8"))) offenders.push(full);
       }
     };
     walk(path.join(ROOT, "src"));
@@ -251,5 +251,8 @@ describe("module boundaries", () => {
     const ipcModule = fs.readFileSync(path.join(ROOT, "electron/aiConfigIpc.ts"), "utf8");
     expect([...ipcModule.matchAll(/import \{([^}]*)\} from "\.\/aiSettingsService\.js"/g)].map((m) => m[1].trim())).toEqual(["getAiConfigurationStatus"]);
     expect(ipcModule).not.toMatch(/loadAiSettings|saveAiSettings/);
+    // The edit handlers use load and save, nothing else.
+    const editModule = fs.readFileSync(path.join(ROOT, "electron/aiConfigEditIpc.ts"), "utf8");
+    expect([...editModule.matchAll(/import \{([^}]*)\} from "\.\/aiSettingsService\.js"/g)].map((m) => m[1].trim())).toEqual(["loadAiSettings, saveAiSettings"]);
   });
 });
