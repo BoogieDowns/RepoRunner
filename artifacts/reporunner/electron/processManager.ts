@@ -224,6 +224,13 @@ const statuses: ServiceStatuses = {
   backend: "stopped",
 };
 
+// The port each service was last started with (Stage 4O), recorded when a
+// start begins. Read only by getTrackedServicePorts; it changes nothing here.
+const servicePorts: Record<ServiceName, number | null> = {
+  frontend: null,
+  backend: null,
+};
+
 // Main-process lifecycle locks, set synchronously before any await so that
 // Start and Stop for the same service can never interleave, regardless of
 // renderer button state.
@@ -354,6 +361,7 @@ export async function startService(
   // this start is still checking the port also invalidates it.
   startInProgress[service] = true;
   const runId = ++runIds[service];
+  servicePorts[service] = port ?? null;
 
   try {
     if (port) {
@@ -584,6 +592,29 @@ export async function stopAllServices(
 
 export function getStatuses(): ServiceStatuses {
   return { ...statuses };
+}
+
+/**
+ * Ports RepoRunner's own services may be using (Stage 4O): the port a
+ * service was started with, while that service is starting, running,
+ * stopping, still tracked, or in an uncertain state ("unknown": its process
+ * exited but the port was still held). A stopped service, or one that failed
+ * with nothing tracked, has none. Read-only; no port is checked or scanned.
+ */
+export function getTrackedServicePorts(): number[] {
+  const ports: number[] = [];
+  for (const service of ["frontend", "backend"] as const) {
+    const port = servicePorts[service];
+    if (!port) continue;
+    const status = statuses[service];
+    const owned =
+      (status !== "stopped" && status !== "failed") ||
+      processes[service] !== null ||
+      startInProgress[service] ||
+      stopInProgress[service] !== null;
+    if (owned) ports.push(port);
+  }
+  return ports;
 }
 
 // ---------------------------------------------------------------------------
