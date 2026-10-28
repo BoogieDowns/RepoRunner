@@ -202,6 +202,7 @@ describe("getTrackedServicePorts", () => {
     child(1001);
     await run(pm.startService("frontend", "npm run dev", "C:\repo", 3000));
     h.waitUntilPortIsFree.mockResolvedValue(false);
+    h.isPortInUse.mockResolvedValue(true);
     await run(pm.stopAllServices(3000));
     expect(pm.getStatuses().frontend).toBe("unknown");
     expect(pm.getTrackedServicePorts()).toEqual([3000]);
@@ -218,5 +219,185 @@ describe("getTrackedServicePorts", () => {
     pm.getTrackedServicePorts();
     pm.getTrackedServicePorts();
     expect([h.isPortInUse, h.waitUntilPortIsFree, h.waitUntilPortIsReachable, h.findListeningPids].map((f) => f.mock.calls.length)).toEqual(calls);
+  });
+});
+
+// Codex review of 670fb20: several orphaned ports per service, Stop racing the
+// exit check, and the launch port versus an edited setup port. `held` is the
+// set of ports the (mocked) port check reports as in use; deferred checks
+// make the races deterministic, with no sleeps.
+describe("port ownership across lifecycles", () => {
+  let held: Set<number>;
+  const sorted = () => [...pm.getTrackedServicePorts()].sort((a, b) => a - b);
+  type Deferred = { port: number; resolve: (inUse: boolean) => void };
+  let deferred: Deferred[] | null;
+
+  beforeEach(() => {
+    held = new Set();
+    deferred = null;
+    h.isPortInUse.mockImplementation((port: number) => {
+      if (deferred) return new Promise<boolean>((resolve) => deferred!.push({ port, resolve }));
+      return Promise.resolve(held.has(port));
+    });
+  });
+  /** Starts `service` on `port`; the root then exits leaving an orphan holding the port. */
+  async function orphan(service: "frontend" | "backend", pid: number, port: number) {
+    const c = child(pid);
+    await run(pm.startService(service, "npm run dev", "C:\repo", port));
+    held.add(port);
+    c.exit(0);
+    await vi.runAllTimersAsync();
+    return c;
+  }
+
+  it("1-2. orphans on 3000 and then 3001 both stay protected; a third run that exits cleanly removes nothing else", async () => {
+    await orphan("frontend", 1001, 3000);
+    await orphan("frontend", 1002, 3001);
+    expect(sorted()).toEqual([3000, 3001]);
+    const third = child(1003);
+    await run(pm.startService("frontend", "npm run dev", "C:\repo", 3002));
+    expect(sorted()).toEqual([3000, 3001, 3002]);
+    third.exit(1);
+    await vi.runAllTimersAsync();
+    expect(sorted()).toEqual([3000, 3001]);
+  });
+
+  it("3. repeated launches on the same port make one record", async () => {
+    await orphan("frontend", 1001, 3000);
+    held.delete(3000);
+    await orphan("frontend", 1002, 3000);
+    expect(pm.getTrackedServicePorts()).toEqual([3000]);
+  });
+
+  it("4. Stop Engine while the exit check is still pending: protected throughout, and after", async () => {
+    const c = child(1001);
+    await run(pm.startService("frontend", "npm run dev", "C:\repo", 3000));
+    deferred = [];
+    c.exit(0);
+    // Recorded before any check has answered.
+    expect(pm.getTrackedServicePorts()).toEqual([3000]);
+    const stopping = pm.stopAllServices(3000);
+    await vi.advanceTimersByTimeAsync(10);
+    expect(pm.getTrackedServicePorts()).toEqual([3000]);
+    // Every check (exit, stop, re-check) finds the orphan still there.
+    while (deferred.length) {
+      for (const d of deferred.splice(0)) d.resolve(true);
+      await vi.advanceTimersByTimeAsync(10);
+    }
+    await stopping;
+    expect(pm.getStatuses().frontend).toBe("stopped");
+    expect(pm.getTrackedServicePorts()).toEqual([3000]);
+  });
+
+  it("5. a stale 'free' answer from an older run's check can't erase a newer run's record of the same port", async () => {
+    const a = child(1001);
+    await run(pm.startService("frontend", "npm run dev", "C:\repo", 3000));
+    deferred = [];
+    a.exit(0); // check A pending
+    const checkA = deferred.shift()!;
+    deferred = null;
+    // Stop Engine (status settles), then run B starts on 3000 (its own check finds it free) and exits leaving an orphan.
+    await run(pm.stopAllServices(3000));
+    await orphan("frontend", 1002, 3000);
+    expect(h.spawn).toHaveBeenCalledTimes(2);
+    expect(pm.getTrackedServicePorts()).toEqual([3000]);
+    // Run A's old check finally answers "free": it must not clear B's record.
+    checkA.resolve(false);
+    await vi.runAllTimersAsync();
+    expect(pm.getTrackedServicePorts()).toEqual([3000]);
+  });
+
+  it("6-7. the launch port is what counts: a setup edited to 4000 (held by something unrelated) is never claimed", async () => {
+    child(1001);
+    await run(pm.startService("frontend", "npm run dev", "C:\repo", 3000));
+    expect(pm.getTrackedServicePorts()).toEqual([3000]);
+    held.add(4000); // unrelated
+    // Stop Engine passes the edited setup's port (4000); the tree on 3000 exits and 3000 is free.
+    h.waitUntilPortIsFree.mockResolvedValue(false);
+    await run(pm.stopAllServices(4000));
+    expect(pm.getTrackedServicePorts()).toEqual([]);
+    expect(pm.getTrackedServicePorts()).not.toContain(4000);
+  });
+
+  it("8-9. a refused restart and a Stop with no tracked root keep every recorded port", async () => {
+    await orphan("frontend", 1001, 3000);
+    await orphan("frontend", 1002, 3001);
+    await run(pm.startService("frontend", "npm run dev", "C:\repo", 3001));
+    expect(pm.getStatuses().frontend).toBe("failed");
+    expect(sorted()).toEqual([3000, 3001]);
+    await run(pm.stopAllServices(3001));
+    expect(pm.getStatuses().frontend).toBe("stopped");
+    expect(sorted()).toEqual([3000, 3001]);
+  });
+
+  it("10-11. a port leaves only after its own check finds it free; the others stay", async () => {
+    await orphan("frontend", 1001, 3000);
+    await orphan("frontend", 1002, 3001);
+    held.delete(3000);
+    // Freed, but nothing has checked it yet.
+    expect(sorted()).toEqual([3000, 3001]);
+    await run(pm.stopAllServices(3001)); // Stop re-checks this service's recorded ports one by one
+    expect(sorted()).toEqual([3001]);
+  });
+
+  it("12. starting the service again on another port keeps the earlier record", async () => {
+    await orphan("frontend", 1001, 3000);
+    child(1002);
+    await run(pm.startService("frontend", "npm run dev", "C:\repo", 3005));
+    expect(sorted()).toEqual([3000, 3005]);
+  });
+
+  it("13. frontend and backend records are independent", async () => {
+    await orphan("frontend", 1001, 3000);
+    await orphan("backend", 2001, 4000);
+    held.delete(3000);
+    held.delete(4000);
+    await run(pm.stopService("backend", 4000)); // re-checks backend records only
+    expect(sorted()).toEqual([3000]);
+    await run(pm.stopService("frontend", 3000));
+    expect(sorted()).toEqual([]);
+  });
+
+  it("14. active ports stay protected while running and while a stop is in progress", async () => {
+    child(1001);
+    await run(pm.startService("frontend", "npm run dev", "C:\repo", 3000));
+    h.treeKill.mockImplementation(() => {}); // the kill hasn't completed yet
+    const stopping = pm.stopAllServices(3000);
+    await vi.advanceTimersByTimeAsync(10);
+    expect(pm.getStatuses().frontend).toBe("stopping");
+    expect(pm.getTrackedServicePorts()).toEqual([3000]);
+    void stopping;
+  });
+
+  it("a start still checking its port claims nothing yet (an unrelated holder isn't treated as ours)", async () => {
+    deferred = [];
+    const starting = pm.startService("frontend", "npm run dev", "C:\repo", 5000);
+    await vi.advanceTimersByTimeAsync(10);
+    expect(deferred.length).toBe(1);
+    expect(pm.getTrackedServicePorts()).toEqual([]);
+    deferred.shift()!.resolve(true); // held by something else: refused
+    deferred = null;
+    await run(starting);
+    expect(pm.getStatuses().frontend).toBe("failed");
+    expect(pm.getTrackedServicePorts()).toEqual([]);
+  });
+
+  it("an occupied port is never recorded just because a check found it in use", async () => {
+    held.add(5000);
+    await run(pm.startService("frontend", "npm run dev", "C:\repo", 5000)); // refused
+    await run(pm.stopAllServices(5000)); // nothing tracked, port in use
+    expect(pm.getTrackedServicePorts()).toEqual([]);
+  });
+
+  it("no checks while RepoRunner is quitting; the record stays", async () => {
+    const c = child(1001);
+    await run(pm.startService("frontend", "npm run dev", "C:\repo", 3000));
+    pm.beginShutdown();
+    h.isPortInUse.mockClear();
+    held.add(3000);
+    c.exit(0);
+    await vi.runAllTimersAsync();
+    expect(h.isPortInUse).not.toHaveBeenCalled();
+    expect(pm.getTrackedServicePorts()).toEqual([3000]);
   });
 });
