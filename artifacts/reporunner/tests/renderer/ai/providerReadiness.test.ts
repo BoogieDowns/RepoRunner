@@ -255,6 +255,8 @@ describe("module boundaries", () => {
     path.resolve(import.meta.dirname, "../../../src/components/AiConfigEditor.tsx"),
     // Stage 4N: the probe transport builds its request with probeSpec.ts; nothing in the app calls it.
     path.resolve(import.meta.dirname, "../../../electron/localProbe.ts"),
+    // Stage 4O: the probe IPC re-checks the id pattern and the stored endpoint with them.
+    path.resolve(import.meta.dirname, "../../../electron/aiProbeIpc.ts"),
   ];
 
   it("nothing in the app imports them yet, apart from the unused settings store and service", () => {

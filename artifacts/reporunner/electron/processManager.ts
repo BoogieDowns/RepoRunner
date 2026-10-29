@@ -224,6 +224,75 @@ const statuses: ServiceStatuses = {
   backend: "stopped",
 };
 
+// Port ownership (Stage 4O), read only by getTrackedServicePorts; it changes
+// nothing about how services start or stop.
+//
+// - launchPorts: the port the current (or last) process of a service was
+//   spawned with. Set when it is spawned, never from a later setup edit.
+// - possibleOrphans: ports a RepoRunner-started process tree may still hold.
+//   The moment a root process exits, its launch port is added here, before
+//   any await and whatever run is current, so a Stop, a refused restart or a
+//   newer run can't skip it. A service can hold several (one per port it
+//   ever left behind). Each entry carries a generation number: a check
+//   removes an entry only if it found that exact port free AND the entry
+//   still has the generation the check started with, so an older check can
+//   never clear a newer record. A port found in use is never added here: an
+//   occupied port is not evidence that RepoRunner owns it.
+const launchPorts: Record<ServiceName, number | null> = {
+  frontend: null,
+  backend: null,
+};
+const possibleOrphans: Record<ServiceName, Map<number, number>> = {
+  frontend: new Map(),
+  backend: new Map(),
+};
+let ownershipGeneration = 0;
+
+interface PortOwnership {
+  service: ServiceName;
+  port: number;
+  generation: number | undefined;
+}
+
+function recordPossibleOrphan(service: ServiceName, port: number): PortOwnership {
+  const generation = ++ownershipGeneration;
+  possibleOrphans[service].set(port, generation);
+  return { service, port, generation };
+}
+
+/** The entry for `port` as it is now (its generation is undefined when there is none). */
+function ownershipOf(service: ServiceName, port: number): PortOwnership {
+  return { service, port, generation: possibleOrphans[service].get(port) };
+}
+
+/** After a check found `port` free: removes the entry if nothing re-recorded it meanwhile. */
+function releaseIfUnchanged(owner: PortOwnership): void {
+  if (owner.generation !== undefined && possibleOrphans[owner.service].get(owner.port) === owner.generation) {
+    possibleOrphans[owner.service].delete(owner.port);
+  }
+}
+
+/**
+ * Checks each of a service's possible orphans on its own; removes those found
+ * free. Shutdown never uses ports: once quitting has begun, no further check
+ * starts (a check already running finishes), and every port not yet shown
+ * free keeps its record. A check that fails proves nothing, so that port
+ * keeps its record too.
+ */
+async function recheckPossibleOrphans(service: ServiceName): Promise<void> {
+  for (const port of [...possibleOrphans[service].keys()]) {
+    if (shuttingDown) return;
+    const owner = ownershipOf(service, port);
+    let inUse = true;
+    try {
+      inUse = await isPortInUse(port);
+    } catch {
+      // Not shown free: keep the record.
+    }
+    if (!inUse) releaseIfUnchanged(owner);
+  }
+}
+
 // Main-process lifecycle locks, set synchronously before any await so that
 // Start and Stop for the same service can never interleave, regardless of
 // renderer button state.
@@ -357,7 +426,9 @@ export async function startService(
 
   try {
     if (port) {
+      const owner = ownershipOf(service, port);
       const inUse = await isPortInUse(port);
+      if (!inUse) releaseIfUnchanged(owner);
       if (runIds[service] !== runId) return;
       if (inUse) {
         emitLog(
@@ -385,6 +456,7 @@ export async function startService(
   const proc = spawnPreparedCommand(preparedCommand, cwd);
 
   processes[service] = proc;
+  launchPorts[service] = port ?? null;
 
   streamProcess(proc, service as LogSource);
 
@@ -399,6 +471,19 @@ export async function startService(
     // for stale runs. Only null the slot if it still refers to this process.
     if (processes[service] === proc) processes[service] = null;
 
+    // Ownership first, for every exit (current or stale run): the launch port
+    // may now be held by an orphan. Only this exit's own check, finding the
+    // port free, removes it (unless something re-recorded it meanwhile).
+    // While RepoRunner is quitting no port is checked (shutdown never uses
+    // ports); the record simply stays.
+    const owner = port ? recordPossibleOrphan(service, port) : null;
+    const exitCheck = port && !shuttingDown ? isPortInUse(port) : null;
+    if (owner && exitCheck) {
+      void exitCheck.then((inUse) => {
+        if (!inUse) releaseIfUnchanged(owner);
+      });
+    }
+
     if (runIds[service] !== runId) return; // stale event — stopService owns status
 
     emitLog(
@@ -412,14 +497,14 @@ export async function startService(
     const exitStatus: ServiceStatus =
       exitedBeforeReady || code !== 0 ? "failed" : "stopped";
 
-    if (!port) {
+    if (!port || !exitCheck) {
       setStatus(service, exitStatus);
       return;
     }
 
     // Root exit does not prove its descendants exited. If the port is still
     // held, report uncertainty instead of claiming the service stopped.
-    void isPortInUse(port).then((inUse) => {
+    void exitCheck.then((inUse) => {
       if (runIds[service] !== runId) return;
       if (inUse) {
         emitLog(
@@ -491,9 +576,13 @@ export function stopService(
     return inFlight;
   }
 
-  const operation: Promise<void> = performStop(service, port).finally(() => {
-    if (stopInProgress[service] === operation) stopInProgress[service] = null;
-  });
+  // Afterwards, each port this service may have left behind is checked on its
+  // own (Stage 4O); only ports found free stop being treated as the project's.
+  const operation: Promise<void> = performStop(service, port)
+    .then(() => recheckPossibleOrphans(service))
+    .finally(() => {
+      if (stopInProgress[service] === operation) stopInProgress[service] = null;
+    });
   stopInProgress[service] = operation;
   return operation;
 }
@@ -584,6 +673,26 @@ export async function stopAllServices(
 
 export function getStatuses(): ServiceStatuses {
   return { ...statuses };
+}
+
+/**
+ * Ports RepoRunner's own services may be using (Stage 4O), deduplicated:
+ * - the launch port of each service whose process is still tracked or being
+ *   stopped;
+ * - every port a RepoRunner-started tree may still hold (recorded when its
+ *   root exited), until a check finds that port free.
+ * A port is never added because it is merely occupied, and a later setup
+ * edit never changes which port a launch used. Read-only; nothing is checked
+ * or scanned here.
+ */
+export function getTrackedServicePorts(): number[] {
+  const ports = new Set<number>();
+  for (const service of ["frontend", "backend"] as const) {
+    for (const port of possibleOrphans[service].keys()) ports.add(port);
+    const launch = launchPorts[service];
+    if (launch && (processes[service] !== null || stopInProgress[service] !== null)) ports.add(launch);
+  }
+  return [...ports];
 }
 
 // ---------------------------------------------------------------------------

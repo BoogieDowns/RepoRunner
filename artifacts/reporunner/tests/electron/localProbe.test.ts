@@ -492,7 +492,7 @@ describe("isolation", () => {
     fs.rmSync(repo, { recursive: true, force: true });
   });
 
-  it("source: only http, net and the probe specification; no runtime module imports it", () => {
+  it("source: only http, net and the probe specification; only the gated probe IPC imports it", () => {
     const root = path.resolve(import.meta.dirname, "../..");
     const code = fs.readFileSync(path.join(root, "electron/localProbe.ts"), "utf8").replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
     expect([...code.matchAll(/from\s+"([^"]+)"/g)].map((m) => m[1]).sort()).toEqual(["../src/lib/ai/probeSpec.js", "node:http", "node:net"]);
@@ -507,6 +507,9 @@ describe("isolation", () => {
       ...fs.readdirSync(path.join(root, "src"), { recursive: true }).map((f) => path.join("src", String(f))),
     ].filter((f) => /\.(c?ts|tsx)$/.test(f));
     const importers = runtime.filter((f) => /localProbe|probeSpec/.test(fs.readFileSync(path.join(root, f), "utf8"))).map((f) => f.replace(/\\/g, "/")).sort();
-    expect(importers).toEqual(["electron/localProbe.ts", "src/lib/ai/probeSpec.ts"]);
+    // Stage 4O: only the gated probe IPC (aiProbeIpc.ts) uses it, and only ipc.ts registers that.
+    expect(importers).toEqual(["electron/aiProbeIpc.ts", "electron/localProbe.ts", "src/lib/ai/probeSpec.ts"]);
+    const probeIpcImporters = runtime.filter((f) => /aiProbeIpc/.test(fs.readFileSync(path.join(root, f), "utf8"))).map((f) => f.replace(/\\/g, "/")).sort();
+    expect(probeIpcImporters).toEqual(["electron/ipc.ts"]);
   });
 });

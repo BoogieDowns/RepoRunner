@@ -40,6 +40,7 @@ vi.mock("../../electron/processManager.js", () => ({
   stopAllServices: h.spy("processManager.stopAllServices", async () => {}),
   waitForServiceSettled: h.spy("processManager.waitForServiceSettled", async () => {}),
   getStatuses: h.spy("processManager.getStatuses", () => ({ frontend: "stopped", backend: "stopped" })),
+  getTrackedServicePorts: h.spy("processManager.getTrackedServicePorts", () => []),
 }));
 vi.mock("../../electron/commandUtils.js", () => ({
   prepareCommandForExecution: h.spy("commandUtils.prepareCommandForExecution", (c: string) => ({ kind: "shell", command: c })),
@@ -97,6 +98,8 @@ const CREDENTIAL_CHANNELS = ["credential-status", "credential-set", "credential-
 const AI_CONFIG_CHANNELS = ["ai-config-status"];
 /** Stage 4K: AI settings editing, behind the same internal gate as the credential handlers. */
 const AI_EDIT_CHANNELS = ["ai-config-edit-load", "ai-config-edit-save"];
+/** Stage 4O: the local connection probe, behind the same internal gate. */
+const AI_PROBE_CHANNELS = ["ai-config-probe"];
 const REV = "a".repeat(64);
 /** Arguments each handler would accept from a trusted caller, so a refusal can only come from the sender check. */
 const VALID_ARGS: Record<string, unknown[]> = {
@@ -109,6 +112,7 @@ const VALID_ARGS: Record<string, unknown[]> = {
   "credential-set": ["byok-slot-1", "rr-synthetic-sender-test-key", { remember: false }],
   "credential-remove": ["byok-slot-1"],
   "ai-config-edit-save": [{ format: "reporunner-ai-settings", version: 1, active: null, configs: [] }, null],
+  "ai-config-probe": ["cfg-a1", REV],
 };
 
 let app: ReturnType<typeof trustedRenderer>;
@@ -203,8 +207,8 @@ describe("the shared sender check", () => {
 
 describe("every handler", () => {
   it("exactly the expected handlers are registered", () => {
-    expect([...h.handlers.keys()].sort()).toEqual([...GENERAL_CHANNELS, ...ANALYSIS_CHANNELS, ...CREDENTIAL_CHANNELS, ...AI_CONFIG_CHANNELS, ...AI_EDIT_CHANNELS].sort());
-    expect(h.handlers.size).toBe(27);
+    expect([...h.handlers.keys()].sort()).toEqual([...GENERAL_CHANNELS, ...ANALYSIS_CHANNELS, ...CREDENTIAL_CHANNELS, ...AI_CONFIG_CHANNELS, ...AI_EDIT_CHANNELS, ...AI_PROBE_CHANNELS].sort());
+    expect(h.handlers.size).toBe(28);
   });
 
   it("refuses every untrusted caller before anything happens, with a message that reveals nothing", async () => {
@@ -292,13 +296,13 @@ describe("trusted callers keep their behavior", () => {
     await expect(call("ai-config-edit-save", ...VALID_ARGS["ai-config-edit-save"])).resolves.toStrictEqual({ ok: true, revision: "d".repeat(64), settings: projected });
   });
 
-  it("with the internal gate closed, the credential and AI edit handlers answer 'not-available' without touching anything; nothing else changes", async () => {
+  it("with the internal gate closed, the credential, AI edit and AI probe handlers answer 'not-available' without touching anything; nothing else changes", async () => {
     for (const options of [undefined, { internalCredentialSettings: false }]) {
       h.handlers.clear();
       for (const f of Object.values(h.spies)) f.mockClear();
       setupIpc(app.trust, options);
-      expect(h.handlers.size).toBe(27);
-      for (const channel of [...CREDENTIAL_CHANNELS, ...AI_EDIT_CHANNELS]) {
+      expect(h.handlers.size).toBe(28);
+      for (const channel of [...CREDENTIAL_CHANNELS, ...AI_EDIT_CHANNELS, ...AI_PROBE_CHANNELS]) {
         await expect(call(channel, ...(VALID_ARGS[channel] ?? [])), channel).resolves.toEqual({ ok: false, error: "not-available" });
       }
       expect(sideEffects()).toEqual([]);
@@ -337,7 +341,7 @@ describe("source structure", () => {
     expect(source.match(/ipcMain\.(handle|handleOnce|on|once)\(/g)).toEqual(["ipcMain.handle("]);
     const guard = /ipcMain\.handle\(channel, async \(event, \.\.\.args: unknown\[\]\) => \{\s*if \(!isTrustedSender\(event, trustedRenderer\)\) throw untrustedSenderError\(\);\s*return listener\(event, \.\.\.args\);\s*\}\);/;
     expect(source).toMatch(guard);
-    expect(source.match(/^ {2}handle\("/gm)).toHaveLength(GENERAL_CHANNELS.length + CREDENTIAL_CHANNELS.length + AI_CONFIG_CHANNELS.length + AI_EDIT_CHANNELS.length);
+    expect(source.match(/^ {2}handle\("/gm)).toHaveLength(GENERAL_CHANNELS.length + CREDENTIAL_CHANNELS.length + AI_CONFIG_CHANNELS.length + AI_EDIT_CHANNELS.length + AI_PROBE_CHANNELS.length);
   });
 
   it("no other main-process file registers IPC handlers", () => {

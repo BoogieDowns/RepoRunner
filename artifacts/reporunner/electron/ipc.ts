@@ -17,6 +17,7 @@ import {
   stopAllServices,
   waitForServiceSettled,
   getStatuses,
+  getTrackedServicePorts,
 } from "./processManager.js";
 import { parsePortFromUrl } from "./portManager.js";
 import {
@@ -42,6 +43,7 @@ import { registerRepoAnalysisIpc } from "./repoAnalysisIpc.js";
 import { credentialNotAvailable, credentialRemove, credentialSet, credentialStatus } from "./credentialIpc.js";
 import { aiConfigStatus } from "./aiConfigIpc.js";
 import { aiConfigEditLoad, aiConfigEditNotAvailable, aiConfigEditSave } from "./aiConfigEditIpc.js";
+import { aiConfigProbe, aiConfigProbeNotAvailable, devServerPorts } from "./aiProbeIpc.js";
 import { isTrustedSender, untrustedSenderError, type TrustedRenderer } from "./ipcTrust.js";
 
 function createLineBufferedLogEmitter(source: LogSource) {
@@ -478,6 +480,15 @@ export function setupIpc(trustedRenderer?: TrustedRenderer, options: IpcOptions 
   handle("ai-config-edit-load", async (_event, ...args: unknown[]) => (credentialsAllowed ? aiConfigEditLoad(args) : aiConfigEditNotAvailable()));
 
   handle("ai-config-edit-save", async (_event, ...args: unknown[]) => (credentialsAllowed ? aiConfigEditSave(args) : aiConfigEditNotAvailable()));
+
+  // Local AI connection probe (Stage 4O): the same internal gate, then exact
+  // arguments, the saved configuration and its revision, the project-port
+  // check, one probe at a time with a cooldown, and the Stage 4N transport.
+  // The ports are those of RepoRunner's own started services and its dev
+  // server (runtime facts, never a scan). No preload method exposes it. See
+  // aiProbeIpc.ts.
+  const projectPorts = () => [...getTrackedServicePorts(), ...devServerPorts(trustedRenderer?.appPageUrl())];
+  handle("ai-config-probe", async (event, ...args: unknown[]) => (credentialsAllowed ? aiConfigProbe(args, event.sender, projectPorts) : aiConfigProbeNotAvailable()));
 }
 
 
