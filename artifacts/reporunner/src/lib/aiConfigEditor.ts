@@ -10,21 +10,49 @@
 // - One request at a time. An answer that arrives after the dialog closed,
 //   or after a newer request, is ignored; nothing is sent after close.
 // - Saving doesn't connect to anything, and the wording never says it does.
+//
+// Stage 4P: a manual connection test for a *saved* configuration. The view
+// shows the exact request (buildProbeRequest, the same pure function the
+// main process uses) and what it does and doesn't prove; one click sends
+// only the saved configuration's id and the loaded revision (never a URL).
+// Testing needs a loaded file with a revision, no unsaved changes, no open
+// form, no save or reload in progress, and no test already running. Results
+// are fixed messages, kept only here: any change to the draft, a reload or a
+// save clears them, and an answer that arrives after close, a newer test, a
+// reload or a revision change is ignored. Nothing is retried or polled.
 import { AI_MODEL_LABEL_MAX_LENGTH, AI_MODEL_LABEL_PATTERN, AI_SETTINGS_MAX_CONFIGS, validateAiSettings } from "./ai/settingsSchema";
 import { validateLocalEndpoint, type LocalEndpointError } from "./ai/localEndpoint";
-import type { AiConfigEditDocument, AiConfigEditEntry, AiConfigEditLoadResult, AiConfigEditSaveResult, RepoRunnerAPI } from "../types";
+import { buildProbeRequest, PROBE_MAX_MODELS } from "./ai/probeSpec";
+import type {
+  AiConfigEditDocument,
+  AiConfigEditEntry,
+  AiConfigEditLoadResult,
+  AiConfigEditSaveResult,
+  AiConfigProbeError,
+  AiConfigProbeIpcResult,
+  AiConfigProbeOutcome,
+  AiConfigProbeStatusClass,
+  RepoRunnerAPI,
+} from "../types";
 
 export interface AiConfigEditApi {
   load: () => Promise<AiConfigEditLoadResult>;
   save: (settings: AiConfigEditDocument, expectedRevision: string | null) => Promise<AiConfigEditSaveResult>;
+  /** Stage 4P: present only when the preload provides it (internal launches). */
+  probe?: (configId: string, expectedRevision: string) => Promise<AiConfigProbeIpcResult>;
 }
 
-/** Both editing methods, or null when this launch doesn't provide them (every packaged build). */
+/** Both editing methods (and the probe when provided), or null when this launch doesn't provide them (every packaged build). */
 export function getAiConfigEditApi(api: Partial<RepoRunnerAPI> | undefined): AiConfigEditApi | null {
   const load = api?.aiConfigEditLoad;
   const save = api?.aiConfigEditSave;
   if (typeof load !== "function" || typeof save !== "function") return null;
-  return { load: () => load.call(api), save: (settings, revision) => save.call(api, settings, revision) };
+  const probe = api?.aiConfigProbe;
+  return {
+    load: () => load.call(api),
+    save: (settings, revision) => save.call(api, settings, revision),
+    ...(typeof probe === "function" ? { probe: (configId: string, revision: string) => probe.call(api, configId, revision) } : {}),
+  };
 }
 
 export const API_STYLE_LABELS: Record<AiConfigEditEntry["apiStyle"], string> = {
@@ -48,6 +76,130 @@ export const AI_EDITOR_TEXT = {
   limit: `You can save up to ${AI_SETTINGS_MAX_CONFIGS} local AI configurations.`,
   modelInvalid: `Model labels can use letters, digits and . _ : / + - (up to ${AI_MODEL_LABEL_MAX_LENGTH} characters), starting with a letter or digit.`,
 } as const;
+
+/** What a connection test sends and what it can't tell you; shown before the button. */
+export const PROBE_EXPLANATION = Object.freeze([
+  "Test connection sends one HTTP GET request to the address shown, only when you click it.",
+  "Any program on this computer listening at that address may answer.",
+  "A compatible response doesn't show which program answered or that it can be trusted, and it doesn't enable AI features.",
+  "No repository data, prompts or credentials are included.",
+] as const);
+
+export const PROBE_TEXT = {
+  testing: "Testing…",
+  saveFirst: "Save this configuration before testing it.",
+  unsaved: "Save or discard your changes to test a saved configuration.",
+  busy: "Wait for the current operation to finish.",
+  conflictReload: "Reload the saved settings before testing.",
+  invalidSaved: "This saved configuration can't be tested.",
+} as const;
+
+/** One fixed message per result. Never server text. */
+export const PROBE_MESSAGES: Readonly<Record<"compatible" | "http-error" | AiConfigProbeOutcome | AiConfigProbeError, string>> = Object.freeze({
+  compatible: "A compatible-looking response was received from the local endpoint. This does not verify which program answered, and AI features remain unavailable.",
+  "http-error": "The local endpoint answered with an HTTP error.",
+  "incompatible-response": "Something answered at this address, but not in the format expected for this API style.",
+  "redirect-refused": "The local endpoint answered with a redirect. RepoRunner doesn't follow redirects, so nothing else was contacted.",
+  "auth-required": "The local endpoint asked for authentication. RepoRunner doesn't send credentials to local endpoints.",
+  "not-found-at-path": "Nothing was found at this path. Check the address and API style; RepoRunner doesn't try other paths.",
+  "connection-refused": "Nothing is accepting connections at this address.",
+  timeout: "The local endpoint didn't answer in time.",
+  "response-too-large": "The answer was larger than a test accepts, so it was discarded.",
+  "address-mismatch": "The connection didn't reach the expected local address, so nothing was sent.",
+  "not-available": "Connection tests aren't available in this launch.",
+  "invalid-request": "The test request wasn't accepted. Nothing was sent.",
+  missing: "There are no saved settings to test. Nothing was sent.",
+  damaged: "The AI settings file is damaged, so nothing was sent.",
+  "unsupported-version": "The AI settings file comes from a newer version of RepoRunner, so nothing was sent.",
+  unreadable: "RepoRunner couldn't read the AI settings, so nothing was sent.",
+  conflict: "The saved settings changed since they were loaded, so nothing was sent. Reload to see the saved version.",
+  "not-found": "This configuration isn't in the saved settings, so nothing was sent.",
+  "invalid-configuration": "This saved configuration can't be tested. Nothing was sent.",
+  "port-in-use-by-project": "This port belongs to a project RepoRunner is running or recently ran, so it wasn't tested.",
+  busy: "Another connection test is already running. Try again when it finishes.",
+  "rate-limited": "Connection tests are limited to one every few seconds. Try again shortly.",
+  cancelled: "The test was cancelled.",
+  failed: "The test couldn't be completed.",
+});
+
+const PROBE_OUTCOMES: readonly AiConfigProbeOutcome[] = [
+  "incompatible-response",
+  "redirect-refused",
+  "auth-required",
+  "not-found-at-path",
+  "connection-refused",
+  "timeout",
+  "response-too-large",
+  "address-mismatch",
+];
+const PROBE_ERRORS: readonly AiConfigProbeError[] = [
+  "not-available",
+  "invalid-request",
+  "missing",
+  "damaged",
+  "unsupported-version",
+  "unreadable",
+  "conflict",
+  "not-found",
+  "invalid-configuration",
+  "port-in-use-by-project",
+  "busy",
+  "rate-limited",
+  "cancelled",
+  "failed",
+];
+const STATUS_CLASSES: readonly AiConfigProbeStatusClass[] = ["1xx", "2xx", "4xx", "5xx", "other"];
+
+/** Probe answers, re-checked field by field: anything else is "failed". */
+export function readProbeResult(value: unknown): AiConfigProbeIpcResult {
+  if (typeof value !== "object" || value === null) return { ok: false, error: "failed" };
+  const r = value as Record<string, unknown>;
+  if (r.ok === true) {
+    if (r.outcome === "compatible") {
+      const count = r.modelCount;
+      if (count === null || (typeof count === "number" && Number.isInteger(count) && count >= 0 && count <= PROBE_MAX_MODELS)) return { ok: true, outcome: "compatible", modelCount: count };
+      return { ok: false, error: "failed" };
+    }
+    if (r.outcome === "http-error") {
+      return (STATUS_CLASSES as readonly unknown[]).includes(r.statusClass) ? { ok: true, outcome: "http-error", statusClass: r.statusClass as AiConfigProbeStatusClass } : { ok: false, error: "failed" };
+    }
+    if ((PROBE_OUTCOMES as readonly unknown[]).includes(r.outcome)) return { ok: true, outcome: r.outcome as AiConfigProbeOutcome };
+    return { ok: false, error: "failed" };
+  }
+  if (r.ok === false && (PROBE_ERRORS as readonly unknown[]).includes(r.error)) return { ok: false, error: r.error as AiConfigProbeError };
+  return { ok: false, error: "failed" };
+}
+
+/** The fixed message for a result, plus the bounded detail the contract allows. */
+export function probeMessage(result: AiConfigProbeIpcResult): { text: string; detail: string | null; tone: "status" | "alert" } {
+  if (!result.ok) return { text: PROBE_MESSAGES[result.error], detail: null, tone: "alert" };
+  if (result.outcome === "compatible") {
+    const n = result.modelCount;
+    return { text: PROBE_MESSAGES.compatible, detail: n === null ? null : `The response listed ${n} ${n === 1 ? "model" : "models"}.`, tone: "status" };
+  }
+  if (result.outcome === "http-error") return { text: PROBE_MESSAGES["http-error"], detail: `HTTP status class: ${result.statusClass}.`, tone: "status" };
+  return { text: PROBE_MESSAGES[result.outcome], detail: null, tone: "status" };
+}
+
+/** The exact request a test would send, for display. */
+export interface ProbePreview {
+  url: string;
+  method: "GET";
+  path: string;
+  apiStyle: string;
+  headers: ReadonlyArray<readonly [string, string]>;
+}
+
+/** What the view shows for one configuration's connection test. */
+export interface ProbeView {
+  /** Only for a saved, unchanged, valid configuration. */
+  preview: ProbePreview | null;
+  canTest: boolean;
+  /** Why testing isn't possible right now (fixed text), or null. */
+  reason: string | null;
+  testing: boolean;
+  result: { text: string; detail: string | null; tone: "status" | "alert" } | null;
+}
 
 export const ENDPOINT_MESSAGES: Record<LocalEndpointError, string> = {
   "not-a-string": "Enter an endpoint address.",
@@ -159,6 +311,8 @@ export interface AiEditorState {
   /** A fixed message. */
   error: string | null;
   notice: string | null;
+  /** Stage 4P: the connection test in progress or last finished (memory only), for one configuration. */
+  probe: { configId: string; testing: boolean; result: ProbeView["result"] } | null;
 }
 
 export const AI_EDITOR_INITIAL: AiEditorState = Object.freeze({
@@ -173,6 +327,7 @@ export const AI_EDITOR_INITIAL: AiEditorState = Object.freeze({
   form: null,
   error: null,
   notice: null,
+  probe: null,
 });
 
 const same = (a: AiConfigEditDocument | null, b: AiConfigEditDocument | null) => JSON.stringify(a) === JSON.stringify(b);
@@ -184,6 +339,8 @@ export class AiConfigEditorController {
   private saved: AiConfigEditDocument | null = null;
   private revision: string | null = null;
   private request = 0;
+  /** Stage 4P: bumped by every test, draft change, reload and save, so older answers are ignored. */
+  private probeRequest = 0;
   private closed = false;
 
   constructor(
@@ -215,7 +372,9 @@ export class AiConfigEditorController {
   }
 
   private setDraft(draft: AiConfigEditDocument, extra: Partial<AiEditorState> = {}) {
-    this.set({ draft, dirty: !same(draft, this.saved), notice: null, error: null, ...extra });
+    // Any change to the draft ends what a test result described.
+    this.probeRequest++;
+    this.set({ draft, dirty: !same(draft, this.saved), notice: null, error: null, probe: null, ...extra });
   }
 
   private editable(): AiConfigEditDocument | null {
@@ -227,6 +386,7 @@ export class AiConfigEditorController {
   async load(): Promise<void> {
     if (this.closed || this.state.saving) return;
     const id = ++this.request;
+    this.probeRequest++;
     this.set({ ...AI_EDITOR_INITIAL });
     let result: AiConfigEditLoadResult;
     try {
@@ -400,7 +560,8 @@ export class AiConfigEditorController {
     if (result.ok) {
       this.saved = copy(result.settings);
       this.revision = result.revision;
-      this.set({ saving: false, draft: copy(result.settings), dirty: false, notice: AI_EDITOR_TEXT.saved });
+      this.probeRequest++;
+      this.set({ saving: false, draft: copy(result.settings), dirty: false, notice: AI_EDITOR_TEXT.saved, probe: null });
       this.onSaved();
       return;
     }
@@ -426,6 +587,58 @@ export class AiConfigEditorController {
       default:
         this.set({ saving: false, error: AI_EDITOR_TEXT.failed });
     }
+  }
+
+  /** Stage 4P: the saved configuration a test would use, when one can be tested at all. */
+  private savedEntry(id: string): AiConfigEditEntry | null {
+    return this.saved?.configs.find((c) => c.id === id) ?? null;
+  }
+
+  /** What the view shows for one configuration's connection test, or null when tests aren't available here. */
+  probeView(id: string): ProbeView | null {
+    if (!this.api.probe) return null;
+    const s = this.state;
+    const testing = s.probe?.testing === true && s.probe.configId === id;
+    const result = s.probe && s.probe.configId === id && !s.probe.testing ? s.probe.result : null;
+    const base = { testing, result };
+    if (s.phase !== "ready" || this.closed) return { preview: null, canTest: false, reason: null, ...base };
+    const entry = this.savedEntry(id);
+    if (!entry) return { preview: null, canTest: false, reason: PROBE_TEXT.saveFirst, ...base };
+    if (s.dirty || s.form !== null) return { preview: null, canTest: false, reason: PROBE_TEXT.unsaved, ...base };
+    const built = buildProbeRequest(entry);
+    if (!built.ok || this.revision === null) return { preview: null, canTest: false, reason: PROBE_TEXT.invalidSaved, ...base };
+    const r = built.request;
+    const preview: ProbePreview = { url: r.url, method: r.method, path: r.path, apiStyle: API_STYLE_LABELS[entry.apiStyle], headers: r.headers };
+    if (s.conflict || s.confirmingReload) return { preview, canTest: false, reason: PROBE_TEXT.conflictReload, ...base };
+    if (s.saving || s.probe?.testing) return { preview, canTest: false, reason: s.probe?.testing ? null : PROBE_TEXT.busy, ...base };
+    return { preview, canTest: true, reason: null, ...base };
+  }
+
+  /**
+   * Sends one test of a saved configuration: its id and the loaded revision,
+   * nothing else. One at a time; never retried; ignored if anything moved on
+   * before the answer arrived.
+   */
+  async testConnection(id: string): Promise<void> {
+    const view = this.probeView(id);
+    const probe = this.api.probe;
+    const revision = this.revision;
+    if (!view?.canTest || !probe || revision === null) return;
+    const token = ++this.probeRequest;
+    this.set({ probe: { configId: id, testing: true, result: null }, notice: null });
+    let result: AiConfigProbeIpcResult;
+    try {
+      result = readProbeResult(await probe(id, revision));
+    } catch {
+      result = { ok: false, error: "failed" };
+    }
+    if (this.closed || token !== this.probeRequest || this.revision !== revision) return;
+    const message = probeMessage(result);
+    if (!result.ok && result.error === "conflict") {
+      this.set({ probe: { configId: id, testing: false, result: message }, conflict: true, error: AI_EDITOR_TEXT.conflict });
+      return;
+    }
+    this.set({ probe: { configId: id, testing: false, result: message } });
   }
 
   /** The dialog may close now (not while a save is in flight). */

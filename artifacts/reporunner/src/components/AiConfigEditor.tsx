@@ -3,9 +3,14 @@
 // src/lib/aiConfigEditor.ts. Shown only when the preload provides the editing
 // methods (internal development launches). Fixed wording only; nothing here
 // connects to anything. Relative imports keep it renderable in tests.
+//
+// Stage 4P: each saved configuration can show a "Connection test" block (only
+// when the preload provides the probe): the exact request, what it does and
+// doesn't prove, a Test connection button, and a fixed result. The renderer
+// sends nothing over the network itself; the click asks the main process.
 import * as React from "react";
 import { AI_SETTINGS_MAX_CONFIGS } from "../lib/ai/settingsSchema";
-import { AI_EDITOR_TEXT, API_STYLE_LABELS, type AiEditorState, type EntryForm } from "../lib/aiConfigEditor";
+import { AI_EDITOR_TEXT, API_STYLE_LABELS, PROBE_EXPLANATION, PROBE_TEXT, type AiEditorState, type EntryForm, type ProbeView } from "../lib/aiConfigEditor";
 
 export const AI_EDITOR_TITLE_ID = "ai-config-editor-title";
 
@@ -28,6 +33,8 @@ export interface AiEditorHandlers {
   onSave: () => void;
   onReload: () => void;
   onCancelReload: () => void;
+  /** Stage 4P: one connection test of a saved configuration. */
+  onTest?: (id: string) => void;
 }
 
 const btn = "btn-glass btn-glass-secondary h-8 px-3 text-[12px]";
@@ -129,8 +136,92 @@ function EntryFormView({ form, handlers, endpointRef, disabled }: { form: EntryF
   );
 }
 
-/** The editor section for a given state. */
-export function AiConfigEditorSection({ state, handlers, endpointRef }: { state: AiEditorState; handlers: AiEditorHandlers; endpointRef?: React.Ref<HTMLInputElement> }) {
+/** Stage 4P: the exact request, the explanation, the button and the result for one configuration. */
+function ProbeSection({ id, view, onTest }: { id: string; view: ProbeView; onTest?: (id: string) => void }) {
+  const base = `ai-probe-${id}`;
+  return (
+    <div className="ml-6 mt-2 rounded-md p-2" style={{ border: "1px dashed #242020" }} role="group" aria-labelledby={`${base}-title`} data-testid="ai-probe">
+      <p id={`${base}-title`} className="text-[12px] font-medium" style={subtle}>
+        Connection test
+      </p>
+      {view.preview && (
+        <>
+          <dl className="mt-1 grid grid-cols-[auto_1fr] gap-x-2 text-[12px]" style={subtle} data-testid="ai-probe-preview">
+            <dt>Request</dt>
+            <dd style={mono}>
+              {view.preview.method} {view.preview.path}
+            </dd>
+            <dt>Destination</dt>
+            <dd style={mono}>{view.preview.url}</dd>
+            <dt>API style</dt>
+            <dd>{view.preview.apiStyle}</dd>
+            <dt>Headers</dt>
+            <dd>
+              <ul data-testid="ai-probe-headers">
+                {view.preview.headers.map(([name, value]) => (
+                  <li key={name} style={mono}>
+                    {name}: {value}
+                  </li>
+                ))}
+              </ul>
+            </dd>
+            <dt>Body</dt>
+            <dd>None. No Authorization header, cookies or credentials.</dd>
+          </dl>
+          <ul id={`${base}-explain`} className="mt-1 list-disc pl-4 text-[12px]" style={text} data-testid="ai-probe-explanation">
+            {PROBE_EXPLANATION.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        </>
+      )}
+      {view.reason && (
+        <p className="mt-1 text-[12px]" style={subtle} data-testid="ai-probe-reason">
+          {view.reason}
+        </p>
+      )}
+      {view.preview && (
+        <button
+          type="button"
+          className={`${btn} mt-2`}
+          disabled={!view.canTest}
+          aria-busy={view.testing}
+          aria-describedby={`${base}-explain`}
+          onClick={() => onTest?.(id)}
+          data-testid="ai-probe-test"
+        >
+          {view.testing ? PROBE_TEXT.testing : "Test connection"}
+        </button>
+      )}
+      <div aria-live="polite">
+        {view.testing && (
+          <p className="mt-1 text-[12px]" role="status" style={subtle}>
+            {PROBE_TEXT.testing}
+          </p>
+        )}
+        {view.result && (
+          <p className="mt-1 text-[12px]" role={view.result.tone} style={{ color: view.result.tone === "alert" ? "#ffb06a" : "#dedad5" }} data-testid="ai-probe-result">
+            {view.result.text}
+            {view.result.detail ? ` ${view.result.detail}` : ""}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** The editor section for a given state. `probeFor` (Stage 4P) gives each configuration's connection-test view, when tests are available. */
+export function AiConfigEditorSection({
+  state,
+  handlers,
+  endpointRef,
+  probeFor,
+}: {
+  state: AiEditorState;
+  handlers: AiEditorHandlers;
+  endpointRef?: React.Ref<HTMLInputElement>;
+  probeFor?: (id: string) => ProbeView | null;
+}) {
   const draft = state.draft;
   const busy = state.saving;
   const locked = busy || state.conflict;
@@ -216,6 +307,10 @@ export function AiConfigEditorSection({ state, handlers, endpointRef }: { state:
                       </button>
                     </div>
                   )}
+                  {(() => {
+                    const view = probeFor?.(c.id);
+                    return view ? <ProbeSection id={c.id} view={view} onTest={handlers.onTest} /> : null;
+                  })()}
                 </li>
               ))}
             </ul>

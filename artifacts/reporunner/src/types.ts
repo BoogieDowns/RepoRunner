@@ -287,6 +287,43 @@ export type AiConfigEditLoadResult =
   | { ok: false; error: "damaged"; damage: AiConfigDamage }
   | { ok: false; error: "not-available" | "invalid-request" | "unsupported-version" | "unreadable" | "failed" };
 
+// Stage 4O/4P: the result of the main process's local connection probe, shared
+// by its IPC module and the renderer so the two can't drift. Fixed codes only:
+// never server text, model names, headers, the endpoint or a path.
+/** A probe that ran and got an answer (or none) other than "compatible" or an HTTP error. */
+export type AiConfigProbeOutcome =
+  | "incompatible-response"
+  | "redirect-refused"
+  | "auth-required"
+  | "not-found-at-path"
+  | "connection-refused"
+  | "timeout"
+  | "response-too-large"
+  | "address-mismatch";
+export type AiConfigProbeStatusClass = "1xx" | "2xx" | "4xx" | "5xx" | "other";
+/** Why no probe ran, or why it couldn't finish. */
+export type AiConfigProbeError =
+  | "not-available"
+  | "invalid-request"
+  | "missing"
+  | "damaged"
+  | "unsupported-version"
+  | "unreadable"
+  | "conflict"
+  | "not-found"
+  | "invalid-configuration"
+  | "port-in-use-by-project"
+  | "busy"
+  | "rate-limited"
+  | "cancelled"
+  | "failed";
+export type AiConfigProbeIpcResult =
+  /** A compatible-looking answer. modelCount: entries listed (openai-compatible), or null. */
+  | { ok: true; outcome: "compatible"; modelCount: number | null }
+  | { ok: true; outcome: "http-error"; statusClass: AiConfigProbeStatusClass }
+  | { ok: true; outcome: AiConfigProbeOutcome }
+  | { ok: false; error: AiConfigProbeError };
+
 export type AiConfigEditSaveResult =
   | { ok: true; revision: string; settings: AiConfigEditDocument }
   | { ok: false; error: "invalid-settings"; detail: AiConfigSettingsError }
@@ -374,6 +411,13 @@ export interface RepoRunnerAPI {
    */
   aiConfigEditLoad?(): Promise<AiConfigEditLoadResult>;
   aiConfigEditSave?(settings: AiConfigEditDocument, expectedRevision: string | null): Promise<AiConfigEditSaveResult>;
+  /**
+   * Internal development launches only (Stage 4P): asks the main process to
+   * probe one saved local AI configuration (the Stage 4O probe channel).
+   * Exactly the saved configuration's id and the revision of the document it
+   * came from; never a URL. Absent in every packaged build and in the mock.
+   */
+  aiConfigProbe?(configId: string, expectedRevision: string): Promise<AiConfigProbeIpcResult>;
 }
 
 declare global {

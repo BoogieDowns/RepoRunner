@@ -508,7 +508,11 @@ describe("isolation", () => {
     ].filter((f) => /\.(c?ts|tsx)$/.test(f));
     const importers = runtime.filter((f) => /localProbe|probeSpec/.test(fs.readFileSync(path.join(root, f), "utf8"))).map((f) => f.replace(/\\/g, "/")).sort();
     // Stage 4O: only the gated probe IPC (aiProbeIpc.ts) uses it, and only ipc.ts registers that.
-    expect(importers).toEqual(["electron/aiProbeIpc.ts", "electron/localProbe.ts", "src/lib/ai/probeSpec.ts"]);
+    // Stage 4P: the renderer's editor uses the pure probe specification (for the preview), never the transport.
+    expect(importers).toEqual(["electron/aiProbeIpc.ts", "electron/localProbe.ts", "src/lib/ai/probeSpec.ts", "src/lib/aiConfigEditor.ts"]);
+    expect(fs.readFileSync(path.join(root, "src/lib/aiConfigEditor.ts"), "utf8")).not.toMatch(/localProbe/);
+    const transportImporters = runtime.filter((f) => /from\s+"[^"]*localProbe(\.js)?"/.test(fs.readFileSync(path.join(root, f), "utf8"))).map((f) => f.replace(/\\/g, "/"));
+    expect(transportImporters).toEqual(["electron/aiProbeIpc.ts"]);
     const probeIpcImporters = runtime.filter((f) => /aiProbeIpc/.test(fs.readFileSync(path.join(root, f), "utf8"))).map((f) => f.replace(/\\/g, "/")).sort();
     expect(probeIpcImporters).toEqual(["electron/ipc.ts"]);
   });

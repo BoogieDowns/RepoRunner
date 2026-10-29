@@ -129,10 +129,10 @@ describe("internal credential methods (Stage 4C, only with the main process's sw
   });
   const call = (name: string, ...args: unknown[]) => (internal[name] as (...a: unknown[]) => Promise<unknown>)(...args);
 
-  it("adds exactly six methods to the same API (three credential, AI status, AI edit load/save), and no way to read a key", () => {
-    expect(Object.keys(internal).filter((k) => !Object.keys(api).includes(k)).sort()).toEqual(["aiConfigEditLoad", "aiConfigEditSave", "aiConfigStatus", "credentialStatus", "removeCredential", "setCredential"]);
+  it("adds exactly seven methods to the same API (three credential, AI status, AI edit load/save, AI probe), and no way to read a key", () => {
+    expect(Object.keys(internal).filter((k) => !Object.keys(api).includes(k)).sort()).toEqual(["aiConfigEditLoad", "aiConfigEditSave", "aiConfigProbe", "aiConfigStatus", "credentialStatus", "removeCredential", "setCredential"]);
     // No other AI write, delete, reset or test method.
-    expect(Object.keys(internal).filter((k) => /ai|config/i.test(k)).sort()).toEqual(["aiConfigEditLoad", "aiConfigEditSave", "aiConfigStatus"]);
+    expect(Object.keys(internal).filter((k) => /ai|config|probe/i.test(k)).sort()).toEqual(["aiConfigEditLoad", "aiConfigEditSave", "aiConfigProbe", "aiConfigStatus"]);
     expect(Object.keys(internal)).not.toEqual(expect.arrayContaining(["getCredential"]));
     expect(Object.keys(internal).filter((k) => /get.*(cred|key|secret)/i.test(k))).toEqual([]);
     for (const name of ["credentialStatus", "setCredential", "removeCredential"]) expect(internal[name]).not.toBe(h.invoke);
@@ -181,6 +181,22 @@ describe("internal credential methods (Stage 4C, only with the main process's sw
     ]);
     for (const name of ["aiConfigEditLoad", "aiConfigEditSave"]) expect(internal[name]).not.toBe(h.invoke);
     expect(h.send).not.toHaveBeenCalled();
+  });
+
+  it("aiConfigProbe (Stage 4P) sends exactly the id and the revision; never a URL or extra arguments", async () => {
+    h.invoke.mockClear();
+    const rev = "b".repeat(64);
+    await call("aiConfigProbe", "cfg-a1", rev);
+    await call("aiConfigProbe", "cfg-a1", rev, "http://127.0.0.1:11434/api/version", { headers: {} });
+    await call("aiConfigProbe", "http://127.0.0.1:1");
+    expect(h.invoke.mock.calls).toEqual([
+      ["ai-config-probe", "cfg-a1", rev],
+      ["ai-config-probe", "cfg-a1", rev],
+      ["ai-config-probe", "http://127.0.0.1:1", undefined],
+    ]);
+    expect(internal.aiConfigProbe).not.toBe(h.invoke);
+    expect(h.send).not.toHaveBeenCalled();
+    // The main process refuses anything but (configId, expectedRevision); see aiProbeIpc tests.
   });
 
   it("main.ts and preload.cts use the same switch", () => {
