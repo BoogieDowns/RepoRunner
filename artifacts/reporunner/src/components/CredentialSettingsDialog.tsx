@@ -37,7 +37,7 @@ import {
   type AiConfigStatusApi,
   type AiStatusState,
 } from "../lib/aiConfigStatus";
-import { AI_EDITOR_INITIAL, AiConfigEditorController, type AiConfigEditApi, type AiEditorState } from "../lib/aiConfigEditor";
+import { AI_EDITOR_INITIAL, AiConfigEditorController, type AiConfigEditApi, type AiEditorState, type ProbeView } from "../lib/aiConfigEditor";
 import { AiConfigEditorSection, type AiEditorHandlers } from "./AiConfigEditor";
 
 export const CREDENTIAL_DIALOG_TITLE_ID = "credential-settings-title";
@@ -84,6 +84,8 @@ export function CredentialSettingsView(props: {
   /** The AI editor's state and actions; when absent, the editor isn't shown. */
   aiEditor?: AiEditorState | null;
   aiEditorHandlers?: AiEditorHandlers;
+  /** Stage 4P: each configuration's connection-test view (internal launches with the probe method). */
+  aiProbeFor?: (id: string) => ProbeView | null;
   endpointRef?: React.Ref<HTMLInputElement>;
   /** Asking before closing discards unsaved AI configuration changes. */
   confirmingClose?: boolean;
@@ -248,7 +250,7 @@ export function CredentialSettingsView(props: {
 
         {props.aiStatus && <AiStatusSection state={props.aiStatus} />}
 
-        {props.aiEditor && props.aiEditorHandlers && <AiConfigEditorSection state={props.aiEditor} handlers={props.aiEditorHandlers} endpointRef={props.endpointRef} />}
+        {props.aiEditor && props.aiEditorHandlers && <AiConfigEditorSection state={props.aiEditor} handlers={props.aiEditorHandlers} endpointRef={props.endpointRef} probeFor={props.aiProbeFor} />}
 
         {props.confirmingClose && (
           <div className="mt-4 rounded-md p-3" role="group" aria-label="Unsaved changes" style={{ border: "1px solid rgba(185,14,28,0.28)" }} data-testid="ai-config-close-confirm">
@@ -431,6 +433,7 @@ export function CredentialSettingsDialog({ api, aiStatusApi, aiEditApi, onClose 
     onSave: () => void editor()?.save(),
     onReload: () => editor()?.requestReload(),
     onCancelReload: () => editor()?.cancelReload(),
+    onTest: (id) => void editor()?.testConnection(id),
   };
 
   return (
@@ -439,6 +442,7 @@ export function CredentialSettingsDialog({ api, aiStatusApi, aiEditApi, onClose 
       aiStatus={aiStatus}
       aiEditor={aiEditor}
       aiEditorHandlers={aiEditorHandlers}
+      aiProbeFor={(id) => editorRef.current?.probeView(id) ?? null}
       endpointRef={endpointRef}
       confirmingClose={confirmingClose}
       closeBlocked={state.activity === "saving" || state.activity === "removing" || aiEditor?.saving === true}

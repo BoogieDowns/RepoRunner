@@ -570,7 +570,7 @@ describe("source boundaries", () => {
       const code = read(f).replace(/^\s*\/\/.*$/gm, "");
       expect(code, f).not.toMatch(/\bfetch\(|XMLHttpRequest|WebSocket|EventSource|localStorage|sessionStorage|indexedDB|ipcRenderer|setCredential|credentialStatus|removeCredential|process\.|\beval\(|new Function|console\.|import\(|aiReady/);
     }
-    expect([...read("src/lib/aiConfigEditor.ts").matchAll(/from\s+"([^"]+)"/g)].map((m) => m[1]).sort()).toEqual(["../types", "./ai/localEndpoint", "./ai/settingsSchema"]);
+    expect([...read("src/lib/aiConfigEditor.ts").matchAll(/from\s+"([^"]+)"/g)].map((m) => m[1]).sort()).toEqual(["../types", "./ai/localEndpoint", "./ai/probeSpec", "./ai/settingsSchema"]);
   });
 
   it("the editor is loaded only from the dialog's effect, never at startup; App only passes it on", () => {

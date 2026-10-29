@@ -356,11 +356,18 @@ describe("isolation", () => {
     fs.rmSync(repo, { recursive: true, force: true });
   });
 
-  it("no renderer exposure: preload, types and mock don't mention the probe", () => {
+  it("renderer exposure (Stage 4P): only the gated preload method reaches the channel; the mock and App never do", () => {
     const root = path.resolve(import.meta.dirname, "../..");
-    for (const f of ["electron/preload.cts", "src/types.ts", "src/mock/repoRunnerMock.ts", "src/App.tsx", "src/components/CredentialSettingsDialog.tsx", "src/components/AiConfigEditor.tsx", "src/lib/aiConfigEditor.ts"]) {
-      expect(fs.readFileSync(path.join(root, f), "utf8"), f).not.toMatch(/ai-config-probe|aiConfigProbe|probeLocalEndpoint|localProbe/);
+    // Never the main-process transport, anywhere in the renderer; never the channel outside the preload; never in the mock or App.
+    for (const f of ["src/types.ts", "src/mock/repoRunnerMock.ts", "src/App.tsx", "src/components/CredentialSettingsDialog.tsx", "src/components/AiConfigEditor.tsx", "src/lib/aiConfigEditor.ts"]) {
+      expect(fs.readFileSync(path.join(root, f), "utf8"), f).not.toMatch(/ai-config-probe|probeLocalEndpoint|localProbe/);
     }
+    for (const f of ["src/mock/repoRunnerMock.ts", "src/App.tsx"]) expect(fs.readFileSync(path.join(root, f), "utf8"), f).not.toMatch(/aiConfigProbe/);
+    // The preload: exactly one method, inside the internal-switch block, forwarding exactly the id and the revision.
+    const preload = fs.readFileSync(path.join(root, "electron/preload.cts"), "utf8");
+    expect(preload.match(/ai-config-probe/g)).toHaveLength(1);
+    const gated = preload.slice(preload.indexOf("const credentialMethods = process.argv.includes(INTERNAL_CREDENTIAL_SETTINGS_SWITCH)"), preload.indexOf(": {};"));
+    expect(gated).toMatch(/aiConfigProbe: \(configId: string, expectedRevision: string\) =>\s*ipcRenderer\.invoke\("ai-config-probe", configId, expectedRevision\),/);
   });
 
   it("registration: through the guard, behind the gate, in the required order", () => {

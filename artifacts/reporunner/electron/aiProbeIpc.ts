@@ -2,6 +2,7 @@ import { loadAiSettings } from "./aiSettingsService.js";
 import { probeLocalEndpoint } from "./localProbe.js";
 import { AI_CONFIG_ID_PATTERN } from "../src/lib/ai/settingsSchema.js";
 import { buildProbeRequest, PROBE_MAX_MODELS, type ProbeResult, type ProbeStatusClass } from "../src/lib/ai/probeSpec.js";
+import type { AiConfigProbeError, AiConfigProbeIpcResult, AiConfigProbeOutcome } from "../src/types.js";
 
 /*
  * Local AI connection probe IPC (Stage 4O): one channel, "ai-config-probe".
@@ -45,29 +46,15 @@ export const AI_PROBE_COOLDOWN_MS = 2000;
 
 const REVISION = /^[0-9a-f]{64}$/;
 
-export type AiConfigProbeError =
-  | "not-available"
-  | "invalid-request"
-  | "missing"
-  | "damaged"
-  | "unsupported-version"
-  | "unreadable"
-  | "conflict"
-  | "not-found"
-  | "invalid-configuration"
-  | "port-in-use-by-project"
-  | "busy"
-  | "rate-limited"
-  | "cancelled"
-  | "failed";
+// The result contract is shared with the renderer (src/types.ts, Stage 4P).
+export type { AiConfigProbeError, AiConfigProbeIpcResult };
 
-type ProbeOutcomeOnly = Exclude<ProbeResult["outcome"], "compatible" | "http-error" | "invalid-request" | "cancelled" | "failed">;
-
-export type AiConfigProbeIpcResult =
-  | { ok: true; outcome: "compatible"; modelCount: number | null }
-  | { ok: true; outcome: "http-error"; statusClass: ProbeStatusClass }
-  | { ok: true; outcome: ProbeOutcomeOnly }
-  | { ok: false; error: AiConfigProbeError };
+type ProbeOutcomeOnly = AiConfigProbeOutcome;
+// Compile-time check: the shared outcome list is exactly the transport's
+// outcomes that cross IPC as they are.
+type TransportOutcomeOnly = Exclude<ProbeResult["outcome"], "compatible" | "http-error" | "invalid-request" | "cancelled" | "failed">;
+const outcomeListsMatch: [TransportOutcomeOnly] extends [AiConfigProbeOutcome] ? ([AiConfigProbeOutcome] extends [TransportOutcomeOnly] ? true : never) : never = true;
+void outcomeListsMatch;
 
 const OUTCOMES_ONLY: readonly ProbeOutcomeOnly[] = [
   "incompatible-response",

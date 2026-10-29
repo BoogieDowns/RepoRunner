@@ -19,7 +19,9 @@ import type {
  * aiConfigStatus (Stage 4I) rides on the same switch: read-only AI
  * configuration metadata, no arguments. aiConfigEditLoad / aiConfigEditSave
  * (Stage 4L) do too: load takes no arguments, save forwards exactly the
- * document and the revision. The main process checks the same gate itself.
+ * document and the revision. aiConfigProbe (Stage 4P) forwards exactly a saved
+ * configuration's id and the revision; never a URL. The main process checks
+ * the same gate itself.
  */
 const INTERNAL_CREDENTIAL_SETTINGS_SWITCH = "--reporunner-internal-credential-settings";
 const credentialMethods = process.argv.includes(INTERNAL_CREDENTIAL_SETTINGS_SWITCH)
@@ -32,6 +34,8 @@ const credentialMethods = process.argv.includes(INTERNAL_CREDENTIAL_SETTINGS_SWI
       aiConfigEditLoad: () => ipcRenderer.invoke("ai-config-edit-load"),
       aiConfigEditSave: (settings: AiConfigEditDocument, expectedRevision: string | null) =>
         ipcRenderer.invoke("ai-config-edit-save", settings, expectedRevision),
+      aiConfigProbe: (configId: string, expectedRevision: string) =>
+        ipcRenderer.invoke("ai-config-probe", configId, expectedRevision),
     }
   : {};
 
