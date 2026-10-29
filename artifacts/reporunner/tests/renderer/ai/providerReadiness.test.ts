@@ -220,10 +220,10 @@ describe("with the capability model", () => {
 
 describe("module boundaries", () => {
   const AI_DIR = path.resolve(import.meta.dirname, "../../../src/lib/ai");
-  // Stage 4N adds probeSpec.ts, held to the same purity rules.
-  const FILES = ["localEndpoint.ts", "settingsSchema.ts", "providerReadiness.ts", "probeSpec.ts"];
+  // Stage 4N adds probeSpec.ts; Stage 4R adds explanationContext.ts and contextDigest.ts. All held to the same purity rules.
+  const FILES = ["localEndpoint.ts", "settingsSchema.ts", "providerReadiness.ts", "probeSpec.ts", "explanationContext.ts", "contextDigest.ts"];
 
-  it("contains exactly the four modules", () => {
+  it("contains exactly the six modules", () => {
     expect(fs.readdirSync(AI_DIR).sort()).toEqual([...FILES].sort());
   });
 
@@ -235,7 +235,7 @@ describe("module boundaries", () => {
         /["']node:|["']electron["']|ipcRenderer|ipcMain|window\.|globalThis|\bfetch\(|XMLHttpRequest|WebSocket|EventSource|sendBeacon|Date\.now|new Date\(|performance\.|process\.|require\(|import\(|localStorage|sessionStorage|indexedDB|credentialStore|credentialService|getCredential|safeStorage|console\.|\beval\(|new Function/,
       );
       const imports = [...source.matchAll(/from\s+"([^"]+)"/g)].map((m) => m[1]);
-      expect(imports.every((i) => ["./localEndpoint", "./localEndpoint.js", "./settingsSchema", "./settingsSchema.js", "../editions/types", "../editions/types.js", "../../types", "../../types.js"].includes(i)), `${file}: ${imports.join(", ")}`).toBe(true);
+      expect(imports.every((i) => ["./localEndpoint", "./localEndpoint.js", "./settingsSchema", "./settingsSchema.js", "../editions/types", "../editions/types.js", "../../types", "../../types.js", "../insights/types", "../safety/types", "./explanationContext"].includes(i)), `${file}: ${imports.join(", ")}`).toBe(true);
     }
   });
 
