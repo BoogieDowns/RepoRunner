@@ -229,14 +229,14 @@ describe("getTrackedServicePorts", () => {
 describe("port ownership across lifecycles", () => {
   let held: Set<number>;
   const sorted = () => [...pm.getTrackedServicePorts()].sort((a, b) => a - b);
-  type Deferred = { port: number; resolve: (inUse: boolean) => void };
+  type Deferred = { port: number; resolve: (inUse: boolean) => void; reject: (error: Error) => void };
   let deferred: Deferred[] | null;
 
   beforeEach(() => {
     held = new Set();
     deferred = null;
     h.isPortInUse.mockImplementation((port: number) => {
-      if (deferred) return new Promise<boolean>((resolve) => deferred!.push({ port, resolve }));
+      if (deferred) return new Promise<boolean>((resolve, reject) => deferred!.push({ port, resolve, reject }));
       return Promise.resolve(held.has(port));
     });
   });
@@ -399,5 +399,92 @@ describe("port ownership across lifecycles", () => {
     await vi.runAllTimersAsync();
     expect(h.isPortInUse).not.toHaveBeenCalled();
     expect(pm.getTrackedServicePorts()).toEqual([3000]);
+  });
+  // Codex review of d910959: quitting while Stop Engine is re-checking recorded ports.
+  describe("quitting while Stop re-checks recorded ports", () => {
+    /** Orphans on 3000 and 3001, then a Stop whose first re-check (3000) is held open. */
+    async function stopWithFirstCheckPending() {
+      await orphan("frontend", 1001, 3000);
+      await orphan("frontend", 1002, 3001);
+      deferred = [];
+      let settled = false;
+      const stopping = pm.stopService("frontend").then(() => {
+        settled = true;
+      });
+      await vi.advanceTimersByTimeAsync(10);
+      expect(deferred.map((d) => d.port)).toEqual([3000]);
+      return { stopping, isSettled: () => settled };
+    }
+
+    it("1-7. quitting begins mid-check; the check says 3000 is free: only 3000 clears, 3001 is never checked and stays", async () => {
+      const { stopping, isSettled } = await stopWithFirstCheckPending();
+      pm.beginShutdown();
+      deferred!.shift()!.resolve(false);
+      await vi.advanceTimersByTimeAsync(10);
+      expect(deferred).toEqual([]); // no check started for 3001
+      await stopping;
+      expect(isSettled()).toBe(true);
+      expect(pm.getTrackedServicePorts()).toEqual([3001]);
+    });
+
+    it("8. the check says 3000 is still in use: both stay", async () => {
+      const { stopping } = await stopWithFirstCheckPending();
+      pm.beginShutdown();
+      deferred!.shift()!.resolve(true);
+      await stopping;
+      expect(deferred).toEqual([]);
+      expect(sorted()).toEqual([3000, 3001]);
+    });
+
+    it("8b. the check fails: nothing is proven free, both stay, and Stop still completes without an error", async () => {
+      const { stopping } = await stopWithFirstCheckPending();
+      pm.beginShutdown();
+      deferred!.shift()!.reject(new Error("SYNTHETIC check failure"));
+      await expect(stopping).resolves.toBeUndefined();
+      expect(deferred).toEqual([]);
+      expect(sorted()).toEqual([3000, 3001]);
+    });
+
+    it("8c. a failed check outside shutdown also keeps that port, and the next port is still checked", async () => {
+      const { stopping } = await stopWithFirstCheckPending();
+      deferred!.shift()!.reject(new Error("SYNTHETIC check failure"));
+      await vi.advanceTimersByTimeAsync(10);
+      expect(deferred!.map((d) => d.port)).toEqual([3001]);
+      deferred!.shift()!.resolve(false);
+      await stopping;
+      expect(pm.getTrackedServicePorts()).toEqual([3000]);
+    });
+
+    it("9. an ordinary Stop (not quitting) re-checks both ports", async () => {
+      const { stopping } = await stopWithFirstCheckPending();
+      deferred!.shift()!.resolve(false);
+      await vi.advanceTimersByTimeAsync(10);
+      expect(deferred!.map((d) => d.port)).toEqual([3001]);
+      deferred!.shift()!.resolve(false);
+      await stopping;
+      expect(pm.getTrackedServicePorts()).toEqual([]);
+    });
+
+    it("10. quitting already under way before Stop: no re-check starts at all; records stay", async () => {
+      await orphan("frontend", 1001, 3000);
+      await orphan("frontend", 1002, 3001);
+      pm.beginShutdown();
+      h.isPortInUse.mockClear();
+      await run(pm.stopService("frontend"));
+      expect(h.isPortInUse).not.toHaveBeenCalled();
+      expect(sorted()).toEqual([3000, 3001]);
+    });
+
+    it("12. frontend and backend stay independent while quitting", async () => {
+      await orphan("backend", 2001, 4000);
+      const { stopping } = await stopWithFirstCheckPending();
+      pm.beginShutdown();
+      deferred!.shift()!.resolve(false);
+      await stopping;
+      h.isPortInUse.mockClear();
+      await run(pm.stopService("backend"));
+      expect(h.isPortInUse).not.toHaveBeenCalled();
+      expect(sorted()).toEqual([3001, 4000]);
+    });
   });
 });

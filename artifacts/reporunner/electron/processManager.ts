@@ -272,12 +272,24 @@ function releaseIfUnchanged(owner: PortOwnership): void {
   }
 }
 
-/** Checks each of a service's possible orphans on its own; removes those found free. Not while quitting (shutdown never uses ports). */
+/**
+ * Checks each of a service's possible orphans on its own; removes those found
+ * free. Shutdown never uses ports: once quitting has begun, no further check
+ * starts (a check already running finishes), and every port not yet shown
+ * free keeps its record. A check that fails proves nothing, so that port
+ * keeps its record too.
+ */
 async function recheckPossibleOrphans(service: ServiceName): Promise<void> {
-  if (shuttingDown) return;
   for (const port of [...possibleOrphans[service].keys()]) {
+    if (shuttingDown) return;
     const owner = ownershipOf(service, port);
-    if (!(await isPortInUse(port))) releaseIfUnchanged(owner);
+    let inUse = true;
+    try {
+      inUse = await isPortInUse(port);
+    } catch {
+      // Not shown free: keep the record.
+    }
+    if (!inUse) releaseIfUnchanged(owner);
   }
 }
 
